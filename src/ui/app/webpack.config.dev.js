@@ -1,32 +1,27 @@
-const merge = require('webpack-merge');
-const baseConfig = require('./webpack.config.base.js');
+const webpack = require('webpack');
+const path = require('path');
 
-module.exports = merge(baseConfig, {
+
+module.exports = {
   devtool: 'eval-source-map',
 
   mode: 'development',
   devServer: {
     inline: true,
     port: '3000',
-    historyApiFallback: true,
   },
 
   module: {
     rules: [
       {
-        test: /\.css$/,
-        use: [
-          {
-            loader: 'style-loader' ,
-          },
-          {
-            loader: 'css-loader',
-            options: {
-              importLoaders: 1,
-            },
-          },
-        ],
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+        }
       },
     ],
   },
-});
+
+  entry: './src/index.js',
+};
