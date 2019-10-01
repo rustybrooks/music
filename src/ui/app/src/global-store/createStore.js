@@ -31,7 +31,8 @@ const createStore = (
       })
     }
 
-    componentWillMount() {
+    // used to be componentWillMount - not sure if it'll work this way
+    componentDidMount() {
       let store = {
         get: (key, defaultValue) => {
           let value = this.state.storage[key]

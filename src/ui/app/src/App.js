@@ -4,29 +4,16 @@ import { BrowserRouter, Route } from 'react-router-dom'
 
 
 import { BASE_URL } from './constants/api'
-import fetchFrameworks from './framework_client'
 import Home from './components/Home'
 import Header from './components/Header'
 
 
 class App extends Component {
-  updateFrameworks() {
-    const { store } = this.props
-
-    fetchFrameworks(BASE_URL, '/api', store).then(data => {
-      store.set('frameworks', data)
-    })
-  }
-
   componentDidMount() {
-    this.updateFrameworks()
   }
 
   render() {
     let { store } = this.props
-    if (store.get('frameworks') === null) {
-     return <div>Loading</div>
-    }
 
     return (
       <BrowserRouter basename={process.env.PUBLIC_URL}>
@@ -40,8 +27,6 @@ class App extends Component {
 }
 
 const initialValue = {
-  'frameworks': null,
-  'login-widget': null,
 }
 
 const config = {}

@@ -49,7 +49,6 @@ class Header extends React.Component {
         <AppBar position="static">
           <Toolbar>
             <Button color="inherit" component={Link} to="/">Home</Button>
-            <Button color="inherit" component={Link} to="/projects/me">Projects</Button>
           </Toolbar>
         </AppBar>
         <Drawer anchor="top" open={false} onClose={this.toggleDrawerEvent(false)}>

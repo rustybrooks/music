@@ -9,14 +9,21 @@ const style = theme => ({
   }
 });
 
-
 class Home extends React.Component {
+  componentDidMount() {
+    console.log(navigator.requestMIDIAccess)
+    console.log(window.navigator.requestMIDIAccess)
+  }
 
   render() {
     const { classes } = this.props
 
     return (
-      <Paper className={classes.paper}>Hi</Paper>
+      <div>
+        <Paper className={classes.paper}>
+          Hi
+        </Paper>
+      </div>
     )
   }
 }
