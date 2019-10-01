@@ -8,10 +8,18 @@ services:
     image: music-ui:latest
     container_name: music-buildui
     volumes:
-      - ./data/:/srv/data
       - ./src/:/srv/src
-    environment:
-      - ENVIRONMENT=dev
     ports:
         - 3000:3000
+
+  music-buildui2:
+    build:
+      context: ./src/
+      dockerfile: ui2/Dockerfile
+    image: music-ui2:latest
+    container_name: music-buildui2
+    volumes:
+      - ./src/:/srv/src
+    ports:
+        - 8000:8000
 
