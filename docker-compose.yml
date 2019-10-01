@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+  music-buildui:
+    build:
+      context: ./src/
+      dockerfile: ui/Dockerfile
+    image: music-ui:latest
+    container_name: music-buildui
+    volumes:
+      - ./data/:/srv/data
+      - ./src/:/srv/src
+    environment:
+      - ENVIRONMENT=dev
+    ports:
+        - 3000:3000
+
