@@ -3,7 +3,6 @@ import createStore from './global-store/createStore'
 import { BrowserRouter, Route } from 'react-router-dom'
 
 
-import { BASE_URL } from './constants/api'
 import Home from './components/Home'
 import Header from './components/Header'
 
