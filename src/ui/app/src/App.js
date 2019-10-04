@@ -1,16 +1,12 @@
-import React, { Component } from 'react'
+import React from 'react';
+import MidiInputs from "./components/MidiInputs";
 
-class App extends Component {
-  componentDidMount() {
-  }
-
-  render() {
-    console.log('...', navigator.requestMIDIAccess)
-
+const App = () => {
     return (
-      <div>Hi</div>
+      <div>
+        <MidiInputs/>
+      </div>
     )
-  }
 }
 
 export default App
