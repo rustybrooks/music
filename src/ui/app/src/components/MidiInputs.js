@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
 
+function connectToDevice(device) {
+  console.log('Connecting to device', device);
+  device.onmidimessage = function(m) {
+    const [command, key, velocity] = m.data;
+    if (command === 145) {
+      debugEl.innerText = 'KEY UP: ' + key;
+    } else if(command === 129) {
+      debugEl.innerText = 'KEY DOWN';
+    }
+  }
+}
+
 const MidiInputs = () => {
   const [midiInputs, set_midiInputs] = useState([]);
 
@@ -9,6 +21,10 @@ const MidiInputs = () => {
       set_midiInputs(Array.from(access.inputs))
       console.log("inputs", midiInputs)
     })
+
+    access.onstatechange = (e) => {
+      console.log("MIDI State change event", e)
+    }
   }, [])
 
   console.log('render', midiInputs)
