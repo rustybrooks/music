@@ -1,10 +1,10 @@
 import React from 'react';
-import MidiInputs from "./components/MidiInputs";
+import Piano from './components/instruments/Piano'
 
 const App = () => {
     return (
       <div>
-        <MidiInputs/>
+        <Piano/>
       </div>
     )
 }
