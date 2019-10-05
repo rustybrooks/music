@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 
-import { createStore } from '@spyna/react-store'
+import { createStore, store } from '@spyna/react-store'
 import Piano from './components/instruments/Piano'
 
 const MidiCallbacks = () => {
-  let callbackMap = {}
 
   function init() {
+    let callbackMap = {}
+
     console.log("initializing midi")
     navigator.requestMIDIAccess().then(function (access) {
-      console.log("updating midi list")
       for (let input of access.inputs.values()) {
+        console.log('midi input', input)
         input.onmidimessage = callback;
+        callbackMap[input.id] = input
       }
 
+      store.set('midiInputs', callbackMap)
       access.onstatechange = (e) => {
-        console.log("MIDI State change event", e)
+        let midiInputs = store.get('midiInputs')
+        store.set('midiInputs', {...midiInputs, [e.port.id]: e.port})
       }
     })
   }
@@ -32,7 +36,7 @@ const MidiCallbacks = () => {
 
 let midiCallbacks = MidiCallbacks()
 
-const App = () => {
+const App = (props) => {
   useEffect(() => {
     midiCallbacks.init()
   }, [])
@@ -44,7 +48,8 @@ const App = () => {
 }
 
 const initialValue = {
-  'midi-callbacks': MidiCallbacks(),
+  'midiCallbacks': MidiCallbacks(),
+  'midiInputs': {},
 }
 
 const config = {}

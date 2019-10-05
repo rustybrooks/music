@@ -1,46 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { withStore } from '@spyna/react-store'
 
-function connectToDevice(device) {
-  console.log('Connecting to device', device);
-  device.onmidimessage = function(m) {
-    const [command, key, velocity] = m.data;
-    if (command === 145) {
-      debugEl.innerText = 'KEY UP: ' + key;
-    } else if(command === 129) {
-      debugEl.innerText = 'KEY DOWN';
-    }
-  }
-}
+const MidiInputs = ({midiInputs, midiCallbacks}) => {
+  console.log('midiinputs', midiInputs)
 
-const MidiInputs = () => {
-  const [midiInputs, set_midiInputs] = useState([]);
-
-  useEffect(() => {
-    navigator.requestMIDIAccess().then(function(access) {
-      console.log("updating midi list")
-      set_midiInputs(Array.from(access.inputs))
-      console.log("inputs", midiInputs)
-    })
-
-    access.onstatechange = (e) => {
-      console.log("MIDI State change event", e)
-    }
-  }, [])
-
-  console.log('render', midiInputs)
   return (
-    <table border={1} cellPadding={3} cellSpacing={0}><tbody>
+    <table border={1} cellPadding={6} cellSpacing={0}>
+      <tbody>
+      <tr><th colSpan={3}>MIDI Inputs</th></tr>
+      <tr><th>Device</th><th>Manufacturer</th><th>Connection</th></tr>
       {
-        midiInputs.map((kv) => {
-          console.log(kv)
-          return <tr key={kv[1].id}>
-            <td>Device Name</td>
-            <td>{kv[1].name}</td>
+        Object.values(midiInputs).map((i) => {
+          console.log('...', i)
+          return <tr key={i.id}>
+            <td>{i.name}</td>
+            <td>{i.manufacturer}</td>
+            <td>{i.connection}</td>
           </tr>
         })
       }
-    </tbody></table>
+      </tbody>
+    </table>
   )
 }
 
-export default MidiInputs
+export default withStore(MidiInputs, ['midiInputs'])

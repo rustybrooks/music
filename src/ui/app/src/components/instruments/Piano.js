@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-import MidiMonitor from "../MIDIMonitor"
+import MidiMonitor from "../MidiMonitor"
+import MidiInputs from "../MidiInputs"
 
 const Piano = () => {
   return <div>
-    <MidiMonitor />
+    <MidiMonitor/>
+    <MidiInputs/>
   </div>
 }
 
