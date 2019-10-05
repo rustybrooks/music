@@ -4,7 +4,7 @@ import MidiMonitor from "../MIDIMonitor"
 
 const Piano = () => {
   return <div>
-    <MidiMonitor/>
+    <MidiMonitor />
   </div>
 }
 
