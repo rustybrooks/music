@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { createStore, store } from '@spyna/react-store'
 import Launchpad from "./components/instruments/Launchpad"
 import MidiMessage from "./MidiMessage"
-
+import MidiGuitar from "./components/instruments/MidiGuitar"
 
 const MidiCallbacks = () => {
   let callbackMap = {}
@@ -56,7 +56,8 @@ const App = (props) => {
   }, [])
   return (
       <div>
-        <Launchpad/>
+        {/*<Launchpad/>*/}
+        <MidiGuitar/>
       </div>
     )
 }
