@@ -1,12 +1,8 @@
 import React from 'react';
 import { withStore } from '@spyna/react-store'
 
-const MidiInputs = ({midiInputs, midiCallbacks}) => {
-  console.log('midiinputs', midiInputs)
-
-  const our_callback = (m) => {
-    console.log("our_callback", m)
-  }
+const MidiInputs = ({midiInputs, midiCallbacks, callback}) => {
+  // console.log('midiinputs', midiInputs)
 
   return (
     <table border={1} cellPadding={6} cellSpacing={0}>
@@ -15,7 +11,7 @@ const MidiInputs = ({midiInputs, midiCallbacks}) => {
       <tr><th>Device</th><th>Manufacturer</th><th>Connection</th></tr>
       {
         Object.values(midiInputs).map((i) => {
-          midiCallbacks.listen(i.id, 'foo', our_callback)
+          midiCallbacks.listen(i.id, callback, callback)
           return <tr key={i.id}>
             <td>{i.name}</td>
             <td>{i.manufacturer}</td>

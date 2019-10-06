@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 import { createStore, store } from '@spyna/react-store'
-import Piano from './components/instruments/Piano'
+import Launchpad from "./components/instruments/Launchpad"
+import MidiMessage from "./MidiMessage"
+
 
 const MidiCallbacks = () => {
   let callbackMap = {}
@@ -32,11 +34,12 @@ const MidiCallbacks = () => {
   }
 
   let callback = (m) => {
+    const message = MidiMessage(m)
     // console.log(m)
     const midi_id = m.target.id
     // console.log("midi cb", midi_id, callbackMap[midi_id])
     Object.values(callbackMap[midi_id]).forEach((cb) => {
-       cb(m)
+       cb(message)
     })
   }
 
@@ -53,7 +56,7 @@ const App = (props) => {
   }, [])
   return (
       <div>
-        <Piano/>
+        <Launchpad/>
       </div>
     )
 }
