@@ -29,7 +29,7 @@ const MidiCallbacks = () => {
   }
 
   let listen = (midi_id, listen_id, callback) => {
-    console.log('listen', midi_id, callback)
+    // console.log('listen', midi_id, callback)
     callbackMap[midi_id][listen_id] = callback
   }
 
