@@ -2,7 +2,7 @@ import React from 'react';
 import { withStore } from '@spyna/react-store'
 
 const MidiInputs = ({midiInputs, midiCallbacks, callback}) => {
-  // console.log('midiinputs', midiInputs)
+  // console.log('midiinputs render', midiInputs)
 
   return (
     <table border={1} cellPadding={6} cellSpacing={0}>

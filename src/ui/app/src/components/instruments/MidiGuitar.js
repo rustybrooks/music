@@ -8,25 +8,28 @@ const style = theme => ({
 })
 
 const MidiGuitar = ({classes}) => {
-  const init_grid = () => {
-    let igrid = []
-    for (let y=0; y<9; y++) {
-      let row = []
-      for (let y=0; y<9; y++) {
-        row.push({class: 'blank'})
-      }
-      igrid.push(row)
+  const our_callback = (m) => {
+    if (m.note >= 0 && m.note <= 8) {
+      const c = (m.command === 'NoteOn') ? 'press' : 'blank'
+      setFretboard(f => {
+        f[0][m.note] = {'class': c}
+        return f.slice(0)
+      })
     }
-    return igrid
   }
 
-  const our_callback = (m) => {
-//    const [x, y] = note_to_grid(m.note)
+  let [fretboard, setFretboard] = useState(init_fretboard())
+
+  function init_fretboard() {
+    const frets = 25
+    return [...Array(6)].map(() => {
+      return [...Array(frets+1)].map((v) => {return {'class': 'blank'}})
+    })
   }
 
 
   return <div>
-    <Guitar handed='left'/>
+    <Guitar handed='left' fretboard={fretboard}/>
     <MidiMonitor/>
     <MidiInputs callback={our_callback}/>
   </div>

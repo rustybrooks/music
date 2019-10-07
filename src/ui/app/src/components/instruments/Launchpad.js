@@ -34,10 +34,8 @@ const Launchpad = ({classes}) => {
 
     let c = null
     if (m.command === 'NoteOn') {
-      // grid[x][y] = {'class': 'press'}
       c = 'press'
     } else if (m.command === 'NoteOff') {
-      // grid[x][y] = {'class': 'blank'}
       c = 'blank'
     }
     setGrid(g => {
