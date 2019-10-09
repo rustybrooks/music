@@ -6,7 +6,7 @@ const MidiMonitor = () => {
 
   const our_callback = (m) => {
     messages.push(m)
-    setMessages(messages.slice(-10))
+    setMessages(messages.slice(-20))
   }
 
   return <div>

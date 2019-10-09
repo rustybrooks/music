@@ -1,32 +1,55 @@
-const NOTEON = 'NoteOn'
-const NOTEOFF = 'NoteOff'
 
 const MidiMessage = (m) => {
-  let command = null
-  let [dcommand, note, velocity] = m.data
+  const NOTEON = 'NoteOn'
+  const NOTEOFF = 'NoteOff'
 
-  const midi_event = dcommand >> 4
-  const channel = dcommand & 0xF
+  let [note, command, channel, velocity] = [null, null, null, null]
+  const [b1, b2, b3] = m.data
 
-  console.log({dcommand, midi_event, channel, note, velocity})
+  const mevent = b1 >> 4
 
-  switch (midi_event) {
-    case 8:
+  switch (mevent) {
+    case 0x9:
+      channel = b1 & 0xF
+      note = b2
+      velocity = b3
       if (velocity > 0) {
         command = NOTEON
+        note = b2
       } else {
         command = NOTEOFF
       }
       break
-    case 9:
+    case 0x8:
+      channel = b1 & 0xF
+      note = b2
+      velocity = b3
       command = NOTEOFF
       break
+    case 0xA:
+      // Polyphonic Key Pressure (Aftertouch)
+      break
+    case 0xB:
+      // Control Change
+      break
+    case 0xC:
+      // Program Change
+      break
+    case 0xD:
+      // Channel Pressure (Aftertouch)
+      break
+    case 0xE:
+      // Pitch Wheel
+      break
     default:
-      command = midi_event
+      command = mevent  // Should probably just throw exception
   }
 
+  console.log({mevent, b1, channel, note, velocity})
+
   return Object.freeze(
-    {channel, command, note, velocity}
+    {channel, command, note, velocity, NOTEON, NOTEOFF}
   )
 }
 export default MidiMessage
+

@@ -57,7 +57,7 @@ const App = (props) => {
   return (
       <div>
         {/*<Launchpad/>*/}
-        <MidiGuitar/>
+        <MidiGuitar handed={'left'}/>
       </div>
     )
 }

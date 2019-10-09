@@ -5,12 +5,14 @@ import MidiMonitor from "../MidiMonitor"
 import MidiInputs from "../MidiInputs"
 import Note from '../../Note'
 
-
 const tunings = {
   guitar: [['E', 0], ['A', 0], ['D', 1], ['G', 1], ['B', 1], ['E', 2]]
 }
 
-const magic = 0.9438743126816935
+// seems kind of dumb, but maybe some configurations will result in different channels
+const channels = [0, 1, 2, 3, 4, 5]
+
+const magic = 0.9438
 
 
 const style = theme => {
@@ -83,18 +85,46 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
   const notes = (tuning in tunings ? tunings[tuning] : tuning).map(n => Note(n)).reverse()
 
   const our_callback = (m) => {
-    if (m.note >= 0 && m.note <= 8) {
-      const c = (m.command === 'NoteOn') ? 'press' : 'blank'
-      setFretboard(f => {
-        f[0][m.note] = {'class': c}
-        return f.slice(0)
-      })
+    if (!fretboard) {
+      console.log("no fretboard")
+      return
+    }
+
+    let s = -1
+    let fret = 0
+
+    // this is a silly thing to let me pretend that 3 rows of launchpad buttons are the low 3 strings on guitar
+    if (m.channel === 0 && m.note < 40) {
+      if (0 <= m.note && m.note <= 8) {
+        s = 0
+        fret = (handed == 'right') ? m.note :(8 - m.note)
+      } else if (16 <= m.note && m.note <= 24) {
+        s = 1
+        fret = m.note - 16
+        fret = (handed == 'right') ? m.note - 16 : (24 - m.note)
+      } else if (32 <= m.note && m.note <= 40) {
+        s = 2
+        fret = (handed == 'right') ? m.note - 32 : (40 - m.note)
+      }
+    } else {
+      fret = m.note - tuning[s]
+    }
+
+    if (s > -1) {
+      const c = (m.command === m.NOTEON) ? 'press' : 'blank'
+      let nf = fretboard.splice(0)
+      let nfs = nf[s].slice(0)
+      console.log('before', s,  nf)
+      nfs[fret]['class'] = c
+      console.log('after', nf)
+      setFretboard(nf)
     }
   }
 
   let [fretboard, setFretboard] = useState(init_fretboard())
 
   function init_fretboard() {
+    console.log('before init fret')
     const frets = 25
     return [...Array(6)].map(() => {
       return [...Array(frets+1)].map((v) => {return {'class': 'blank'}})
