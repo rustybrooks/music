@@ -9,6 +9,7 @@ module.exports = merge(baseConfig, {
     inline: true,
     port: '3000',
     historyApiFallback: true,
+    https: true
   },
 
   module: {

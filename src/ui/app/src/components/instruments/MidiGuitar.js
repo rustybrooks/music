@@ -114,7 +114,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
 
           return <div key={n.number} className={classes.fret}>
             <div className={classes[fs.class]}>
-              {n.add(f).note}
+              {n.add(f).note} / {n.add(f).number}
             </div>
           </div>
         })

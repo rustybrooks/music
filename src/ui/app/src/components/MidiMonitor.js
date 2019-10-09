@@ -12,11 +12,18 @@ const MidiMonitor = () => {
   return <div>
     <table>
       <tbody>
+      <tr>
+        <th>Command</th>
+        <th>Channel</th>
+        <th>Note</th>
+        <th>Velocity</th>
+      </tr>
       {
         messages.map((m, i) => {
           // console.log(m, i)
           return <tr key={i}>
             <td>{m.command}</td>
+            <td>{m.channel}</td>
             <td>{m.note}</td>
             <td>{m.velocity}</td>
           </tr>
