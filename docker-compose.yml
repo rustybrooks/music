@@ -12,3 +12,12 @@ services:
     ports:
         - 3000:3000
 
+  music-midi:
+    build:
+      context: ./src/
+      dockerfile: audio_to_midi/Dockerfile
+    image: music-midi:latest
+    container_name: music-midi
+    volumes:
+      - ./src/:/srv/src
+
