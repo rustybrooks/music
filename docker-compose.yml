@@ -1,12 +1,12 @@
 version: '2'
 
 services:
-  music-buildui:
+  music-ui:
     build:
       context: ./src/
       dockerfile: ui/Dockerfile
     image: music-ui:latest
-    container_name: music-buildui
+    container_name: music-dui
     volumes:
       - ./src/:/srv/src
     ports:
