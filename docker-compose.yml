@@ -6,7 +6,7 @@ services:
       context: ./src/
       dockerfile: ui/Dockerfile
     image: music-ui:latest
-    container_name: music-dui
+    container_name: music-ui
     volumes:
       - ./src/:/srv/src
     ports:
