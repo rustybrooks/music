@@ -5,6 +5,8 @@ import MidiMonitor from "../MidiMonitor"
 import MidiInputs from "../MidiInputs"
 import Note from '../../Note'
 
+import * as exercises from '../../exercises/guitar'
+
 const tunings = {
   guitar: [['E', 0], ['A', 0], ['D', 1], ['G', 1], ['B', 1], ['E', 2]]
 }
@@ -14,8 +16,12 @@ const channels = [0, 1, 2, 3, 4, 5]
 
 const magic = 0.9438
 
+// const exercise = exercises.FindNotes
+const exercise = exercises.FindNotes([])
 
-const style = theme => {
+
+// const style = theme => {
+const style = () => {
   let x = {
     'fretboard': {
       'display': 'flex',
@@ -71,9 +77,16 @@ const style = theme => {
       'border-image': 'initial',
       'border-radius': '3px',
     },
+    'fret-select': {
+
+    }
   }
-  x['blank'] = {...x.fret2, ['background-color']: '#eee'}
-  x['press'] = {...x.fret2, ['background-color']: 'blue'}
+
+  x['press-blank'] = {...x.fret2, ['background-color']: '#eee'}
+  x['press'] = {...x.fret2, ['background-color']: '#66F'}
+
+  x['select-blank'] = {...x['fret-select'], ['background-color']: '#eee'}
+  x['select'] = {...x['fret-select'], ['background-color']: '#3A9'}
 
   return x
 }
@@ -90,33 +103,33 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
       return
     }
 
-    let s = -1
+    let string = -1
     let fret = 0
 
     // this is a silly thing to let me pretend that 3 rows of launchpad buttons are the low 3 strings on guitar
     if (m.channel === 0 && m.note < 40) {
       if (0 <= m.note && m.note <= 8) {
-        s = 0
-        fret = (handed == 'right') ? m.note :(8 - m.note)
+        string = 0
+        fret = (handed === 'right') ? m.note :(8 - m.note)
       } else if (16 <= m.note && m.note <= 24) {
-        s = 1
-        fret = m.note - 16
-        fret = (handed == 'right') ? m.note - 16 : (24 - m.note)
+        string = 1
+        fret = (handed === 'right') ? m.note - 16 : (24 - m.note)
       } else if (32 <= m.note && m.note <= 40) {
-        s = 2
-        fret = (handed == 'right') ? m.note - 32 : (40 - m.note)
+        string = 2
+        fret = (handed === 'right') ? m.note - 32 : (40 - m.note)
       }
     } else {
-      fret = m.note - tuning[s]
+      string = channels.findIndex(m.channel)
+      fret = m.note - tuning[string]
     }
 
-    if (s > -1) {
-      const c = (m.command === m.NOTEON) ? 'press' : 'blank'
+    const result = exercise.callback(string, fret, m.command === m.NOTEON)
+    console.log(result)
+
+    if (string > -1) {
       let nf = fretboard.splice(0)
-      let nfs = nf[s].slice(0)
-      console.log('before', s,  nf)
-      nfs[fret]['class'] = c
-      console.log('after', nf)
+      let nfs = nf[string].slice(0)
+      nfs[fret]['pressed'] = (m.command === m.NOTEON)
       setFretboard(nf)
     }
   }
@@ -127,7 +140,9 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
     console.log('before init fret')
     const frets = 25
     return [...Array(6)].map(() => {
-      return [...Array(frets+1)].map((v) => {return {'class': 'blank'}})
+      return [...Array(frets+1)].map(() => {return {
+        pressed: false, selected: false,
+      }})
     })
   }
 
@@ -143,8 +158,10 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
           const fs = fretboard[i][f]
 
           return <div key={n.number} className={classes.fret}>
-            <div className={classes[fs.class]}>
-              {n.add(f).note} / {n.add(f).number}
+            <div className={classes[fs.pressed ? 'press' : 'press-blank']}>
+              <div className={classes[fs.selected ? 'select' : (fs.pressed ? '' : 'select-blank')]}>
+                {n.add(f).note} / {n.add(f).number}
+              </div>
             </div>
           </div>
         })
@@ -171,7 +188,6 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
     let w = 89.25
     let x = left ? 100-10.75-w : 10.75
     return <svg key='rest' width={w + "%"} height="100%" x={x+'%'} y="0">
-      <g></g>
       <foreignObject width="100%" height="100%">
         <div className={classes.fretboard2}>
           {[...Array(frets).keys()].map(f => fret(left ? frets-f : f+1))}
@@ -195,7 +211,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
 
   return <div>
     <div className={classes.fretboard}>
-      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" stroke="black" strokeWidth="1"
+      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" stroke="black" strokeWidth="1"
            fill="white" shapeRendering="geometricPrecision" style={{overflow: "visible"}}>
         {stuff()}
       </svg>
