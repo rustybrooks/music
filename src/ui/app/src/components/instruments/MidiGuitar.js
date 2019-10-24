@@ -16,10 +16,6 @@ const channels = [0, 1, 2, 3, 4, 5]
 
 const magic = 0.9438
 
-// const exercise = exercises.FindNotes
-const exercise = exercises.FindNotes([])
-
-
 // const style = theme => {
 const style = () => {
   let x = {
@@ -84,6 +80,7 @@ const style = () => {
 
   x['press-blank'] = {...x.fret2, ['background-color']: '#eee'}
   x['press'] = {...x.fret2, ['background-color']: '#66F'}
+  x['press-error'] = {...x.fret2, ['background-color']: '#F66'}
 
   x['select-blank'] = {...x['fret-select'], ['background-color']: '#eee'}
   x['select'] = {...x['fret-select'], ['background-color']: '#3A9'}
@@ -91,13 +88,19 @@ const style = () => {
   return x
 }
 
+// const string_fret_to_note = (string, fret, tuning) => {
+//   return tuning[string].add(fret)
+// }
+
 const MidiGuitar = ({classes, tuning, frets, handed}) => {
   tuning = (tuning === undefined) ? 'guitar' : tuning
   frets = (frets === undefined) ? 17 : frets
   handed = (handed === undefined) ? 'right' : handed
   const notes = (tuning in tunings ? tunings[tuning] : tuning).map(n => Note(n)).reverse()
 
-  const our_callback = (m) => {
+  const exercise = exercises.FindNotes(notes, [Note(["A", 0])])
+
+  const midi_callback = (m) => {
     if (!fretboard) {
       console.log("no fretboard")
       return
@@ -123,15 +126,24 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
       fret = m.note - tuning[string]
     }
 
-    const result = exercise.callback(string, fret, m.command === m.NOTEON)
-    console.log(result)
+    // console.log(string, fret)
+    if (string < 0) return;
 
-    if (string > -1) {
-      let nf = fretboard.splice(0)
-      let nfs = nf[string].slice(0)
-      nfs[fret]['pressed'] = (m.command === m.NOTEON)
-      setFretboard(nf)
-    }
+    const fret_events = exercise.callback(string, fret, m.command === m.NOTEON)
+
+    let nf = fretboard.splice(0)
+
+    fret_events.forEach((e) => {
+      // console.log("event", e)
+      if (e[0] === 'set_press') {
+        let nfs = nf[string].slice(0)
+        nfs[fret].pressed = ['press', 'error'].includes(e[1])
+        nfs[fret].error = e[1] === 'error'
+        // console.log('set_press', nfs[fret].pressed, nfs[fret].error)
+      }
+    })
+
+    setFretboard(nf)
   }
 
   let [fretboard, setFretboard] = useState(init_fretboard())
@@ -141,7 +153,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
     const frets = 25
     return [...Array(6)].map(() => {
       return [...Array(frets+1)].map(() => {return {
-        pressed: false, selected: false,
+        pressed: false, error: false, selected: false,
       }})
     })
   }
@@ -158,7 +170,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
           const fs = fretboard[i][f]
 
           return <div key={n.number} className={classes.fret}>
-            <div className={classes[fs.pressed ? 'press' : 'press-blank']}>
+            <div className={classes[fs.pressed ? (fs.error ? 'press-error' : 'press') : 'press-blank']}>
               <div className={classes[fs.selected ? 'select' : (fs.pressed ? '' : 'select-blank')]}>
                 {n.add(f).note} / {n.add(f).number}
               </div>
@@ -217,7 +229,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
       </svg>
     </div>
     <MidiMonitor/>
-    <MidiInputs callback={our_callback}/>
+    <MidiInputs callback={midi_callback}/>
   </div>
 }
 

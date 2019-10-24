@@ -17,7 +17,7 @@ function number_to_note(n, is_sharp) {
   return [note_list[is_sharp ? 'sharp' : 'flat'][n % 12], Math.trunc((n-36) / 12)]
 }
 
-const Note = (n, is_sharp = true) => {
+const Note = (n, is_sharp=true) => {
   function add(i) {
     return Note(number + i, is_sharp)
   }
