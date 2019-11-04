@@ -56,8 +56,8 @@ const App = (props) => {
   }, [])
   return (
       <div>
-        {/*<Launchpad/>*/}
-        <MidiGuitar handed={'left'}/>
+        <Launchpad/>
+        {/*<MidiGuitar handed={'left'}/>*/}
       </div>
     )
 }

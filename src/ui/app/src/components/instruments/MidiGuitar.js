@@ -73,24 +73,20 @@ const style = () => {
       'border-image': 'initial',
       'border-radius': '3px',
     },
-    'fret-select': {
+    'fretSelect': {
 
     }
   }
 
-  x['press-blank'] = {...x.fret2, ['background-color']: '#eee'}
-  x['press'] = {...x.fret2, ['background-color']: '#66F'}
-  x['press-error'] = {...x.fret2, ['background-color']: '#F66'}
+  x.pressBlank = {...x.fret2, ['background-color']: '#eee'}
+  x.press = {...x.fret2, ['background-color']: '#66F'}
+  x.pressError = {...x.fret2, ['background-color']: '#F66'}
 
-  x['select-blank'] = {...x['fret-select'], ['background-color']: '#eee'}
-  x['select'] = {...x['fret-select'], ['background-color']: '#3A9'}
+  x.selectBlank = {...x.fretSelect, ['background-color']: '#eee'}
+  x.select = {...x.fretSelect, ['background-color']: '#3A9'}
 
   return x
 }
-
-// const string_fret_to_note = (string, fret, tuning) => {
-//   return tuning[string].add(fret)
-// }
 
 const MidiGuitar = ({classes, tuning, frets, handed}) => {
   tuning = (tuning === undefined) ? 'guitar' : tuning
@@ -146,7 +142,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
     setFretboard(nf)
   }
 
-  let [fretboard, setFretboard] = useState(init_fretboard())
+  let [fretboard, setFretboard] = useState(() => init_fretboard())
 
   function init_fretboard() {
     console.log('before init fret')
@@ -170,8 +166,8 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
           const fs = fretboard[i][f]
 
           return <div key={n.number} className={classes.fret}>
-            <div className={classes[fs.pressed ? (fs.error ? 'press-error' : 'press') : 'press-blank']}>
-              <div className={classes[fs.selected ? 'select' : (fs.pressed ? '' : 'select-blank')]}>
+            <div className={classes[fs.pressed ? (fs.error ? 'pressError' : 'press') : 'pressBlank']}>
+              <div className={classes[fs.selected ? 'select' : (fs.pressed ? '' : 'selectBlank')]}>
                 {n.add(f).note} / {n.add(f).number}
               </div>
             </div>

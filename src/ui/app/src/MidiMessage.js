@@ -8,6 +8,7 @@ const MidiMessage = (m) => {
 
   const mevent = b1 >> 4
 
+  console.log("mevent", mevent)
   switch (mevent) {
     case 0x9:
       channel = b1 & 0xF
@@ -45,7 +46,7 @@ const MidiMessage = (m) => {
       command = mevent  // Should probably just throw exception
   }
 
-  console.log({mevent, b1, channel, note, velocity})
+  console.log({mevent, b1, channel, note, velocity, command})
 
   return Object.freeze(
     {channel, command, note, velocity, NOTEON, NOTEOFF}
