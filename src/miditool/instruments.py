@@ -13,7 +13,6 @@ class Instrument:
             device = matches[index]
             self.midi_in = midiin.open_port(device[0], name=device[1])
             self.midi_in.set_callback(*callback)
-            print(f"callback set to {callback}")
 
         if out_rule:
             midiout = rtmidi.MidiOut()
@@ -25,7 +24,6 @@ class Instrument:
     def input_callback(self, msg, data):
         midi_message, offset = msg
         status, b1, b2 = midi_message
-
         print(f"{status:x} {b1} {b2}")
 
     def send_message(self, status, b1, b2):
@@ -40,15 +38,21 @@ class Launchpad(Instrument):
             callback=callback,
         )
         self.index = index
+        self.clear()
 
+        print(f"Launchpad {index} ready")
+
+    def clear(self):
         for i in range(9):
             self.send_cc(i, 0)
+            self.send_cc2(i, 0)
 
         for x in range(10):
             for y in range(9):
                 self.send_note_on(x, y, 0)
 
-        print(f"Launchpad {index} ready")
+    def __del__(self):
+        self.clear()
 
     def send_note_on(self, x, y, value):
         self.send_message(0x90, y*16+x, value)
@@ -57,7 +61,6 @@ class Launchpad(Instrument):
         self.send_message(0xb0, 104+button, value)
 
     def send_cc2(self, button, value):
-        print(f"{self.index} {button} {value}")
         self.send_note_on(8, button, value)
 
 
@@ -71,8 +74,6 @@ class MultiLaunchpad:
         for i, d in enumerate(callback_data):
             d.update({'index': i})
 
-        print(callback_data)
-
         self.launchpads = [
             Launchpad(
                 index=i,
@@ -84,7 +85,6 @@ class MultiLaunchpad:
         index = data['index']
 
         status, b1, b2 = midi_msg
-        print(status, b1, b2)
         if status in [0x90, 0x80]:
             y = b1 // 16
             x = b1 % 16
@@ -102,7 +102,12 @@ class MultiLaunchpad:
 
     def callback(self, msg, index):
         midi_msg, offset = msg
-        print(self.callback_decoder(midi_msg, index))
+
+        message = self.callback_decoder(midi_msg, index)
+        if message[0] == 'NoteOn':
+            x, y = message[1:3]
+            val = y*8 + x
+            self.send_note_on(0, 0, val)
 
     def send_note_on(self, x, y, value):
         index = x//8
