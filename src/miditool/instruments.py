@@ -1,5 +1,48 @@
 import copy
 import rtmidi
+from itertools import accumulate
+
+
+note_list = {
+    "sharp": ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+    "flat": ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+}
+
+scales = {
+    "major": [2, 2, 1, 2, 2, 2, 1],
+    "natural_minor": [2, 1, 2, 2, 1, 2, 2],
+    "harmonic_minor": [2, 1, 2, 2, 1, 3, 1],
+    "melodic_minor": [2, 1, 2, 2, 2, 2, 1],
+    "hungarian_minor, ": [2, 1, 3, 1, 1, 3, 1],
+    "neapolitan_minor": [1, 2, 2, 2, 2, 2, 1],
+    "neapolitan_major": [1, 2, 2, 2, 2, 2, 1],
+    "pentatonic_major": [2, 2, 3, 2, 3, ],
+    "pentatonic_minor": [3, 2, 2, 3, 2, ],
+    "whole_tone": [2, 2, 2, 2, 2, 2, ],
+    "diminished": [2, 1, 2, 1, 2, 1, 2, 1],
+    "enigmatic": [1, 3, 2, 2, 2, 1, 1],
+    "chromatic": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "ionian": [2, 2, 1, 2, 2, 2, 1],
+    "dorian": [2, 1, 2, 2, 2, 1, 2],
+    "phrygian": [1, 2, 2, 2, 1, 2, 2],
+    "lydian": [2, 2, 2, 1, 2, 2, 1],
+    "mixolydian": [2, 2, 1, 2, 2, 1, 2],
+    "aeolian": [2, 1, 2, 2, 1, 2, 2],
+    "aeoliant": [1, 2, 2, 1, 2, 2, 2],
+}
+
+
+def note_to_number(n):
+    note, octave = n
+    i = note_list['sharp'].index(note.upper())
+    if i == -1:
+        i = note_list['flat'].index(note.upper())
+
+    return 36 + octave*12 + i
+
+
+def number_to_note(n, is_sharp=True):
+    return [note_list['sharp' if is_sharp else 'flat'][n % 12], (n-36) // 12]
 
 
 class Instrument:
@@ -21,10 +64,11 @@ class Instrument:
             device = matches[index]
             self.midi_out = midiout.open_port(device[0], name=device[1])
 
-    def input_callback(self, msg, data):
+    @classmethod
+    def input_callback(cls, msg, data):
         midi_message, offset = msg
         status, b1, b2 = midi_message
-        print(f"{status:x} {b1} {b2}")
+        print(f"{status:x} {b1} {b2} - {data}")
 
     def send_message(self, status, b1, b2):
         self.midi_out.send_message([status, b1, b2])
@@ -64,8 +108,53 @@ class Launchpad(Instrument):
         self.send_note_on(8, button, value)
 
 
+class MultiLaunchpadModes:
+    pass
+
+
+class MLMPianoMode(MultiLaunchpadModes):
+    def __init__(self):
+        self.mlp = None
+        self.scale_notes = None
+
+    def start(self, mlp):
+        self.mlp = mlp
+
+        self.scale_notes = list(accumulate(scales['major'], lambda x, y: x+y, initial=0))
+        self.off_notes = [x for x in range(12) if x not in self.scale_notes]
+        print(self.scale_notes, self.off_notes)
+        for i in range(8):
+            mlp.send_note_on(i, 1, 127)
+
+    def callback(self, msg, data):
+        midi_msg, offset = msg
+        message = self.mlp.callback_decoder(midi_msg, data)
+
+        if message[0] in [
+            'NoteOn',
+            # 'NoteOff'
+        ]:
+            print("-------")
+            root = note_to_number(['C', 0])
+            print("root", root, number_to_note(root))
+
+            x, y = message[1:3]
+            if y % 2 == 1:
+                noten = root + self.scale_notes[x] + 12*(y//2)
+                print(x, y, noten, number_to_note(noten))
+            else:
+                sn = self.scale_notes[x]
+                if sn + 1 in self.off_notes:
+                    noten = root + sn+1 + 12*(y//2)
+                    print(x, y, noten, number_to_note(noten))
+
+
+
 class MultiLaunchpad:
-    def __init__(self, number=2, callback_data=None):
+    def __init__(self, number=2, callback_data=None, modes=None, start_mode=0):
+        self.modes = modes or [MLMPianoMode()]
+        self.mode = modes[start_mode]
+
         if callback_data is None:
             callback_data = [{} for i in range(number)]
         if not isinstance(callback_data, (list, tuple)):
@@ -77,11 +166,14 @@ class MultiLaunchpad:
         self.launchpads = [
             Launchpad(
                 index=i,
-                callback=[self.callback, callback_data[i]]
+                callback=[self.mode.callback, callback_data[i]]
             ) for i in range(number)
         ]
 
-    def callback_decoder(self, midi_msg, data):
+        self.mode.start(self)
+
+    @classmethod
+    def callback_decoder(cls, midi_msg, data):
         index = data['index']
 
         status, b1, b2 = midi_msg
@@ -120,3 +212,4 @@ class MultiLaunchpad:
     def send_cc2(self, button, value):
         index = button//8
         self.launchpads[index].send_cc2(button-(index*8), value)
+
