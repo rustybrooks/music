@@ -119,12 +119,36 @@ class MLMPianoMode(MultiLaunchpadModes):
 
     def start(self, mlp):
         self.mlp = mlp
+        self.scale = 'pentatonic_minor'
 
-        self.scale_notes = list(accumulate(scales['major'], lambda x, y: x+y, initial=0))
+        self.scale_notes = list(accumulate(scales[self.scale], lambda x, y: x+y, initial=0))
         self.off_notes = [x for x in range(12) if x not in self.scale_notes]
-        print(self.scale_notes, self.off_notes)
-        for i in range(8):
-            mlp.send_note_on(i, 1, 127)
+        self.scale_map = []
+        self.off_map = []
+
+        this = 0
+        for n in scales[self.scale]:
+            interval = n-1
+            self.scale_map.append(this)
+
+            for i in range(interval):
+                self.off_map.append(this+i)
+            this += max(interval, 1)
+
+        self.scale_map.append(this)
+#        for i in range(12-this):
+#            self.off_map.append(this+i+1)
+
+        # print(self.scale_notes, self.off_notes)
+        print(self.off_map)
+        print(self.scale_map)
+
+        for y in range(0, 8, 2):
+            for x in self.scale_map:
+                self.mlp.send_note_on(x, y+1, 127)
+
+            for x in self.off_map:
+                self.mlp.send_note_on(x, y, 83)
 
     def callback(self, msg, data):
         midi_msg, offset = msg
@@ -134,20 +158,18 @@ class MLMPianoMode(MultiLaunchpadModes):
             'NoteOn',
             # 'NoteOff'
         ]:
-            print("-------")
-            root = note_to_number(['C', 0])
-            print("root", root, number_to_note(root))
-
             x, y = message[1:3]
+            root = note_to_number(['C', 0])
             if y % 2 == 1:
-                noten = root + self.scale_notes[x] + 12*(y//2)
-                print(x, y, noten, number_to_note(noten))
-            else:
-                sn = self.scale_notes[x]
-                if sn + 1 in self.off_notes:
-                    noten = root + sn+1 + 12*(y//2)
+                if x in self.scale_map:
+                    noten = root + self.scale_notes[x] + 12*(y//2)
                     print(x, y, noten, number_to_note(noten))
 
+            else:
+                if x in self.off_map:
+                    max_scale_n = max([n for n in self.scale_map if n <= x])
+                    noten = root + self.scale_notes[max_scale_n] + (x - max_scale_n + 1) + 12*(y//2)
+                    print(x, y, noten, number_to_note(noten))
 
 
 class MultiLaunchpad:
