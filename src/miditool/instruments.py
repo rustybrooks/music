@@ -64,6 +64,9 @@ class Launchpad(Instrument):
     def send_note_on(self, x, y, value):
         self.send_message(NOTE_ON, y*16+x, value)
 
+    def send_note_off(self, x, y, value):
+        self.send_message(NOTE_OFF, y*16+x, value)
+
     def send_cc(self, button, value):
         self.send_message(CONTROL_CHANGE, 104+button, value)
 
@@ -189,6 +192,10 @@ class MultiLaunchpad:
     def send_note_on(self, x, y, value):
         index = x//8
         self.launchpads[index].send_note_on(x-(index*8), y, value)
+
+    def send_note_off(self, x, y, value):
+        index = x//8
+        self.launchpads[index].send_note_off(x-(index*8), y, value)
 
     def send_cc(self, button, value):
         index = button//8

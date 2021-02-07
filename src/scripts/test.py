@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import time
-import instruments
+from miditool import instruments
 
 lp = instruments.MultiLaunchpad(
     number=2,

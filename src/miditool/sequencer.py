@@ -8,15 +8,17 @@
 import logging
 import threading
 import time
+import rtmidi
 
 from heapq import heappush, heappop
 
-from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
+from rtmidi.midiconstants import NOTE_ON, NOTE_OFF, CONTROL_CHANGE
 from rtmidi.midiutil import open_midiport, list_output_ports
 
-import sys
 
-from scales import scales
+
+# from scales import scales
+from . import instruments
 
 log = logging.getLogger(__name__)
 
@@ -91,8 +93,19 @@ class StepSequencer(threading.Thread):
 
         self.join()
 
+    def toggle(self, col, row, velocity=127):
+        if self.grid[col][row] is None:
+            self.grid[col][row] = velocity
+            return True
+        else:
+            self.grid[col][row] = None
+            return False
+
     def add(self, col, row, velocity=127):
         self.grid[col][row] = velocity
+
+    def remove(self, col, row):
+        self.grid[col][row] = None
 
     def get_events(self, col):
         return [x for x in self.grid[col] if x]
@@ -172,6 +185,67 @@ class StepSequencer(threading.Thread):
             pass
 
         self._finished.set()
+
+
+class LaunchpadStepSequencerMode:
+    def __init__(self, sequencer):
+        self.mlp = None
+        self.seq = sequencer
+
+    def start(self, mlp):
+        self.mlp = mlp
+
+    def callback(self, msg, data):
+        midi_msg, offset = msg
+        message = self.mlp.callback_decoder(midi_msg, data)
+
+        if message[0] in ['NoteOn']:
+            x, y = message[1:3]
+            added = self.seq.toggle(x, y, 127)
+
+            if added:
+                self.mlp.send_note_on(x, y, 51)
+            else:
+                self.mlp.send_note_off(x, y, 51)
+
+        elif message[0] in ['NoteOff']:
+            pass
+        elif message[0] in ['CC']:
+            print(message)
+        else:
+            print("???", message)
+
+
+class LaunchpadStepSequencer:
+    def __init__(self, out_rule=None):
+        if out_rule:
+            midiout = rtmidi.MidiOut()
+            label, index = out_rule
+            matches = [x for x in enumerate(midiout.get_ports()) if label in x[1]]
+            device = matches[index]
+            self.midi_out = midiout.open_port(device[0], name=device[1])
+        else:
+            self.midi_out, port = open_midiport(
+                None,
+                "LaunchpadSequencer",
+                use_virtual=True
+            )
+            time.sleep(1)
+
+        self.seq = StepSequencer(
+            self.midi_out, bpm=120, loop=True, cols=16
+        )
+
+        self.lp = instruments.MultiLaunchpad(
+            number=2,
+            modes=[
+                LaunchpadStepSequencerMode(sequencer=self.seq)
+            ]
+        )
+
+
+        self.seq.run()
+        self.seq.join()
 
 
 def _test():
