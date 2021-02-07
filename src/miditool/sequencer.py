@@ -136,15 +136,14 @@ class StepSequencer(threading.Thread):
                 heappush(self.pending, MidiEvent(tickoff, [NOTE_OFF, note, 0]))
 
     def clock(self):
-        self.loop_tickcnt = self.tickcnt
-
         due = []
 
-        if not self.pending or self.pending[0].tick > self.tickcnt:
-            return False
+        while True:
+            if not self.pending or self.pending[0].tick > self.tickcnt:
+                break
 
-        evt = heappop(self.pending)
-        heappush(due, evt)
+            evt = heappop(self.pending)
+            heappush(due, evt)
 
         if due:
             for i in range(len(due)):
@@ -179,16 +178,18 @@ class StepSequencer(threading.Thread):
 
         try:
             while not self._stopped.is_set():
-                do_break = self.clock()
+                self.loop_tickcnt = self.tickcnt
+                while not self._stopped.is_set():
+                    do_break = self.clock()
 
-                left = max(start + self.tick*self.tickcnt - time.time(), 0)
-                time.sleep(left)
-                if do_break:
-                    break
+                    left = max(start + self.tick*self.tickcnt - time.time(), 0)
+                    time.sleep(left)
+                    if do_break:
+                        break
 
-                # if not self.loop:
-                #     if not self.pending:
-                #         break
+                if not self.loop:
+                    if not self.pending:
+                        break
 
         except KeyboardInterrupt:
             pass
