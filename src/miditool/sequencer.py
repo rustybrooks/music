@@ -57,7 +57,7 @@ class MidiEvent(object):
 
 class StepSequencer(threading.Thread):
     def __init__(
-        self, midiout, bpm=120.0, loop=True, ppqn=480, batchsize=100, rows=8, cols=8,
+        self, midiout, bpm=120.0, loop=True, ppqn=240, batchsize=100, rows=8, cols=8,
         column_callback=None,
     ):
         super().__init__()
@@ -75,6 +75,8 @@ class StepSequencer(threading.Thread):
         self.tickcnt = 0
         self.loop_tickcnt = 0
         self.col = 0
+        self.pending = []
+        self.do_add = True
 
         self._stopped = threading.Event()
         self._finished = threading.Event()
@@ -120,7 +122,7 @@ class StepSequencer(threading.Thread):
         these = [0, 2, 4, 5, 7, 9, 11, 12]
         return 54 + these[row]
 
-    def fill_pending_col(self, pending, col):
+    def fill_pending_col(self, col):
         events = [(i, x) for i, x in enumerate(self.grid[col]) if x]
         if events:
             tick = self.loop_tickcnt + col*self.ppqn
@@ -130,61 +132,63 @@ class StepSequencer(threading.Thread):
             # print(f"fill pending {col} - {tick} - {tickoff}")
             for event in events:
                 note = self.get_note(event[0])
-                heappush(pending, MidiEvent(tick, [NOTE_ON, note, event[1]]))
-                heappush(pending, MidiEvent(tickoff, [NOTE_OFF, note, 0]))
+                heappush(self.pending, MidiEvent(tick, [NOTE_ON, note, event[1]]))
+                heappush(self.pending, MidiEvent(tickoff, [NOTE_OFF, note, 0]))
+
+    def clock(self):
+        self.loop_tickcnt = self.tickcnt
+
+        due = []
+
+        if not self.pending or self.pending[0].tick > self.tickcnt:
+            return False
+
+        evt = heappop(self.pending)
+        heappush(due, evt)
+
+        if due:
+            for i in range(len(due)):
+                self.handle_event(heappop(due))
+
+        self.tickcnt += 1
+        if self.tickcnt % self.ppqn == 0:
+            self.col = (self.col + 1) % self.cols
+            next_col = (self.col + 1) % self.cols
+
+            if not self.loop and next_col == 0:
+                self.do_add = False
+
+            if self.do_add:
+                self.fill_pending_col(next_col)
+
+            if self.col == 0:
+                return True
+
+            if self.column_callback:
+                self.column_callback(self.col)
+
+        return False
 
     def run(self):
-        pending = []
-        self.fill_pending_col(pending, 0)
-        self.fill_pending_col(pending, 1)
+        self.fill_pending_col(0)
+        self.fill_pending_col(1)
 
-        do_add = True
+        self.do_add = True
 
         start = time.time()
 
         try:
-            while True:
-                self.loop_tickcnt = self.tickcnt
-                do_break = False
+            while not self._stopped.is_set():
+                do_break = self.clock()
 
-                while not self._stopped.is_set():
-                    due = []
+                left = max(start + self.tick*self.tickcnt - time.time(), 0)
+                time.sleep(left)
+                if do_break:
+                    break
 
-                    while True:
-                        if not pending or pending[0].tick > self.tickcnt:
-                            break
-
-                        evt = heappop(pending)
-                        heappush(due, evt)
-                    if due:
-                        for i in range(len(due)):
-                            self.handle_event(heappop(due))
-
-                    self.tickcnt += 1
-                    if self.tickcnt % self.ppqn == 0:
-                        self.col = (self.col + 1) % self.cols
-                        next_col = (self.col + 1) % self.cols
-
-                        if not self.loop and next_col == 0:
-                            do_add = False
-
-                        if do_add:
-                            self.fill_pending_col(pending, next_col)
-
-                        if self.col == 0:
-                            do_break = True
-
-                        if self.column_callback:
-                            self.column_callback(self.col)
-
-                    left = max(start + self.tick*self.tickcnt - time.time(), 0)
-                    time.sleep(left)
-                    if do_break:
-                        break
-
-                if not self.loop:
-                    if not pending:
-                        break
+                # if not self.loop:
+                #     if not self.pending:
+                #         break
 
         except KeyboardInterrupt:
             pass
