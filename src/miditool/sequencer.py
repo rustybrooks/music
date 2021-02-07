@@ -57,7 +57,7 @@ class MidiEvent(object):
 
 class StepSequencer(threading.Thread):
     def __init__(
-        self, midiout, bpm=120.0, loop=True, ppqn=240, batchsize=100, rows=8, cols=8,
+        self, midiout, bpm=120.0, loop=True, ppqn=240, batchsize=100, rows=8, cols=8, pages=1,
         column_callback=None,
     ):
         super().__init__()
@@ -67,7 +67,9 @@ class StepSequencer(threading.Thread):
         self.batchsize = batchsize
         self.rows = rows
         self.cols = cols
-        self.grid = [[None for row in range(rows)] for col in range(self.cols)]
+        self.pages = {
+            p: [[None for row in range(rows)] for col in range(self.cols)] for p in range(pages)
+        }
         self.column_callback = column_callback
 
         self.tick = None
@@ -97,33 +99,32 @@ class StepSequencer(threading.Thread):
 
         self.join()
 
-    def toggle(self, col, row, velocity=127):
-        if self.grid[col][row] is None:
-            self.grid[col][row] = velocity
+    def toggle(self, col, row, velocity=127, page=0):
+        if self.pages[page][col][row] is None:
+            self.pages[page][col][row] = velocity
             return True
         else:
-            self.grid[col][row] = None
+            self.pages[page][col][row] = None
             return False
 
-    def add(self, col, row, velocity=127):
-        self.grid[col][row] = velocity
+    def add(self, col, row, velocity=127, page=0):
+        self.pages[page][col][row] = velocity
 
-    def remove(self, col, row):
-        self.grid[col][row] = None
-
-    def get_events(self, col):
-        return [x for x in self.grid[col] if x]
+    def remove(self, col, row, page=0):
+        self.pages[page][col][row] = None
 
     def handle_event(self, event):
         # print(f"fire {self.tickcnt} {event.message}")
         self.midiout.send_message(event.message)
 
-    def get_note(self, row):
+    def get_note(self, page, row):
         these = [0, 2, 4, 5, 7, 9, 11, 12]
         return 54 + these[row]
 
     def fill_pending_col(self, col):
-        events = [(i, x) for i, x in enumerate(self.grid[col]) if x]
+        events = []
+        for p, grid in self.pages.items():
+            events += [(p, i, x) for i, x in enumerate(grid[col]) if x]
         if events:
             tick = self.loop_tickcnt + col*self.ppqn
             if tick < self.tickcnt:
@@ -131,9 +132,10 @@ class StepSequencer(threading.Thread):
             tickoff = tick + self.ppqn - 1
             # print(f"fill pending {col} - {tick} - {tickoff}")
             for event in events:
-                note = self.get_note(event[0])
-                heappush(self.pending, MidiEvent(tick, [NOTE_ON, note, event[1]]))
-                heappush(self.pending, MidiEvent(tickoff, [NOTE_OFF, note, 0]))
+                page, note, velocity = event
+                note = self.get_note(page, note)
+                heappush(self.pending, MidiEvent(tick, [NOTE_ON+page, note, velocity]))
+                heappush(self.pending, MidiEvent(tickoff, [NOTE_OFF+page, note, 0]))
 
     def clock(self):
         due = []
@@ -211,7 +213,7 @@ class LaunchpadStepSequencerMode:
 
         if message[0] in ['NoteOn']:
             x, y = message[1:3]
-            added = self.seq.toggle(x, y, 127)
+            added = self.seq.toggle(x, y, velocity=127)
 
             if added:
                 self.mlp.send_note_on(x, y, 51)
