@@ -106,8 +106,8 @@ class MLMPianoMode(MultiLaunchpadModes):
 #            self.off_map.append(this+i+1)
 
         # print(self.scale_notes, self.off_notes)
-        print(self.off_map)
-        print(self.scale_map)
+        # print(self.off_map)
+        # print(self.scale_map)
 
         for y in range(0, 8, 2):
             for x in self.scale_map:
@@ -205,3 +205,6 @@ class MultiLaunchpad:
         index = button//8
         self.launchpads[index].send_cc2(button-(index*8), value)
 
+    def clear(self):
+        for l in self.launchpads:
+            l.clear()

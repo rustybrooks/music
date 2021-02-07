@@ -88,7 +88,6 @@ class StepSequencer(threading.Thread):
     def set_bpm(self, value):
         self.bpm = value
         self.tick = 60. / value / self.ppqn
-        print(f'tick={self.tick}')
 
     def stop(self, timeout=5):
         """Set thread stop event, causing it to exit its mainloop."""
@@ -203,9 +202,11 @@ class LaunchpadStepSequencerMode:
     def __init__(self, sequencer):
         self.mlp = None
         self.seq = sequencer
+        self.page = 0
 
     def start(self, mlp):
         self.mlp = mlp
+        self.mlp.send_cc2(self.page, 3)
 
     def callback(self, msg, data):
         midi_msg, offset = msg
@@ -213,7 +214,7 @@ class LaunchpadStepSequencerMode:
 
         if message[0] in ['NoteOn']:
             x, y = message[1:3]
-            added = self.seq.toggle(x, y, velocity=127)
+            added = self.seq.toggle(x, y, velocity=127, page=self.page)
 
             if added:
                 self.mlp.send_note_on(x, y, 51)
@@ -224,6 +225,17 @@ class LaunchpadStepSequencerMode:
             pass
         elif message[0] in ['CC']:
             print(message)
+        elif message[0] in ['CC2'] and message[2] == 127:
+            self.page = message[1]
+            self.mlp.clear()
+            self.mlp.send_cc2(self.page, 3)
+            this = self.seq.pages[self.page]
+            print(this)
+            for c, col in enumerate(this):
+                print(c, col)
+                for r, row in enumerate(col):
+                    if row:
+                        self.mlp.send_note_on(c, r, 51)
         else:
             print("???", message)
 
@@ -245,7 +257,7 @@ class LaunchpadStepSequencer:
             time.sleep(1)
 
         self.seq = StepSequencer(
-            self.midi_out, bpm=200, loop=True, cols=16,
+            self.midi_out, bpm=200, loop=True, cols=16, pages=8,
             column_callback=self.set_column
         )
 
