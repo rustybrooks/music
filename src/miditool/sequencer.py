@@ -58,6 +58,7 @@ class MidiEvent(object):
 class StepSequencer(threading.Thread):
     def __init__(
         self, midiout, bpm=120.0, loop=True, ppqn=480, batchsize=100, rows=8, cols=8,
+        column_callback=None,
     ):
         super().__init__()
         self.midiout = midiout
@@ -67,6 +68,7 @@ class StepSequencer(threading.Thread):
         self.rows = rows
         self.cols = cols
         self.grid = [[None for row in range(rows)] for col in range(self.cols)]
+        self.column_callback = column_callback
 
         self.tick = None
         self.bpm = None
@@ -172,6 +174,9 @@ class StepSequencer(threading.Thread):
                         if self.col == 0:
                             do_break = True
 
+                        if self.column_callback:
+                            self.column_callback(self.col)
+
                     left = max(start + self.tick*self.tickcnt - time.time(), 0)
                     time.sleep(left)
                     if do_break:
@@ -233,7 +238,8 @@ class LaunchpadStepSequencer:
             time.sleep(1)
 
         self.seq = StepSequencer(
-            self.midi_out, bpm=120, loop=True, cols=16
+            self.midi_out, bpm=200, loop=True, cols=16,
+            column_callback=self.set_column
         )
 
         self.lp = instruments.MultiLaunchpad(
@@ -243,9 +249,13 @@ class LaunchpadStepSequencer:
             ]
         )
 
-
         self.seq.run()
         self.seq.join()
+
+    def set_column(self, column):
+        old = (column - 1) % 16
+        self.lp.send_cc(old, 0)
+        self.lp.send_cc(column, 55)
 
 
 def _test():
