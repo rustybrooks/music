@@ -9,13 +9,14 @@ import logging
 import threading
 import time
 
-from collections import deque
 from heapq import heappush, heappop
 
 from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 from rtmidi.midiutil import open_midiport, list_output_ports
 
+import sys
 
+from scales import scales
 
 log = logging.getLogger(__name__)
 
@@ -37,8 +38,7 @@ class MidiEvent(object):
         return "@ %05i %r" % (self.tick, self.message)
 
     def __eq__(self, other):
-        return (self.tick == other.tick and
-                self.message == other.message)
+        return self.tick == other.tick and self.message == other.message
 
     def __lt__(self, other):
         return self.tick < other.tick
@@ -53,37 +53,34 @@ class MidiEvent(object):
         return self.tick >= other.tick
 
 
-class SequencerThread(threading.Thread):
-    def __init__(self, midiout, queue=None, bpm=120.0, ppqn=480):
-        super(SequencerThread, self).__init__()
+class StepSequencer(threading.Thread):
+    def __init__(
+        self, midiout, bpm=120.0, loop=True, ppqn=480, batchsize=100, rows=8, cols=8,
+    ):
+        super().__init__()
         self.midiout = midiout
+        self.loop = loop
+        self.ppqn = ppqn
+        self.batchsize = batchsize
+        self.rows = rows
+        self.cols = cols
+        self.grid = [[None for row in range(rows)] for col in range(self.cols)]
 
-        # inter-thread communication
-        self.queue = queue
-        if queue is None:
-            self.queue = deque()
+        self.tick = None
+        self.bpm = None
+        self.tickcnt = 0
+        self.loop_tickcnt = 0
+        self.col = 0
+        self.next_col = 1
 
         self._stopped = threading.Event()
         self._finished = threading.Event()
 
-        # Counts elapsed ticks when sequence is running
-        self._tickcnt = None
-        # Max number of input queue events to get in one loop
-        self._batchsize = 100
+        self.set_bpm(bpm)
 
-        # run-time options
-        self.ppqn = ppqn
-        self.bpm = bpm
-
-    @property
-    def bpm(self):
-        """Return current beats-per-minute value."""
-        return self._bpm
-
-    @bpm.setter
-    def bpm(self, value):
-        self._bpm = value
-        self._tick = 60. / value / self.ppqn
+    def set_bpm(self, value):
+        self.bpm = value
+        self.tick = 60. / value / self.ppqn
 
     def stop(self, timeout=5):
         """Set thread stop event, causing it to exit its mainloop."""
@@ -94,87 +91,84 @@ class SequencerThread(threading.Thread):
 
         self.join()
 
-    def add(self, event, tick=None, delta=0):
-        """Enqueue event for sending to MIDI output."""
-        if tick is None:
-            tick = self._tickcnt or 0
+    def add(self, col, row, velocity=127):
+        self.grid[col][row] = velocity
 
-        if not isinstance(event, MidiEvent):
-            event = MidiEvent(tick, event)
-
-        if not event.tick:
-            event.tick = tick
-
-        event.tick += delta
-        self.queue.append(event)
-
-    def get_event(self):
-        """Poll the input queue for events without blocking.
-        Could be overwritten, e.g. if you passed in your own queue instance
-        with a different API.
-        """
-        try:
-            return self.queue.popleft()
-        except IndexError:
-            return None
+    def get_events(self, col):
+        return [x for x in self.grid[col] if x]
 
     def handle_event(self, event):
-        """Handle the event by sending it to MIDI out.
-        Could be overwritten, e.g. to handle meta events, like time signature
-        and tick division changes.
-        """
+        print(f"fire {self.tickcnt} {event.message}")
         self.midiout.send_message(event.message)
 
+    def get_note(self, row):
+        these = [0, 2, 4, 5, 7, 9, 11, 12]
+        return 54 + these[row]
+
+    def fill_pending_col(self, pending, col):
+        events = [(i, x) for i, x in enumerate(self.grid[col]) if x]
+        if events:
+            tick = self.loop_tickcnt + col*self.ppqn
+            tickoff = tick + self.ppqn - 1
+            print(f"fill pending col={col} {tick} {tickoff}")
+            for event in events:
+                note = self.get_note(event[0])
+                heappush(pending, MidiEvent(tick, [NOTE_ON, note, event[1]]))
+                # heappush(pending, MidiEvent(tickoff, [NOTE_ON, note, 0]))
+                heappush(pending, MidiEvent(tickoff, [NOTE_OFF, note, 0]))
+
     def run(self):
-        """Start the thread's main loop.
-        The thread will watch for events on the input queue and either send
-        them immediately to the MIDI output or queue them for later output, if
-        their timestamp has not been reached yet.
-        """
-        # busy loop to wait for time when next batch of events needs to
-        # be written to output
         pending = []
-        self._tickcnt = 0
+        self.fill_pending_col(pending, 0)
+        self.fill_pending_col(pending, 1)
+
+        do_add = True
+
+        start = time.time()
 
         try:
-            while not self._stopped.is_set():
-                due = []
-                curtime = time.time()
+            while True:
+                self.loop_tickcnt = self.tickcnt
+                do_break = False
 
-                # Pop events off the pending queue
-                # if they are due for this tick
-                while True:
-                    if not pending or pending[0].tick > self._tickcnt:
-                        break
+                while not self._stopped.is_set():
+                    due = []
 
-                    evt = heappop(pending)
-                    heappush(due, evt)
+                    while True:
+                        if not pending or pending[0].tick > self.tickcnt:
+                            break
 
-                # Pop up to self._batchsize events off the input queue
-                for i in range(self._batchsize):
-                    evt = self.get_event()
-
-                    if not evt:
-                        break
-
-                    if evt.tick <= self._tickcnt:
+                        evt = heappop(pending)
                         heappush(due, evt)
-                    else:
-                        heappush(pending, evt)
+                    if due:
+                        for i in range(len(due)):
+                            self.handle_event(heappop(due))
 
-                # If this batch contains any due events,
-                # send them to the MIDI output.
-                if due:
-                    for i in range(len(due)):
-                        self.handle_event(heappop(due))
+                    self.tickcnt += 1
+                    if self.tickcnt % self.ppqn == 0:
+                        self.col = (self.col + 1) % self.cols
 
-                # loop speed adjustment
-                elapsed = time.time() - curtime
+                        print(f"------ tick={self.tickcnt} col={self.col}")
+                        self.next_col = (self.col + 1) % self.cols
 
-                if elapsed < self._tick:
-                    time.sleep(self._tick - elapsed)
+                        if not self.loop and self.next_col == 0:
+                            do_add = False
 
-                self._tickcnt += 1
+                        if do_add or self.loop:
+                            self.fill_pending_col(pending, self.next_col)
+
+                        if self.col == 0:
+                            do_break = True
+
+                    left = max(start + self.tick*self.tickcnt - time.time(), 0)
+                    time.sleep(left)
+                    if do_break:
+                        break
+
+                if not self.loop:
+                    if not pending:
+                        break
+
         except KeyboardInterrupt:
             pass
 
@@ -186,41 +180,27 @@ def _test():
 
     logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
-    print(list_output_ports())
     try:
         midiout, port = open_midiport(
             sys.argv[1] if len(sys.argv) > 1 else None,
             "output",
             client_name="RtMidi Sequencer")
+        time.sleep(3)
+
     except (IOError, ValueError) as exc:
         return "Could not open MIDI input: %s" % exc
     except (EOFError, KeyboardInterrupt):
         return
 
-    seq = SequencerThread(midiout, bpm=100, ppqn=240)
-
-    def add_quarter(tick, note, vel=100):
-        seq.add((NOTE_ON, note, vel), tick)
-        seq.add((NOTE_OFF, note, 0), tick=tick + seq.ppqn)
-
-    t = 0
-    p = seq.ppqn
-    add_quarter(t, 60)
-    add_quarter(t + p, 64)
-    add_quarter(t + p * 2, 67)
-    add_quarter(t + p * 3, 72)
-
-    t = p * 5
-    add_quarter(t, 60)
-    add_quarter(t + p, 64)
-    add_quarter(t + p * 2, 67)
-    add_quarter(t + p * 3, 72)
+    seq = StepSequencer(midiout, bpm=120, ppqn=240, loop=False, cols=4)
+    seq.add(0, 0)
+    seq.add(1, 1)
+    seq.add(2, 2)
+    seq.add(3, 3)
 
     try:
         seq.start()
-        time.sleep(60. / seq.bpm * 4)
-        seq.bpm = 150
-        time.sleep(60. / seq.bpm * 6)
+        seq.join()
     finally:
         seq.stop()
         midiout.close_port()

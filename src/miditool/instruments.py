@@ -1,48 +1,11 @@
 import copy
 import rtmidi
+from rtmidi.midiconstants import NOTE_OFF, NOTE_ON, CONTROL_CHANGE
 from itertools import accumulate
 
 
-note_list = {
-    "sharp": ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
-    "flat": ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-}
-
-scales = {
-    "major": [2, 2, 1, 2, 2, 2, 1],
-    "natural_minor": [2, 1, 2, 2, 1, 2, 2],
-    "harmonic_minor": [2, 1, 2, 2, 1, 3, 1],
-    "melodic_minor": [2, 1, 2, 2, 2, 2, 1],
-    "hungarian_minor, ": [2, 1, 3, 1, 1, 3, 1],
-    "neapolitan_minor": [1, 2, 2, 2, 2, 2, 1],
-    "neapolitan_major": [1, 2, 2, 2, 2, 2, 1],
-    "pentatonic_major": [2, 2, 3, 2, 3, ],
-    "pentatonic_minor": [3, 2, 2, 3, 2, ],
-    "whole_tone": [2, 2, 2, 2, 2, 2, ],
-    "diminished": [2, 1, 2, 1, 2, 1, 2, 1],
-    "enigmatic": [1, 3, 2, 2, 2, 1, 1],
-    "chromatic": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "ionian": [2, 2, 1, 2, 2, 2, 1],
-    "dorian": [2, 1, 2, 2, 2, 1, 2],
-    "phrygian": [1, 2, 2, 2, 1, 2, 2],
-    "lydian": [2, 2, 2, 1, 2, 2, 1],
-    "mixolydian": [2, 2, 1, 2, 2, 1, 2],
-    "aeolian": [2, 1, 2, 2, 1, 2, 2],
-    "aeoliant": [1, 2, 2, 1, 2, 2, 2],
-}
-
-
-def note_to_number(n):
-    note, octave = n
-    i = note_list['sharp'].index(note.upper())
-    if i == -1:
-        i = note_list['flat'].index(note.upper())
-
-    return 36 + octave*12 + i
-
-
-def number_to_note(n, is_sharp=True):
-    return [note_list['sharp' if is_sharp else 'flat'][n % 12], (n-36) // 12]
+from .notes import note_to_number, number_to_note
+from .scales import scales
 
 
 class Instrument:
@@ -99,10 +62,10 @@ class Launchpad(Instrument):
         self.clear()
 
     def send_note_on(self, x, y, value):
-        self.send_message(0x90, y*16+x, value)
+        self.send_message(NOTE_ON, y*16+x, value)
 
     def send_cc(self, button, value):
-        self.send_message(0xb0, 104+button, value)
+        self.send_message(CONTROL_CHANGE, 104+button, value)
 
     def send_cc2(self, button, value):
         self.send_note_on(8, button, value)
