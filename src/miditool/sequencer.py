@@ -71,7 +71,6 @@ class StepSequencer(threading.Thread):
         self.tickcnt = 0
         self.loop_tickcnt = 0
         self.col = 0
-        self.next_col = 1
 
         self._stopped = threading.Event()
         self._finished = threading.Event()
@@ -81,6 +80,7 @@ class StepSequencer(threading.Thread):
     def set_bpm(self, value):
         self.bpm = value
         self.tick = 60. / value / self.ppqn
+        print(f'tick={self.tick}')
 
     def stop(self, timeout=5):
         """Set thread stop event, causing it to exit its mainloop."""
@@ -98,7 +98,7 @@ class StepSequencer(threading.Thread):
         return [x for x in self.grid[col] if x]
 
     def handle_event(self, event):
-        print(f"fire {self.tickcnt} {event.message}")
+        # print(f"fire {self.tickcnt} {event.message}")
         self.midiout.send_message(event.message)
 
     def get_note(self, row):
@@ -109,12 +109,13 @@ class StepSequencer(threading.Thread):
         events = [(i, x) for i, x in enumerate(self.grid[col]) if x]
         if events:
             tick = self.loop_tickcnt + col*self.ppqn
+            if tick < self.tickcnt:
+                tick += self.cols*self.ppqn
             tickoff = tick + self.ppqn - 1
-            print(f"fill pending col={col} {tick} {tickoff}")
+            # print(f"fill pending {col} - {tick} - {tickoff}")
             for event in events:
                 note = self.get_note(event[0])
                 heappush(pending, MidiEvent(tick, [NOTE_ON, note, event[1]]))
-                # heappush(pending, MidiEvent(tickoff, [NOTE_ON, note, 0]))
                 heappush(pending, MidiEvent(tickoff, [NOTE_OFF, note, 0]))
 
     def run(self):
@@ -147,15 +148,13 @@ class StepSequencer(threading.Thread):
                     self.tickcnt += 1
                     if self.tickcnt % self.ppqn == 0:
                         self.col = (self.col + 1) % self.cols
+                        next_col = (self.col + 1) % self.cols
 
-                        print(f"------ tick={self.tickcnt} col={self.col}")
-                        self.next_col = (self.col + 1) % self.cols
-
-                        if not self.loop and self.next_col == 0:
+                        if not self.loop and next_col == 0:
                             do_add = False
 
-                        if do_add or self.loop:
-                            self.fill_pending_col(pending, self.next_col)
+                        if do_add:
+                            self.fill_pending_col(pending, next_col)
 
                         if self.col == 0:
                             do_break = True
@@ -185,18 +184,18 @@ def _test():
             sys.argv[1] if len(sys.argv) > 1 else None,
             "output",
             client_name="RtMidi Sequencer")
-        time.sleep(3)
+        time.sleep(1)
 
     except (IOError, ValueError) as exc:
         return "Could not open MIDI input: %s" % exc
     except (EOFError, KeyboardInterrupt):
         return
 
-    seq = StepSequencer(midiout, bpm=120, ppqn=240, loop=False, cols=4)
+    seq = StepSequencer(midiout, bpm=200, ppqn=10, loop=False, cols=4)
     seq.add(0, 0)
-    seq.add(1, 1)
+    # seq.add(1, 1)
     seq.add(2, 2)
-    seq.add(3, 3)
+    seq.add(3, 2)
 
     try:
         seq.start()
