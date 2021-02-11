@@ -1,9 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# sequencer.py
-#
-"""Example of using a thread to send out queued-up, timed MIDI messages."""
 
 import logging
 import threading
@@ -257,7 +252,7 @@ class LaunchpadStepSequencer:
             time.sleep(1)
 
         self.seq = StepSequencer(
-            self.midi_out, bpm=200, loop=True, cols=16, pages=8,
+            self.midi_out, bpm=200, loop=True, cols=16, pages=16,
             column_callback=self.set_column
         )
 
