@@ -32,7 +32,7 @@ class MidiEvent(object):
         self.message = message
 
     def __repr__(self):
-        return "@ %05i %r" % (self.tick, self.message)
+        return "@%.3f %r" % (self.tick, self.message)
 
     def __eq__(self, other):
         return self.tick == other.tick and self.message == other.message

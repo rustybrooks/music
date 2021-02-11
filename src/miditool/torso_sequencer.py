@@ -49,6 +49,7 @@ class TorsoSequencer(threading.Thread):
         self.lookahead = lookahead
         self.start_time = None
         self.next_lookahead = None
+        self.pending = []
 
         self.tracks = {}
 
@@ -68,11 +69,9 @@ class TorsoSequencer(threading.Thread):
         self.join()
 
     def fill_lookahead(self, t):
-        last = self.next_lookahead
         self.next_lookahead = t + self.lookahead*0.5
-        print('look', t, self.next_lookahead-last, int(1e6*((self.next_lookahead-last) - self.lookahead)))
-        self.midiout.send_message([NOTE_ON, 65, 127])
-        # self.midiout.send_message([NOTE_OFF, 64, 127])
+        heappush(self.pending, MidiEvent(t+0.25, [NOTE_ON, 65, 127]))
+        heappush(self.pending, MidiEvent(t+0.35, [NOTE_OFF, 65, 127]))
 
     def run(self):
         steps = 0
@@ -81,6 +80,19 @@ class TorsoSequencer(threading.Thread):
             self.next_lookahead = self.start_time
             while not self._stopped.is_set():
                 t1 = time.time()
+
+                due = []
+                while True:
+                    if not self.pending or self.pending[0].tick > t1:
+                        break
+                    evt = heappop(self.pending)
+                    heappush(due, evt)
+
+                if due:
+                    print(t1, due)
+                    for i in range(len(due)):
+                        self.midiout.send_message(heappop(due).message)
+
                 if t1 >= self.next_lookahead:
                     self.fill_lookahead(t1)
                 steps += 1

@@ -13,9 +13,9 @@ from rtmidi.midiutil import open_midiport
 
 midiout, port = open_midiport(
     None,
-    "output",
+    "TORSO",
     use_virtual=True,
-    client_name="TORSE"
+    client_name="TORSO"
 )
 time.sleep(1)
 
