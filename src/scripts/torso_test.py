@@ -10,6 +10,7 @@ sys.path.append(lp)
 import time
 from miditool import torso_sequencer
 from rtmidi.midiutil import open_midiport
+from miditool.sequencer import Sequencer
 
 midiout, port = open_midiport(
     None,
@@ -19,12 +20,26 @@ midiout, port = open_midiport(
 )
 time.sleep(1)
 
-t = torso_sequencer.TorsoSequencer(midiout=midiout)
+seq = Sequencer(midiout, bpm=120, ppqn=10, loop=False, cols=4)
+seq.add(0, 0)
+# seq.add(1, 1)
+seq.add(2, 2)
+seq.add(3, 2)
 
 try:
-    t.start()
-    t.join()
+    seq.start()
+    seq.join()
 finally:
-    t.stop()
+    seq.stop()
     midiout.close_port()
     del midiout
+
+# t = torso_sequencer.TorsoSequencer(midiout=midiout)
+#
+# try:
+#     t.start()
+#     t.join()
+# finally:
+#     t.stop()
+#     midiout.close_port()
+#     del midiout

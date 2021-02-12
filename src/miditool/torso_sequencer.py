@@ -1,13 +1,10 @@
 import logging
 import threading
 import time
-import rtmidi
 
 from heapq import heappush, heappop
 
 from rtmidi.midiconstants import NOTE_ON, NOTE_OFF, CONTROL_CHANGE
-from rtmidi.midiutil import open_midiport, list_output_ports
-
 
 
 from . import instruments
@@ -40,15 +37,25 @@ class TorsoTrack:
         self.offset = offset
         self.time = time
 
+    def get_bpm(self):
+        pass
+
+    def generate(self):
+        pass
+
+    def fill_lookahead(self, start, end):
+        pass
+
 
 class TorsoSequencer(threading.Thread):
-    def __init__(self, midiout, interval=0.002, lookahead=0.5):
+    def __init__(self, midiout, interval=0.002, lookahead=1):
         super().__init__()
         self.midiout = midiout
         self.interval = interval
         self.lookahead = lookahead
         self.start_time = None
         self.next_lookahead = None
+        self.last_lookahead = None
         self.pending = []
 
         self.tracks = {}
@@ -68,16 +75,26 @@ class TorsoSequencer(threading.Thread):
 
         self.join()
 
-    def fill_lookahead(self, t):
-        self.next_lookahead = t + self.lookahead*0.5
-        heappush(self.pending, MidiEvent(t+0.25, [NOTE_ON, 65, 127]))
-        heappush(self.pending, MidiEvent(t+0.35, [NOTE_OFF, 65, 127]))
+    def fill_lookahead(self):
+        next_lookahead = self.last_lookahead + self.lookahead
+        print(time.time(), self.last_lookahead, next_lookahead)
+        for v in self.tracks.values():
+            new = v.fill_lookahead(self.last_lookahead, self.next_lookahead)
+            if new:
+                for n in new:
+                    heappush(self.pending, n)
+
+        self.last_lookahead = next_lookahead
 
     def run(self):
         steps = 0
         try:
             self.start_time = time.time()
-            self.next_lookahead = self.start_time
+            self.last_lookahead = self.start_time
+            self.fill_lookahead()
+            self.fill_lookahead()
+            print("...", time.time(), self.last_lookahead, self.next_lookahead)
+
             while not self._stopped.is_set():
                 t1 = time.time()
 
@@ -89,12 +106,13 @@ class TorsoSequencer(threading.Thread):
                     heappush(due, evt)
 
                 if due:
-                    print(t1, due)
                     for i in range(len(due)):
                         self.midiout.send_message(heappop(due).message)
 
-                if t1 >= self.next_lookahead:
-                    self.fill_lookahead(t1)
+                if t1 >= self.last_lookahead:
+                    self.fill_lookahead()
+                    return
+
                 steps += 1
                 left = (self.interval*steps) - (time.time() - self.start_time)
                 if left <= 0:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from collections import deque
 import logging
 import threading
 import time
@@ -48,6 +49,134 @@ class MidiEvent(object):
 
     def __ge__(self, other):
         return self.tick >= other.tick
+
+
+class SequencerThread(threading.Thread):
+    def __init__(self, midiout, queue=None, bpm=120.0, ppqn=480):
+        super(SequencerThread, self).__init__()
+        self.midiout = midiout
+
+        # inter-thread communication
+        self.queue = queue
+        if queue is None:
+            self.queue = deque()
+
+        self._stopped = threading.Event()
+        self._finished = threading.Event()
+
+        # Counts elapsed ticks when sequence is running
+        self._tickcnt = None
+        # Max number of input queue events to get in one loop
+        self._batchsize = 100
+
+        # run-time options
+        self.ppqn = ppqn
+        self.bpm = bpm
+
+    @property
+    def bpm(self):
+        """Return current beats-per-minute value."""
+        return self._bpm
+
+    @bpm.setter
+    def bpm(self, value):
+        self._bpm = value
+        self._tick = 60. / value / self.ppqn
+
+    def stop(self, timeout=5):
+        """Set thread stop event, causing it to exit its mainloop."""
+        self._stopped.set()
+
+        if self.is_alive():
+            self._finished.wait(timeout)
+
+        self.join()
+
+    def add(self, event, tick=None, delta=0):
+        """Enqueue event for sending to MIDI output."""
+        if tick is None:
+            tick = self._tickcnt or 0
+
+        if not isinstance(event, MidiEvent):
+            event = MidiEvent(tick, event)
+
+        if not event.tick:
+            event.tick = tick
+
+        event.tick += delta
+        self.queue.append(event)
+
+    def get_event(self):
+        """Poll the input queue for events without blocking.
+        Could be overwritten, e.g. if you passed in your own queue instance
+        with a different API.
+        """
+        try:
+            return self.queue.popleft()
+        except IndexError:
+            return None
+
+    def handle_event(self, event):
+        """Handle the event by sending it to MIDI out.
+        Could be overwritten, e.g. to handle meta events, like time signature
+        and tick division changes.
+        """
+        self.midiout.send_message(event.message)
+
+    def run(self):
+        """Start the thread's main loop.
+        The thread will watch for events on the input queue and either send
+        them immediately to the MIDI output or queue them for later output, if
+        their timestamp has not been reached yet.
+        """
+        # busy loop to wait for time when next batch of events needs to
+        # be written to output
+        pending = []
+        self._tickcnt = 0
+
+        try:
+            while not self._stopped.is_set():
+                due = []
+                curtime = time.time()
+
+                # Pop events off the pending queue
+                # if they are due for this tick
+                while True:
+                    if not pending or pending[0].tick > self._tickcnt:
+                        break
+
+                    evt = heappop(pending)
+                    heappush(due, evt)
+
+                # Pop up to self._batchsize events off the input queue
+                for i in range(self._batchsize):
+                    evt = self.get_event()
+
+                    if not evt:
+                        break
+
+                    if evt.tick <= self._tickcnt:
+                        heappush(due, evt)
+                    else:
+                        heappush(pending, evt)
+
+                # If this batch contains any due events,
+                # send them to the MIDI output.
+                if due:
+                    for i in range(len(due)):
+                        self.handle_event(heappop(due))
+
+                # loop speed adjustment
+                elapsed = time.time() - curtime
+
+                if elapsed < self._tick:
+                    time.sleep(self._tick - elapsed)
+
+                self._tickcnt += 1
+        except KeyboardInterrupt:
+            pass
+
+        self._finished.set()
 
 
 class StepSequencer(threading.Thread):
