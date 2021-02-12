@@ -8,9 +8,11 @@ sys.path.append(lp)
 
 
 import time
-from miditool import torso_sequencer
+from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
+from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 from miditool.sequencer import Sequencer
+
 
 midiout, port = open_midiport(
     None,
@@ -20,11 +22,24 @@ midiout, port = open_midiport(
 )
 time.sleep(1)
 
-seq = Sequencer(midiout, bpm=120, ppqn=10, loop=False, cols=4)
-seq.add(0, 0)
-# seq.add(1, 1)
-seq.add(2, 2)
-seq.add(3, 2)
+tt = torso_sequencer.TorsoTrack(
+    notes=[notes.note_to_number(['F', 4])],
+    pulses=5,
+)
+
+snotes = tt.generate()
+print(snotes)
+
+seq = Sequencer(midiout, bpm=220, ppqn=240)
+for i, el in enumerate(snotes):
+    if not el:
+        continue
+
+    # track should probably generate these events
+    seq.add(event=[NOTE_ON+tt.channel, el[0], el[2]], tick=seq.ppqn*(i + tt.offset))
+    seq.add(event=[NOTE_OFF+tt.channel, el[0], 0], tick=seq.ppqn*(i+tt.sustain + tt.offset))
+
+time.sleep(10)
 
 try:
     seq.start()

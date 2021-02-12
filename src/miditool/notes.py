@@ -10,7 +10,7 @@ def note_to_number(n):
     if i == -1:
         i = note_list['flat'].index(note.upper())
 
-    return 36 + octave*12 + i
+    return 12 + octave*12 + i
 
 
 def number_to_note(n, is_sharp=True):

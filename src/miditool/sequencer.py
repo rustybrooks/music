@@ -51,9 +51,9 @@ class MidiEvent(object):
         return self.tick >= other.tick
 
 
-class SequencerThread(threading.Thread):
+class Sequencer(threading.Thread):
     def __init__(self, midiout, queue=None, bpm=120.0, ppqn=480):
-        super(SequencerThread, self).__init__()
+        super().__init__()
         self.midiout = midiout
 
         # inter-thread communication

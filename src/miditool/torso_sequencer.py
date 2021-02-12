@@ -15,17 +15,17 @@ log = logging.getLogger(__name__)
 
 class TorsoTrack:
     def __init__(
-        self, channel=None, notes=None, steps=16, pulses=1, pitch=0, rotate=0, manual_steps=None,
-        accent=0, accent_curve=0, sustain=0, division=0, velocity=127, timing=0, swing=0, repeats=0,
+        self, channel=0, notes=None, steps=16, pulses=1, pitch=0, rotate=0, manual_steps=None,
+        accent=0, accent_curve=0, sustain=0.5, division=0, velocity=64, timing=0, swing=0, repeats=0,
         offset=0, time=0,
     ):
         self.channel = channel
         self.notes = notes or []
+        self.manual_steps = manual_steps or []
         self.steps = steps
         self.pulses = pulses
         self.pitch = pitch
         self.rotate = rotate
-        self.manual_steps = manual_steps or []
         self.division = division  # ??
         self.accent = accent
         self.accent_curve = accent_curve
@@ -41,7 +41,13 @@ class TorsoTrack:
         pass
 
     def generate(self):
-        pass
+        out = [None] * 16
+        interval = self.steps / self.pulses
+        for i in range(self.pulses):
+            spot = int(i*interval)
+            out[spot] = [self.notes[spot % len(self.notes)], self.sustain, self.velocity]
+
+        return out
 
     def fill_lookahead(self, start, end):
         pass
