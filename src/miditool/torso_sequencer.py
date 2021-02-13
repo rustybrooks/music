@@ -37,17 +37,18 @@ class TorsoTrack:
         self.offset = offset
         self.time = time
 
-    def get_bpm(self):
-        pass
-
     def generate(self):
-        out = [None] * 16
         interval = self.steps / self.pulses
+        events = []
         for i in range(self.pulses):
             spot = int(i*interval)
-            out[spot] = [self.notes[spot % len(self.notes)], self.sustain, self.velocity]
+            note = self.notes[spot % len(self.notes)]
+            events.extend([
+                (spot + self.offset, (NOTE_ON+self.channel, note, self.velocity)),
+                (spot + self.offset+self.sustain, (NOTE_OFF+self.channel, note, 0)),
+            ])
 
-        return out
+        return events
 
     def fill_lookahead(self, start, end):
         pass
