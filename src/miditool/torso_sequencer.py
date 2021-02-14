@@ -58,12 +58,20 @@ class TorsoTrack:
     def generate(self):
         interval = self.steps / self.pulses
 
-        self.sequence = [None]*self.steps
+        sequence = [0]*self.steps
 
         for i in range(self.pulses):
-            spot = int(i*interval)
-            note = self.notes[spot % len(self.notes)]
-            self.sequence[spot] = note
+            sequence[int(i*interval)] = 1
+
+        for i, v in enumerate(self.manual_steps):
+            if v < 0:
+                if sequence[i]:
+                    sequence[i] = None
+            elif v > 0:
+                sequence[i] = v
+
+        lnotes = len(self.notes)
+        self.sequence = [self.notes[i % lnotes] if v else None for i, v in enumerate(sequence)]
 
     def fill_lookahead(self, start, end):
         # print(start, end, (start - self._sequence_start)/self._beat, (end - self._sequence_start)/self._beat)
@@ -75,7 +83,7 @@ class TorsoTrack:
 
         events = []
         for step in range(first_step, last_step+1):
-            note = self.sequence[step % self.steps]
+            note = self.sequence[(step+self.rotate) % self.steps]
             if not note:
                 continue
 

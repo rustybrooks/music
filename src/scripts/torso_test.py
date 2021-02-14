@@ -44,7 +44,7 @@ t = torso_sequencer.TorsoSequencer(
 )
 
 t.add_track(track_name='hihat', track=tt1)
-# t.add_track(track_name='cymbal', track=tt2)
+t.add_track(track_name='cymbal', track=tt2)
 t.add_track(track_name='clap', track=tt3)
 
 try:
