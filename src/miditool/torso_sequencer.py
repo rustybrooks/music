@@ -18,10 +18,16 @@ class TorsoTrack:
     accent_curves = [
         [x/100. for x in [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20, 70]],
     ]
+    divisions = [
+        1, 2, 4, 8, 16, 32, 64, 0,
+        0, 0, 3, 6, 12, 24, 48, 0
+    ]
 
     def __init__(
         self, channel=0, notes=None, steps=16, pulses=1, pitch=0, rotate=0, manual_steps=None,
-        accent=0, accent_curve=0, sustain=0.5, division=0, velocity=64, timing=0, swing=0, repeats=0,
+        accent=0, accent_curve=0, sustain=0.5,
+        division=1,  # how many pieces to divide a beat into
+        velocity=64, timing=0, swing=0, repeats=0,
         offset=0, time=0, bpm=200,
     ):
         self.channel = channel
@@ -40,6 +46,8 @@ class TorsoTrack:
         self.offset = offset
         self.time = time
 
+        # requires updating some other param
+
         # require re-sequencing:
         self.steps = steps
         self.pulses = pulses
@@ -53,7 +61,15 @@ class TorsoTrack:
 
     def set_bpm(self, value):
         self._bpm = value
-        self._beat = 60. / value
+        self._beat = 60. / (value*self.division)
+
+    # FIXME come back and clean up the math when I'm sure it works
+    def set_division(self, value, now=None):
+        now = now or time.time()
+        old_offset = now - self._sequence_start
+        multiplier = self.division / value
+        new_offset = old_offset * multiplier
+        self._sequence_start = now - new_offset
 
     def generate(self):
         interval = self.steps / self.pulses
@@ -65,8 +81,7 @@ class TorsoTrack:
 
         for i, v in enumerate(self.manual_steps):
             if v < 0:
-                if sequence[i]:
-                    sequence[i] = None
+                sequence[i] = 0
             elif v > 0:
                 sequence[i] = v
 
@@ -90,11 +105,11 @@ class TorsoTrack:
             events.extend([
                 MidiEvent(
                     (step + self.offset)*self._beat,
-                    (NOTE_ON+self.channel, note, self.velocity)
+                    (NOTE_ON+self.channel, note+self.pitch, self.velocity)
                 ),
                 MidiEvent(
                     (step + self.offset+self.sustain)*self._beat,
-                    (NOTE_OFF+self.channel, note, 0)
+                    (NOTE_OFF+self.channel, note+self.pitch, 0)
                 ),
             ])
 
