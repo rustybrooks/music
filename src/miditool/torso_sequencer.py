@@ -26,6 +26,10 @@ class TorsoTrack:
     scales = [
         'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hex', 'aug', 'pentatonic_minor'
     ]
+    styles = [
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    ]
 
     def __init__(
         self, channel=0, steps=16,
@@ -71,8 +75,9 @@ class TorsoTrack:
         self.repeat_time = repeat_time
         self.pace = pace
 
-        self.accent_curve = None
         self.set_accent_curve(accent_curve)
+        self.set_style(style)
+
 
         # requires updating some other param
 
@@ -102,6 +107,9 @@ class TorsoTrack:
 
     def set_accent_curve(self, value):
         self.accent_curve = self.accent_curves[value]
+
+    def set_style(self, value):
+        self.style = self.styles[value]
 
     def generate(self):
         interval = self.steps / self.pulses
@@ -155,7 +163,7 @@ class TorsoTrack:
             ])
 
             for r in range(1, self.repeats+1):
-                note = self.notes[r % lnotes]
+                note = self.notes[self.style[r % lnotes]]
 
                 events.extend([
                     MidiEvent(
