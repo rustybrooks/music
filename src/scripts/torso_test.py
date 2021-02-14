@@ -26,7 +26,7 @@ tt1 = torso_sequencer.TorsoTrack(
     notes=[notes.note_to_number(['D#', 3])],
     pulses=4,
     steps=6,
-    division=1,
+    division=2,
 )
 tt2 = torso_sequencer.TorsoTrack(
     notes=[notes.note_to_number(['C#', 3])],
@@ -36,12 +36,13 @@ tt2 = torso_sequencer.TorsoTrack(
 tt3 = torso_sequencer.TorsoTrack(
     notes=[notes.note_to_number(['D#', 2])],
     pulses=5,
+    division=2,
 )
 
 t = torso_sequencer.TorsoSequencer(
     midiout=midiout,
     lookahead=0.02,
-    bpm=400,
+    bpm=120,
 )
 
 t.add_track(track_name='hihat', track=tt1)

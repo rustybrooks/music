@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 class TorsoTrack:
     accent_curves = [
-        [x/100. for x in [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20, 70]],
+        [128*x/100. for x in [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20, 70]],
     ]
     divisions = [
         1, 2, 4, 8, 16, 32, 64, 0,
@@ -24,11 +24,28 @@ class TorsoTrack:
     ]
 
     def __init__(
-        self, channel=0, notes=None, steps=16, pulses=1, pitch=0, rotate=0, manual_steps=None,
-        accent=0, accent_curve=0, sustain=0.5,
+        self, channel=0, notes=None, steps=16,
+        pulses=1,  # number of euclidean pulses to apply, 1 to steps
+        pitch=0,  # pitch shift to apply to all notes, integer (FIXME add intelligent shifting?)
+        harmony=None,
+        rotate=0,  # number of steps to rotate sequence
+        manual_steps=None,  # list of manual locations to apply hits, -1=remove, 0=nothing, 1=add
+        accent=.5,  # 0-1 the percent of accent curve to apply
+        accent_curve=0,  # select from predefined accent curves (FIXME make some)
+        sustain=0.5,  # Note length, in increments of step, i.e. 0.5 = half step
         division=1,  # how many pieces to divide a beat into
-        velocity=64, timing=0, swing=0, repeats=0,
-        offset=0, time=0, bpm=200,
+        velocity=64,  # base velocity - accent gets added to this
+        timing=0,
+        swing=0,
+        repeats=0,
+        offset=0,
+        time=0,
+        pace=None,
+        voicing=None,
+        melody=None,
+        phrase=None,
+        scale=None,
+        root=None,
     ):
         self.channel = channel
         self.notes = notes or []
@@ -37,7 +54,6 @@ class TorsoTrack:
         self.rotate = rotate
         self.division = division  # ??
         self.accent = accent
-        self.accent_curve = accent_curve
         self.sustain = sustain
         self.velocity = velocity
         self.timing = timing
@@ -45,6 +61,8 @@ class TorsoTrack:
         self.repeats = repeats
         self.offset = offset
         self.time = time
+
+        self.set_accent_curve(accent_curve)
 
         # requires updating some other param
 
@@ -61,15 +79,19 @@ class TorsoTrack:
 
     def set_bpm(self, value):
         self._bpm = value
-        self._beat = 60. / (value*self.division)
+        # self._beat = 60. / (value*self.division)
+        self._beat = 60. / (value)
 
-    # FIXME come back and clean up the math when I'm sure it works
-    def set_division(self, value, now=None):
-        now = now or time.time()
-        old_offset = now - self._sequence_start
-        multiplier = self.division / value
-        new_offset = old_offset * multiplier
-        self._sequence_start = now - new_offset
+    # # FIXME come back and clean up the math when I'm sure it works
+    # def set_division(self, value, now=None):
+    #     now = now or time.time()
+    #     old_offset = now - self._sequence_start
+    #     multiplier = self.division / value
+    #     new_offset = old_offset * multiplier
+    #     self._sequence_start = now - new_offset
+
+    def set_accent_curve(self, value):
+        self.accent_curve = self.accent_curves[value]
 
     def generate(self):
         interval = self.steps / self.pulses
@@ -90,8 +112,8 @@ class TorsoTrack:
 
     def fill_lookahead(self, start, end):
         # print(start, end, (start - self._sequence_start)/self._beat, (end - self._sequence_start)/self._beat)
-        first_step = math.ceil((start - self._sequence_start)/self._beat)
-        last_step = math.floor((end - self._sequence_start)/self._beat)
+        first_step = math.ceil(self.division*(start - self._sequence_start)/self._beat)
+        last_step = math.floor(self.division*(end - self._sequence_start)/self._beat)
 
         if last_step < first_step:
             return []
@@ -102,13 +124,17 @@ class TorsoTrack:
             if not note:
                 continue
 
+            # do we want to step through accent curve, or apply it directly to sequence including
+            # off notes?
+            accent = (self.accent_curve[(step+self.rotate) % len(self.accent_curve)])*self.accent
+            velocity = min(int(self.velocity + accent), 127)
             events.extend([
                 MidiEvent(
-                    (step + self.offset)*self._beat,
-                    (NOTE_ON+self.channel, note+self.pitch, self.velocity)
+                    (step + self.offset)*self._beat/self.division,
+                    (NOTE_ON+self.channel, note+self.pitch, velocity)
                 ),
                 MidiEvent(
-                    (step + self.offset+self.sustain)*self._beat,
+                    (step + self.offset+self.sustain)*self._beat/self.division,
                     (NOTE_OFF+self.channel, note+self.pitch, 0)
                 ),
             ])
