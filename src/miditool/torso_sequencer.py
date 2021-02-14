@@ -36,7 +36,7 @@ class TorsoTrack:
         division=1,  # how many pieces to divide a beat into
         velocity=64,  # base velocity - accent gets added to this
         timing=0.5,  # swing timing, 0.5=even, less means every other beat is early, more means late
-        delay=0,
+        delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
         repeats=0,
         offset=0,
         time=0,
@@ -57,6 +57,7 @@ class TorsoTrack:
         self.sustain = sustain
         self.velocity = velocity
         self.timing = timing
+        self.delay = delay
         self.repeats = repeats
         self.offset = offset
         self.time = time
@@ -111,8 +112,10 @@ class TorsoTrack:
         self.sequence = [self.notes[i % lnotes] if v else None for i, v in enumerate(sequence)]
 
     def fill_lookahead(self, start, end):
-        first_step = math.ceil(self.division*(start - self._sequence_start)/self._beat)
-        last_step = math.floor(self.division*(end - self._sequence_start)/self._beat)
+        # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
+        # need to
+        first_step = math.ceil(self.division*(start - self._sequence_start + self.delay*self._beat)/self._beat)
+        last_step = math.floor(self.division*(end - self._sequence_start + self.delay*self._beat)/self._beat)
 
         if last_step < first_step:
             return []
@@ -130,11 +133,11 @@ class TorsoTrack:
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
             events.extend([
                 MidiEvent(
-                    (step + self.offset + swing)*self._beat/self.division,
+                    (step + swing + self.delay)*self._beat/self.division,
                     (NOTE_ON+self.channel, note+self.pitch, velocity)
                 ),
                 MidiEvent(
-                    (step + self.offset + self.sustain)*self._beat/self.division,
+                    (step + self.sustain + self.delay)*self._beat/self.division,
                     (NOTE_OFF+self.channel, note+self.pitch, 0)
                 ),
             ])
@@ -213,7 +216,7 @@ class TorsoSequencer(threading.Thread):
                 if due:
                     for i in range(len(due)):
                         m = heappop(due)
-                        # print(time.time() - self.start_time, m)
+                        # print(f"{t1o:.04f} - self.start_time {m}")
                         self.midiout.send_message(m.message)
 
                 if t1 >= self.last_lookahead:
