@@ -65,14 +65,17 @@ t.add_track(track_name='clap', track=tt3)
 tp = torso_sequencer.TorsoTrack(
     notes=[
         ('C', 4),
-        # ('E', 4), ('G', 4), ('B', 4)
+        ('E', 4),
+        ('G', 4),
+        # ('B', 4)
     ],
-    pulses=11,
+    pulses=16,
     steps=16,
-    repeats=5,
-    repeat_time=6,
+    repeats=2,
+    # repeat_time=6,
     sustain=1,
     style=1,
+    voicing=3,
 )
 t.add_track(track_name='piano', track=tp)
 

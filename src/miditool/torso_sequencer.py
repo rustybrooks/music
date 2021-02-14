@@ -50,7 +50,7 @@ class TorsoTrack:
         repeat_offset=0,  # this delays the repeats, in units of 1 beat
         repeat_time=2,  # this is the same as divion, but for repeats, minimum is 2
         pace=None,  # supposed to accelerate or decelerate repeats - not implemented
-        voicing=0,  # adds notes an octave above
+        voicing=0,  # adds notes an octave above, 1 means just first note
         style=0,  # integer, picks
         melody=None,  # "depth" LFO for phrase (speed?)
         phrase=None,  # integer, picks phrase from a list
@@ -151,7 +151,9 @@ class TorsoTrack:
             accent = (self.accent_curve[(step+self.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
-            for voicing in range(0, self.voicing+1, 1+self.repeats):
+            vleft = (self.voicing+1+self.repeats) % (self.repeats+1)
+            vmax = (vleft >= 0) + (self.voicing+1+self.repeats)//(self.repeats+1)
+            for voicing in range(0, vmax):
                 events.extend([
                     MidiEvent(
                         (step + swing + self.delay)*self._beat/self.division,
@@ -159,23 +161,27 @@ class TorsoTrack:
                     ),
                     MidiEvent(
                         (step + self.sustain + self.delay)*self._beat/self.division,
-                        (NOTE_OFF+self.channel, note+self.pitch, 0)
+                        (NOTE_OFF+self.channel, note+self.pitch+voicing*12, 0)
                     ),
                 ])
 
             for r in range(1, self.repeats+1):
-                note = self.notes[self.style[r % lnotes]]
+                note = self.notes[self.style[r % len(self.sequence)] % lnotes]
+                vmax = (vleft >= r) + (self.voicing+1+self.repeats)//(self.repeats+1)
 
-                events.extend([
-                    MidiEvent(
-                        (step + swing + self.delay + self.repeat_offset + (r/self.repeat_time))*self._beat/self.division,
-                        (NOTE_ON+self.channel, note+self.pitch, velocity)
-                    ),
-                    MidiEvent(
-                        (step + self.sustain + self.delay + self.repeat_offset + r/self.repeat_time)*self._beat/self.division,
-                        (NOTE_OFF+self.channel, note+self.pitch, 0)
-                    ),
-                ])
+                print("repeat", r, vmax, self.voicing // (1+self.repeats))
+
+                for voicing in range(0, vmax):
+                    events.extend([
+                        MidiEvent(
+                            (step + swing + self.delay + self.repeat_offset + (r/self.repeat_time))*self._beat/self.division,
+                            (NOTE_ON+self.channel, note+self.pitch+voicing*12, velocity)
+                        ),
+                        MidiEvent(
+                            (step + self.sustain + self.delay + self.repeat_offset + r/self.repeat_time)*self._beat/self.division,
+                            (NOTE_OFF+self.channel, note+self.pitch+voicing*12, 0)
+                        ),
+                    ])
 
         return events
 
