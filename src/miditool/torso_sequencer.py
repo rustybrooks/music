@@ -74,6 +74,7 @@ class TorsoTrack:
         self.repeat_offset = repeat_offset
         self.repeat_time = repeat_time
         self.pace = pace
+        self.voicing = voicing
 
         self.set_accent_curve(accent_curve)
         self.set_style(style)
@@ -150,16 +151,17 @@ class TorsoTrack:
             accent = (self.accent_curve[(step+self.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
-            events.extend([
-                MidiEvent(
-                    (step + swing + self.delay)*self._beat/self.division,
-                    (NOTE_ON+self.channel, note+self.pitch, velocity)
-                ),
-                MidiEvent(
-                    (step + self.sustain + self.delay)*self._beat/self.division,
-                    (NOTE_OFF+self.channel, note+self.pitch, 0)
-                ),
-            ])
+            for voicing in range(0, self.voicing+1, 1+self.repeats):
+                events.extend([
+                    MidiEvent(
+                        (step + swing + self.delay)*self._beat/self.division,
+                        (NOTE_ON+self.channel, note+self.pitch+voicing*12, velocity)
+                    ),
+                    MidiEvent(
+                        (step + self.sustain + self.delay)*self._beat/self.division,
+                        (NOTE_OFF+self.channel, note+self.pitch, 0)
+                    ),
+                ])
 
             for r in range(1, self.repeats+1):
                 note = self.notes[self.style[r % lnotes]]
