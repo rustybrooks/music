@@ -69,6 +69,7 @@ tp = torso_sequencer.TorsoTrack(
     repeats=5,
     repeat_time=6,
     sustain=1,
+    style=1,
 )
 t.add_track(track_name='piano', track=tp)
 

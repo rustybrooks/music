@@ -28,7 +28,7 @@ class TorsoTrack:
     ]
     styles = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        [0, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9, 8],
     ]
 
     def __init__(
@@ -51,7 +51,7 @@ class TorsoTrack:
         repeat_time=2,  # this is the same as divion, but for repeats, minimum is 2
         pace=None,  # supposed to accelerate or decelerate repeats - not implemented
         voicing=0,  # adds notes an octave above
-        style=None,  # integer, picks
+        style=0,  # integer, picks
         melody=None,  # "depth" LFO for phrase (speed?)
         phrase=None,  # integer, picks phrase from a list
         scale=0,  # integer, picks scale from a list for phrase to operate on (default = chromatic)
@@ -77,7 +77,6 @@ class TorsoTrack:
 
         self.set_accent_curve(accent_curve)
         self.set_style(style)
-
 
         # requires updating some other param
 
