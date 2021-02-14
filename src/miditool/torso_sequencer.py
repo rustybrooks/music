@@ -9,6 +9,7 @@ from rtmidi.midiconstants import NOTE_ON, NOTE_OFF, CONTROL_CHANGE
 
 
 from . import instruments
+from .notes import note_to_number
 from .sequencer import MidiEvent
 
 log = logging.getLogger(__name__)
@@ -22,12 +23,16 @@ class TorsoTrack:
         1, 2, 4, 8, 16, 32, 64, 0,
         0, 0, 3, 6, 12, 24, 48, 0
     ]
+    scales = [
+        'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hex', 'aug', 'pentatonic_minor'
+    ]
 
     def __init__(
-        self, channel=0, notes=None, steps=16,
+        self, channel=0, steps=16,
         pulses=1,  # number of euclidean pulses to apply, 1 to steps
         pitch=0,  # pitch shift to apply to all notes, integer (FIXME add intelligent shifting?)
-        harmony=None,
+        harmony=0,  # transpose notes defined in pitch up one at a time?
+        notes=None,  # List of notes to play
         rotate=0,  # number of steps to rotate sequence
         manual_steps=None,  # list of manual locations to apply hits, -1=remove, 0=nothing, 1=add
         accent=.5,  # 0-1 the percent of accent curve to apply
@@ -38,17 +43,20 @@ class TorsoTrack:
         timing=0.5,  # swing timing, 0.5=even, less means every other beat is early, more means late
         delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
         repeats=0,  # number of repeats to add, integer, will be is divisions of self.time
-        offset=0,  # this delays the repeats, in units of 1 beat
-        time=2,  # this is the same as divion, but for repeats, minimum is 2
+        repeat_offset=0,  # this delays the repeats, in units of 1 beat
+        repeat_time=2,  # this is the same as divion, but for repeats, minimum is 2
         pace=None,  # supposed to accelerate or decelerate repeats - not implemented
-        voicing=None,
-        melody=None,
-        phrase=None,
-        scale=None,
+        voicing=0,  # adds notes an octave above
+        style=None,  # integer, picks
+        melody=None,  # "depth" LFO for phrase (speed?)
+        phrase=None,  # integer, picks phrase from a list
+        scale=0,  # integer, picks scale from a list for phrase to operate on (default = chromatic)
         root=None,
+        random=None,
+        random_rate=None,
     ):
         self.channel = channel
-        self.notes = notes or []
+        self.notes = [note_to_number(x) for x in notes] or []
         self.manual_steps = manual_steps or []
         self.pitch = pitch
         self.rotate = rotate
@@ -59,8 +67,8 @@ class TorsoTrack:
         self.timing = timing
         self.delay = delay
         self.repeats = repeats
-        self.offset = offset
-        self.time = time
+        self.repeat_offset = repeat_offset
+        self.repeat_time = repeat_time
         self.pace = pace
 
         self.accent_curve = None
@@ -97,7 +105,6 @@ class TorsoTrack:
 
     def generate(self):
         interval = self.steps / self.pulses
-
         sequence = [0]*self.steps
 
         for i in range(self.pulses):
@@ -109,8 +116,10 @@ class TorsoTrack:
             elif v > 0:
                 sequence[i] = v
 
-        lnotes = len(self.notes)
-        self.sequence = [self.notes[i % lnotes] if v else None for i, v in enumerate(sequence)]
+        self.sequence = sequence
+
+        # lnotes = len(self.notes)
+        # self.sequence = [self.notes[i % lnotes] if v else None for i, v in enumerate(sequence)]
 
     def fill_lookahead(self, start, end):
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
@@ -122,10 +131,12 @@ class TorsoTrack:
             return []
 
         events = []
+        lnotes = len(self.notes)
         for step in range(first_step, last_step+1):
-            note = self.sequence[(step+self.rotate) % self.steps]
-            if not note:
+            if not self.sequence[(step+self.rotate) % self.steps]:
                 continue
+
+            note = self.notes[0]
 
             # do we want to step through accent curve, or apply it directly to sequence including
             # off notes?
@@ -144,16 +155,15 @@ class TorsoTrack:
             ])
 
             for r in range(1, self.repeats+1):
-                if (r)/self.time > 1:
-                    break  # prevent overflowing beat?
+                note = self.notes[r % lnotes]
 
                 events.extend([
                     MidiEvent(
-                        (step + swing + self.delay + self.offset + (r/self.time))*self._beat/self.division,
+                        (step + swing + self.delay + self.repeat_offset + (r/self.repeat_time))*self._beat/self.division,
                         (NOTE_ON+self.channel, note+self.pitch, velocity)
                     ),
                     MidiEvent(
-                        (step + self.sustain + self.delay + self.offset + r/self.time)*self._beat/self.division,
+                        (step + self.sustain + self.delay + self.repeat_offset + r/self.repeat_time)*self._beat/self.division,
                         (NOTE_OFF+self.channel, note+self.pitch, 0)
                     ),
                 ])
