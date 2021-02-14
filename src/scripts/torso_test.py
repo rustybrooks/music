@@ -44,6 +44,9 @@ tt3 = torso_sequencer.TorsoTrack(
     steps=16,
     accent=0,
     velocity=127,
+    repeats=3,
+    time=4,
+    offset=.2,
     # delay=0.25,
 )
 
