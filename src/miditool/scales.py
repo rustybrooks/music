@@ -1,3 +1,5 @@
+from . import notes
+
 scales = {
     "major": [2, 2, 1, 2, 2, 2, 1],
     "natural_minor": [2, 1, 2, 2, 1, 2, 2],
@@ -22,5 +24,7 @@ scales = {
 }
 
 
-def get_scale(scale_key, scale_type):
-    pass
+def get_scale_numbers(root, scale_type):
+    out = [notes.note_to_number(root)]
+    for n in scales[scale_type]:
+        out.append(out[-1]+n)

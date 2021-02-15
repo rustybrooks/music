@@ -5,6 +5,9 @@ note_list = {
 
 
 def note_to_number(n):
+    if isinstance(n, int):
+        return n
+
     note, octave = n
     i = note_list['sharp'].index(note.upper())
     if i == -1:

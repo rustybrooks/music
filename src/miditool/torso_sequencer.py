@@ -1,7 +1,9 @@
+import copy
 import math
 import logging
 import threading
 import time
+import random
 
 from heapq import heappush, heappop
 
@@ -10,10 +12,12 @@ from rtmidi.midiconstants import NOTE_ON, NOTE_OFF, CONTROL_CHANGE
 
 from . import instruments
 from .notes import note_to_number
+from .scales import get_scale_numbers
 from .sequencer import MidiEvent
 
 log = logging.getLogger(__name__)
 
+MAX_PULSE = 16
 
 class TorsoTrack:
     accent_curves = [
@@ -29,6 +33,10 @@ class TorsoTrack:
     styles = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         [0, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9, 8],
+    ]
+
+    phrases = [
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     ]
 
     def __init__(
@@ -52,10 +60,10 @@ class TorsoTrack:
         pace=None,  # supposed to accelerate or decelerate repeats - not implemented
         voicing=0,  # adds notes an octave above, 1 means just first note
         style=0,  # integer, picks
-        melody=None,  # "depth" LFO for phrase (speed?)
-        phrase=None,  # integer, picks phrase from a list
+        melody=0,  # "depth" LFO for phrase (speed?)
+        phrase=0,  # integer, picks phrase from a list
         scale=0,  # integer, picks scale from a list for phrase to operate on (default = chromatic)
-        root=None,
+        root=0,
         random=None,
         random_rate=None,
     ):
@@ -75,9 +83,18 @@ class TorsoTrack:
         self.repeat_time = repeat_time
         self.pace = pace
         self.voicing = voicing
+        self.melody = melody
+
+        self.phrase = None
+        self.accent_curve = None
+        self.style = None
+        self.scale = None
 
         self.set_accent_curve(accent_curve)
         self.set_style(style)
+        self.set_scale(scale, root=root)
+        self.set_phrase(phrase)
+
 
         # requires updating some other param
 
@@ -86,6 +103,7 @@ class TorsoTrack:
         self.pulses = pulses
 
         self.sequence = []
+        self.randoms = {}
 
         # some internal params
         self._sequence_start = None
@@ -111,6 +129,19 @@ class TorsoTrack:
     def set_style(self, value):
         self.style = self.styles[value]
 
+    def set_scale(self, value, root):
+        self.scale = get_scale_numbers(root-root, scale_type=self.scales[value])
+
+    def set_phrase(self, value):
+        self.phrase = self.phrases[value]
+
+    def update_random(self, parameter, strength):
+        if parameter not in self.randoms:
+            self.randoms[parameter] = [0] * MAX_PULSE
+
+        for i in range(MAX_PULSE):
+            self.randoms[parameter][i] += random.randrange(-strength, strength)
+
     def generate(self):
         interval = self.steps / self.pulses
         sequence = [0]*self.steps
@@ -129,6 +160,28 @@ class TorsoTrack:
         # lnotes = len(self.notes)
         # self.sequence = [self.notes[i % lnotes] if v else None for i, v in enumerate(sequence)]
 
+    def quantize(self, note):
+        root = self.scale[0]
+        while root > note:
+            root -= 12
+
+        while root+12 < note:
+            root += 12
+
+        diff = root - self.scale[0]
+        scale = [x+diff for x in self.scale]
+        overi = next(i for i, n in enumerate(scale) if n > note)
+        if overi is None:
+            overi = len(scale)
+            scale.append(scale[0]+12)
+
+        underi = overi-1
+
+        if (note - scale[underi]) < (scale[overi] - note):
+            return scale[underi]
+        else:
+            return scale[overi]
+
     def fill_lookahead(self, start, end):
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
         # need to
@@ -145,6 +198,10 @@ class TorsoTrack:
                 continue
 
             note = self.notes[0]
+            melody_offset = None
+            if self.melody > 0:
+                melody_offset = note + self.phrase[step]*self.melody
+                note = self.quantize(note + melody_offset)
 
             # do we want to step through accent curve, or apply it directly to sequence including
             # off notes?
@@ -167,6 +224,9 @@ class TorsoTrack:
 
             for r in range(1, self.repeats+1):
                 note = self.notes[self.style[r % len(self.sequence)] % lnotes]
+                if melody_offset:
+                    note = self.quantize(melody_offset)
+
                 vmax = (vleft >= r) + (self.voicing+1+self.repeats)//(self.repeats+1)
 
                 print("repeat", r, vmax, self.voicing // (1+self.repeats))
