@@ -253,6 +253,7 @@ class TorsoSequencer(threading.Thread):
 
         self._stopped = threading.Event()
         self._finished = threading.Event()
+        self._paused = threading.Event()
 
     def set_bpm(self, value):
         for t in self.tracks.values():
@@ -274,6 +275,12 @@ class TorsoSequencer(threading.Thread):
 
         self.join()
 
+    def play_pause(self):
+        if self._paused.is_set():
+            self._paused.clear()
+        else:
+            self._paused.set()
+
     def fill_lookahead(self):
         next_lookahead = self.last_lookahead + self.lookahead
         for v in self.tracks.values():
@@ -284,19 +291,26 @@ class TorsoSequencer(threading.Thread):
 
         self.last_lookahead = next_lookahead
 
+    def reset(self):
+        self.start_time = time.time()
+        self.last_lookahead = self.start_time
+        for t in self.tracks.values():
+            t._sequence_start = self.start_time
+
+        self.fill_lookahead()
+        self.fill_lookahead()
+
     def run(self):
         steps = 0
         try:
-            self.start_time = time.time()
-            self.last_lookahead = self.start_time
-            for t in self.tracks.values():
-                t._sequence_start = self.start_time
-
-            self.fill_lookahead()
-            self.fill_lookahead()
-            # return
+            self.reset()
 
             while not self._stopped.is_set():
+                while self._paused.is_set():
+                    time.sleep(.1)
+                else:
+                    self.reset()
+
                 t1 = time.time()
                 t1o = t1 - self.start_time
                 due = []

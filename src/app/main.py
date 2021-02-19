@@ -9,86 +9,84 @@ sys.path.append(lp)
 from tkinter import *
 from app.dial import Dial
 
-import time
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
 from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
-from miditool.sequencer import Sequencer
-
-
-knobs1 = [
-    [
-        ['steps', ''],
-        ['pulses', 'rotate'],
-        ['cycles', ''],
-        ['division', ''],
-        ['velocity', ''],
-        ['sustain', ''],
-    ],
-    [
-        ['repeats', 'offset'],
-        ['time', 'pace'],
-        ['voicing', 'style'],
-        ['melody', 'phrase'],
-        ['accent', 'curve'],
-        ['timing', 'delay'],
-
-    ]
-]
-
-knobs2 = [
-    [
-        ['pitch', 'harmony'],
-        ['length', 'quantize'],
-        ['tempo', ''],
-    ],
-    [
-        ['scale', 'root'],
-        ['midi ch', ''],
-        ['random', 'rate'],
-    ]
-]
-
-buttons1 = [
-    [
-        ['/1', ''],
-        ['/2', ''],
-        ['/4', ''],
-        ['/8', ''],
-        ['/16', ''],
-        ['/32', ''],
-        ['/64', ''],
-        ['', ''],
-    ],
-    [
-        ['', 'chrom'],
-        ['', 'major', ''],
-        ['/3', 'minor'],
-        ['/6', 'melo'],
-        ['/12', 'hex'],
-        ['/24', 'aug'],
-        ['/48', 'penta'],
-        ['', 'user'],
-    ]
-]
-
-buttons2 = [
-    [
-        ['play', 'stop'],
-        [None, None],
-        ['clear', 'copy'],
-        ['ctrl', ''],
-    ],
-    [
-        ['bank', 'save'],
-        ['pattern', 'select'],
-        ['temp', 'multi'],
-        ['mute', ''],
-    ],
-]
 
 
 class App(Tk):
+    knobs = [
+        [
+            [
+                ['steps', ''],
+                ['pulses', 'rotate'],
+                ['cycles', ''],
+                ['division', ''],
+                ['velocity', ''],
+                ['sustain', ''],
+            ],
+            [
+                ['repeats', 'offset'],
+                ['time', 'pace'],
+                ['voicing', 'style'],
+                ['melody', 'phrase'],
+                ['accent', 'curve'],
+                ['timing', 'delay'],
+
+            ]
+        ],
+        [
+            [
+                ['pitch', 'harmony'],
+                ['length', 'quantize'],
+                ['tempo', ''],
+            ],
+            [
+                ['scale', 'root'],
+                ['midi ch', ''],
+                ['random', 'rate'],
+            ]
+        ]
+    ]
+    buttons = [
+        [
+            [
+                ['/1', ''],
+                ['/2', ''],
+                ['/4', ''],
+                ['/8', ''],
+                ['/16', ''],
+                ['/32', ''],
+                ['/64', ''],
+                ['', ''],
+            ],
+            [
+                ['', 'chrom'],
+                ['', 'major', ''],
+                ['/3', 'minor'],
+                ['/6', 'melo'],
+                ['/12', 'hex'],
+                ['/24', 'aug'],
+                ['/48', 'penta'],
+                ['', 'user'],
+            ]
+        ],
+        [
+            [
+                ['play', 'stop'],
+                [None, None],
+                ['clear', 'copy'],
+                ['ctrl', ''],
+            ],
+            [
+                ['bank', 'save'],
+                ['pattern', 'select'],
+                ['temp', 'multi'],
+                ['mute', ''],
+            ],
+        ],
+    ]
+
     def __init__(self):
         midiout, port = open_midiport(
             None,
@@ -96,6 +94,8 @@ class App(Tk):
             use_virtual=True,
             client_name="TORSO"
         )
+
+        self.pressed = []
 
         self.torso = torso_sequencer.TorsoSequencer(
             midiout=midiout,
@@ -124,52 +124,63 @@ class App(Tk):
         frt.pack(side=TOP, fill=BOTH)
         frb.pack(side=TOP, fill=BOTH, pady=[50, 0])
 
-        for r, row in enumerate(knobs1):
-            for c, col in enumerate(row):
-                f = Frame(flt)
-                f.grid(row=r, column=c)
-                d = Dial(parent=f, command=lambda degrees, row=r, col=c: self.dial_callback(row, col, degrees))
-                d.pack(side=TOP, fill=BOTH)
-                l = Label(f, text=col[0])
-                l.pack(side=TOP, fill=BOTH)
-                l = Label(f, text=col[1])
-                l.pack(side=TOP, fill=BOTH)
+        frames = [flt, frt, flb, frb]
 
-        for r, row in enumerate(buttons1):
-            for c, col in enumerate(row):
-                f = Frame(flb)
-                f.grid(row=r, column=c)
-                b = Button(f, height=3, width=4)
-                b.pack(side=TOP, fill=X)
-                l = Label(f, text=col[0])
-                l.pack(side=TOP, fill=X)
-                l = Label(f, text=col[1])
-                l.pack(side=TOP, fill=X)
+        for b, bank in enumerate(self.knobs):
+            for r, row in enumerate(bank):
+                for c, col in enumerate(row):
+                    f = Frame(frames[b])
+                    f.grid(row=r, column=c)
+                    d = Dial(
+                        parent=f, zeroAxis='y',
+                        command=lambda degrees, row=r, col=c: self.dial_callback(row, col, b, degrees)
+                    )
+                    d.pack(side=TOP, fill=BOTH)
+                    lb = Label(f, text=col[0])
+                    lb.pack(side=TOP, fill=BOTH)
+                    lb = Label(f, text=col[1])
+                    lb.pack(side=TOP, fill=BOTH)
 
-        for r, row in enumerate(knobs2):
-            for c, col in enumerate(row):
-                f = Frame(frt)
-                f.grid(row=r, column=c)
-                d = Dial(parent=f, command=lambda degrees, row=r, col=c: self.dial_callback(row, col, degrees))
-                d.pack(side=TOP, fill=BOTH)
-                l = Label(f, text=col[0])
-                l.pack(side=TOP, fill=BOTH)
-                l = Label(f, text=col[1])
-                l.pack(side=TOP, fill=BOTH)
+        for b, bank in enumerate(self.buttons):
+            for r, row in enumerate(bank):
+                for c, col in enumerate(row):
+                    f = Frame(frames[b+2])
+                    f.grid(row=r, column=c)
+                    bt = Button(f, height=3, width=4)
 
-        for r, row in enumerate(buttons2):
-            for c, col in enumerate(row):
-                f = Frame(frb)
-                f.grid(row=r, column=c)
-                b = Button(f, height=3, width=4)
-                b.pack(side=TOP, fill=X)
-                l = Label(f, text=col[0])
-                l.pack(side=TOP, fill=X)
-                l = Label(f, text=col[1])
-                l.pack(side=TOP, fill=X)
+                    bt.bind(
+                        '<ButtonPress>',
+                        lambda *args, row=r, col=c, **kwargs: self.button_press(row, col, b, *args, **kwargs)
+                    )
+                    bt.bind(
+                        '<ButtonRelease>',
+                        lambda *args, row=r, col=c, **kwargs: self.button_release(row, col, b, *args, **kwargs)
+                    )
+                    bt.pack(side=TOP, fill=X)
+                    lb = Label(f, text=col[0])
+                    lb.pack(side=TOP, fill=X)
+                    lb = Label(f, text=col[1])
+                    lb.pack(side=TOP, fill=X)
 
-    def dial_callback(self, *args, **kwargs):
-        print("dial", args, kwargs)
+    def dial_callback(self, row, col, bank, degrees):
+        print("dial", row, col, bank, degrees)
+
+    def button_press(self, row, col, bank, *args, **kwargs):
+        print('press', row, col, bank, *args, **kwargs)
+
+    def button_release(self, row, col, bank, *args, **kwargs):
+        print('press', row, col, bank, *args, **kwargs)
+
+    def press(self, button, callback=None, illumuinate=None):
+        self.pressed.append(button)
+
+    def unpress(self, button, callback=None, deluminate=None):
+        i = self.pressed.index(button)
+        if i > -1:
+            self.pressed.pop(i)
+
+    def play_pause(self):
+        self.torso.play_pause()
 
 
 if __name__ == '__main__':
