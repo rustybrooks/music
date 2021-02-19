@@ -14,10 +14,15 @@ class Dial:
         self, parent, radius='.5i',
         command=None, press_command=None, release_command=None,
         initAngle=0.0,
-        zeroAxis='x', rotDir='counterclockwise',
-        fill=None, outline='black', line='black',
-        label=''
+        zeroAxis='x',
+        rotDir='counterclockwise',
+        fill=None,
+        outline='black',
+        line='black',
+        label='',
+        bg=None,
     ):
+
 
         self.command = command
         self.press_command = press_command
@@ -29,7 +34,7 @@ class Dial:
         self.drag_from_angle = None
 
         s = int(2 * (self.radius + self.bump_size))
-        c = tkinter.Canvas(parent, width=s, height=s)
+        c = tkinter.Canvas(parent, width=s, height=s, bg=bg, border=0, highlightbackground=bg)
         cx, cy = self.center_xy
         r = self.radius
         kw = {}
