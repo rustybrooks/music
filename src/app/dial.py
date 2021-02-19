@@ -10,11 +10,17 @@ import tkinter
 # Command callback takes an angle argument (degrees).
 #
 class Dial:
-    def __init__(self, parent, radius='.5i', command=None, initAngle=0.0,
-                 zeroAxis='x', rotDir='counterclockwise',
-                 fill=None, outline='black', line='black'):
+    def __init__(
+        self, parent, radius='.5i',
+        command=None, press_command=None, release_command=None,
+        initAngle=0.0,
+        zeroAxis='x', rotDir='counterclockwise',
+        fill=None, outline='black', line='black'
+    ):
 
         self.command = command
+        self.press_command = press_command
+        self.release_command = release_command
         self.radius = parent.winfo_pixels(radius)
         self.bump_size = .2 * self.radius
         rpb = self.radius + self.bump_size
@@ -23,9 +29,6 @@ class Dial:
 
         s = int(2 * (self.radius + self.bump_size))
         c = tkinter.Canvas(parent, width=s, height=s)
-        c.bind('<ButtonPress-1>', self.button_press_cb)
-        c.bind('<Button1-Motion>', self.pointer_drag_cb)
-        c.bind('<ButtonRelease-1>', self.button_release_cb)
         cx, cy = self.center_xy
         r = self.radius
         kw = {}
@@ -33,12 +36,20 @@ class Dial:
             kw['fill'] = fill
         if outline is not None:
             kw['outline'] = outline
-        c.create_oval(cx - r, cy - r, cx + r, cy + r, **kw)
+        self.main = c.create_oval(cx-r, cy-r, cx+r, cy+r, **kw)
+        c.tag_bind(self.main, '<ButtonPress-1>', self.button_press_cb)
+        c.tag_bind(self.main, '<Button1-Motion>', self.pointer_drag_cb)
+        c.tag_bind(self.main, '<ButtonRelease-1>', self.button_release_cb)
+
+        self.mid = c.create_oval(cx-r//2, cy-r//2, cx+r//2, cy+r//2, fill='white')
+        c.tag_bind(self.mid, '<ButtonPress-1>', self.mid_press_cb)
+        c.tag_bind(self.mid, '<ButtonRelease-1>', self.mid_release_cb)
+
         bs = self.bump_size
         kw = {'width': bs}
         if line is not None:
             kw['fill'] = line
-        id = c.create_line(cx, cy, cx + r + bs, cy, **kw)
+        id = c.create_line(cx, cy, cx+r + bs, cy, **kw)
         self.line_id = id
         self.canvas = c
         self.widget = c
@@ -54,19 +65,21 @@ class Dial:
     def grid(self, *args, **kwargs):
         self.c.grid(*args, **kwargs)
 
-    # ---------------------------------------------------------------------------
-    #
-    def button_press_cb(self, event):
+    def mid_press_cb(self, event):
+        self.c.itemconfigure(self.mid, fill='red')
+        self.press_command()
 
+    def mid_release_cb(self, event):
+        self.c.itemconfigure(self.mid, fill='white')
+        self.release_command()
+
+    def button_press_cb(self, event):
         try:
             self.drag_from_angle = self.event_angle(event)
         except ValueError:
             pass
 
-    # ---------------------------------------------------------------------------
-    #
     def pointer_drag_cb(self, event):
-
         if self.drag_from_angle == None:
             return
 
@@ -78,10 +91,7 @@ class Dial:
             self.drag_from_angle = a
             self.set_angle(a)
 
-    # ---------------------------------------------------------------------------
-    #
     def button_release_cb(self, event):
-
         if self.drag_from_angle == None:
             return
 

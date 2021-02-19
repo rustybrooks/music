@@ -18,71 +18,71 @@ class App(Tk):
     knobs = [
         [
             [
-                ['steps', ''],
-                ['pulses', 'rotate'],
-                ['cycles', ''],
-                ['division', ''],
-                ['velocity', ''],
-                ['sustain', ''],
+                ['steps', '',          'a', ],
+                ['pulses', 'rotate',   's', ],
+                ['cycles', '',         'd', ],
+                ['division', '',       'f', ],
+                ['velocity', '',       'g', ],
+                ['sustain', '',        'h', ],
             ],
             [
-                ['repeats', 'offset'],
-                ['time', 'pace'],
-                ['voicing', 'style'],
-                ['melody', 'phrase'],
-                ['accent', 'curve'],
-                ['timing', 'delay'],
+                ['repeats', 'offset',  'z', ],
+                ['time', 'pace',       'x', ],
+                ['voicing', 'style',   'c', ],
+                ['melody', 'phrase',   'v', ],
+                ['accent', 'curve',    'b', ],
+                ['timing', 'delay',    'n', ],
 
             ]
         ],
         [
             [
-                ['pitch', 'harmony'],
-                ['length', 'quantize'],
-                ['tempo', ''],
+                ['pitch', 'harmony',   'j', ],
+                ['length', 'quantize', 'k', ],
+                ['tempo', '',          'l', ],
             ],
             [
-                ['scale', 'root'],
-                ['midi ch', ''],
-                ['random', 'rate'],
+                ['scale', 'root',      'm', ],
+                ['midi ch', '',        ',', ],
+                ['random', 'rate',     '.', ],
             ]
         ]
     ]
     buttons = [
         [
             [
-                ['/1', ''],
-                ['/2', ''],
-                ['/4', ''],
-                ['/8', ''],
-                ['/16', ''],
-                ['/32', ''],
-                ['/64', ''],
-                ['', ''],
+                ['/1',       '',       '1', ],
+                ['/2',       '',       '2', ],
+                ['/4',       '',       '3', ],
+                ['/8',       '',       '4', ],
+                ['/16',      '',       '5', ],
+                ['/32',      '',       '6', ],
+                ['/64',      '',       '7', ],
+                ['',         '',       '8', ],
             ],
             [
-                ['', 'chrom'],
-                ['', 'major', ''],
-                ['/3', 'minor'],
-                ['/6', 'melo'],
-                ['/12', 'hex'],
-                ['/24', 'aug'],
-                ['/48', 'penta'],
-                ['', 'user'],
+                ['',         'chrom',  'q', ],
+                ['',         'major',  'w', ],
+                ['/3',       'minor',  'e', ],
+                ['/6',       'melo',   'r', ],
+                ['/12',      'hex',    't', ],
+                ['/24',      'aug',    'y', ],
+                ['/48',      'penta',  'u', ],
+                ['',         'user',   'i', ],
             ]
         ],
         [
             [
-                ['play', 'stop'],
-                [None, None],
-                ['clear', 'copy'],
-                ['ctrl', ''],
+                ['play',     'stop',   '9'],
+                [None,       None,     '0'],
+                ['clear',    'copy',   '-'],
+                ['ctrl',     '',       '='],
             ],
             [
-                ['bank', 'save'],
-                ['pattern', 'select'],
-                ['temp', 'multi'],
-                ['mute', ''],
+                ['bank',    'save',    'p'],
+                ['pattern', 'select',  '['],
+                ['temp',    'multi',   ']'],
+                ['mute',     '',       '\\'],
             ],
         ],
     ]
@@ -132,8 +132,10 @@ class App(Tk):
                     f = Frame(frames[b])
                     f.grid(row=r, column=c)
                     d = Dial(
-                        parent=f, zeroAxis='y',
-                        command=lambda degrees, row=r, col=c: self.dial_callback(row, col, b, degrees)
+                        parent=f, zeroAxis='y', fill='#aaaaaa',
+                        command=lambda degrees, row=r, col=c: self.dial_callback(row, col, b, degrees),
+                        press_command=self.dial_press,
+                        release_command=self.dial_release,
                     )
                     d.pack(side=TOP, fill=BOTH)
                     lb = Label(f, text=col[0])
@@ -141,12 +143,32 @@ class App(Tk):
                     lb = Label(f, text=col[1])
                     lb.pack(side=TOP, fill=BOTH)
 
+                    self.bind(
+                        f'<KeyPress-{col[2]}>',
+                        d.mid_press_cb,
+                    )
+
+                    self.bind(
+                        f'<KeyRelease-{col[2]}>',
+                        d.mid_release_cb,
+                    )
+
         for b, bank in enumerate(self.buttons):
             for r, row in enumerate(bank):
                 for c, col in enumerate(row):
                     f = Frame(frames[b+2])
                     f.grid(row=r, column=c)
                     bt = Button(f, height=3, width=4)
+
+                    self.bind(
+                        f'<KeyPress-{col[2]}>',
+                        lambda *args, row=r, col=c, **kwargs: self.button_press(row, col, b, *args, **kwargs)
+                    )
+
+                    self.bind(
+                        f'<KeyRelease-{col[2]}>',
+                        lambda *args, row=r, col=c, **kwargs: self.button_release(row, col, b, *args, **kwargs)
+                    )
 
                     bt.bind(
                         '<ButtonPress>',
@@ -161,6 +183,12 @@ class App(Tk):
                     lb.pack(side=TOP, fill=X)
                     lb = Label(f, text=col[1])
                     lb.pack(side=TOP, fill=X)
+
+    def dial_press(self, *args, **kwargs):
+        pass
+
+    def dial_release(self, *args, **kwargs):
+        pass
 
     def dial_callback(self, row, col, bank, degrees):
         print("dial", row, col, bank, degrees)
