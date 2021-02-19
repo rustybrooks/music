@@ -1,4 +1,3 @@
-import copy
 import math
 import logging
 import threading
@@ -7,10 +6,9 @@ import random
 
 from heapq import heappush, heappop
 
-from rtmidi.midiconstants import NOTE_ON, NOTE_OFF, CONTROL_CHANGE
+from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 
 
-from . import instruments
 from .notes import note_to_number
 from .scales import get_scale_numbers
 from .sequencer import MidiEvent
@@ -19,13 +17,10 @@ log = logging.getLogger(__name__)
 
 MAX_PULSE = 16
 
+
 class TorsoTrack:
     accent_curves = [
         [128*x/100. for x in [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20, 70]],
-    ]
-    divisions = [
-        1, 2, 4, 8, 16, 32, 64, 0,
-        0, 0, 3, 6, 12, 24, 48, 0
     ]
     scales = [
         'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hex', 'aug', 'pentatonic_minor'
@@ -94,9 +89,6 @@ class TorsoTrack:
         self.set_style(style)
         self.set_scale(scale, root=root)
         self.set_phrase(phrase)
-
-
-        # requires updating some other param
 
         # require re-sequencing:
         self.steps = steps
@@ -327,7 +319,7 @@ class TorsoSequencer(threading.Thread):
                 steps += 1
                 left = (self.interval*steps) - (time.time() - self.start_time)
                 if left <= 0:
-                    print(f"overflow time {left}")
+                    print(f"overflow time {1000*left:.2f}ms")
                 else:
                     time.sleep(left)
 
