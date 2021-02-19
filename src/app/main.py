@@ -10,7 +10,7 @@ from tkinter import *
 from app.dial import Dial
 
 
-buttons1 = [
+knobs1 = [
     [
         ['steps', ''],
         ['pulses', 'rotate'],
@@ -30,7 +30,7 @@ buttons1 = [
     ]
 ]
 
-buttons2 = [
+knobs2 = [
     [
         ['pitch', 'harmony'],
         ['length', 'quantize'],
@@ -40,9 +40,48 @@ buttons2 = [
         ['scale', 'root'],
         ['midi ch', ''],
         ['random', 'rate'],
-
     ]
 ]
+
+buttons1 = [
+    [
+        ['/1', ''],
+        ['/2', ''],
+        ['/4', ''],
+        ['/8', ''],
+        ['/16', ''],
+        ['/32', ''],
+        ['/64', ''],
+        ['', ''],
+    ],
+    [
+        ['', 'chrom'],
+        ['', 'major', ''],
+        ['/3', 'minor'],
+        ['/6', 'melo'],
+        ['/12', 'hex'],
+        ['/24', 'aug'],
+        ['/48', 'penta'],
+        ['', 'user'],
+    ]
+]
+
+buttons2 = [
+    [
+        ['play', 'stop'],
+        [None, None],
+        ['clear', 'copy'],
+        ['ctrl', ''],
+    ],
+    [
+        ['bank', 'save'],
+        ['pattern', 'select'],
+        ['temp', 'multi'],
+        ['mute', ''],
+    ],
+]
+
+
 
 class App(Tk):
     def __init__(self):
@@ -57,47 +96,61 @@ class App(Tk):
         fr.pack(side=LEFT, fill=X)
 
         flt = Frame(fl)
-        flb = Frame(fl, background='red')
+        flb = Frame(fl)
         flt.pack(side=TOP, fill=BOTH)
-        flb.pack(side=TOP, fill=BOTH)
+        flb.pack(side=TOP, fill=BOTH, pady=[50, 0])
 
         frt = Frame(fr)
         frb = Frame(fr)
         frt.pack(side=TOP, fill=BOTH)
-        frb.pack(side=TOP, fill=BOTH)
+        frb.pack(side=TOP, fill=BOTH, pady=[50, 0])
 
-        for r, row in enumerate(buttons1):
+        for r, row in enumerate(knobs1):
             for c, col in enumerate(row):
                 f = Frame(flt)
                 f.grid(row=r, column=c)
-                d = Dial(parent=f)
+                d = Dial(parent=f, command=lambda degrees, row=r, col=c: self.dial_callback(row, col, degrees))
                 d.pack(side=TOP, fill=BOTH)
                 l = Label(f, text=col[0])
                 l.pack(side=TOP, fill=BOTH)
                 l = Label(f, text=col[1])
                 l.pack(side=TOP, fill=BOTH)
 
-            for r in range(2):
-                for c in range(8):
-                    b = Button(flb, height=3, width=4)
-                    b.grid(row=r, column=c)
+        for r, row in enumerate(buttons1):
+            for c, col in enumerate(row):
+                f = Frame(flb)
+                f.grid(row=r, column=c)
+                b = Button(f, height=3, width=4)
+                b.pack(side=TOP, fill=X)
+                l = Label(f, text=col[0])
+                l.pack(side=TOP, fill=X)
+                l = Label(f, text=col[1])
+                l.pack(side=TOP, fill=X)
 
-        for r, row in enumerate(buttons2):
+        for r, row in enumerate(knobs2):
             for c, col in enumerate(row):
                 f = Frame(frt)
                 f.grid(row=r, column=c)
-                d = Dial(f)
+                d = Dial(parent=f, command=lambda degrees, row=r, col=c: self.dial_callback(row, col, degrees))
                 d.pack(side=TOP, fill=BOTH)
                 l = Label(f, text=col[0])
                 l.pack(side=TOP, fill=BOTH)
                 l = Label(f, text=col[1])
                 l.pack(side=TOP, fill=BOTH)
 
-            for r in range(2):
-                for c in range(4):
-                    b = Button(frb, height=3, width=4)
-                    b.grid(row=r, column=c)
+        for r, row in enumerate(buttons2):
+            for c, col in enumerate(row):
+                f = Frame(frb)
+                f.grid(row=r, column=c)
+                b = Button(f, height=3, width=4)
+                b.pack(side=TOP, fill=X)
+                l = Label(f, text=col[0])
+                l.pack(side=TOP, fill=X)
+                l = Label(f, text=col[1])
+                l.pack(side=TOP, fill=X)
 
+    def dial_callback(self, *args, **kwargs):
+        print("dial", args, kwargs)
 
 
 if __name__ == '__main__':
