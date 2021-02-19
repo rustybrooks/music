@@ -73,9 +73,9 @@ class App(Tk):
         ],
         [
             [
-                ['play',     'stop',   '9'],
-                [None,       None,     '0'],
-                ['clear',    'copy',   '-'],
+                ['play',     'stop',   '9',  ['play_pause', None]],
+                [None,       None,     None],
+                ['clear',    'copy',   '\-'],
                 ['ctrl',     '',       '='],
             ],
             [
@@ -95,13 +95,35 @@ class App(Tk):
             client_name="TORSO"
         )
 
-        self.pressed = []
+        self.button_pressed = {}
+        self.dial_pressed = {}
+        self.selected_track = None
+        self.has_prev_key_release = {}
 
         self.torso = torso_sequencer.TorsoSequencer(
             midiout=midiout,
             lookahead=0.02,
             bpm=60,
         )
+
+        tp = torso_sequencer.TorsoTrack(
+            notes=[
+                ('C', 4),
+                ('E', 4),
+                ('G', 4),
+                # ('B', 4)
+            ],
+            pulses=8,
+            steps=16,
+            repeats=2,
+            # repeat_time=6,
+            sustain=1,
+            style=1,
+            voicing=3,
+        )
+        self.torso.add_track(track_name='piano', track=tp)
+
+        self.torso.pause()
         self.torso.start()
 
         Tk.__init__(self)
@@ -133,9 +155,10 @@ class App(Tk):
                     f.grid(row=r, column=c)
                     d = Dial(
                         parent=f, zeroAxis='y', fill='#aaaaaa',
-                        command=lambda degrees, row=r, col=c: self.dial_callback(row, col, b, degrees),
+                        command=lambda degrees, rowx=r, colx=c, bankx=b: self.dial_callback(rowx, colx, bankx, degrees),
                         press_command=self.dial_press,
                         release_command=self.dial_release,
+                        label=col[2],
                     )
                     d.pack(side=TOP, fill=BOTH)
                     lb = Label(f, text=col[0])
@@ -143,6 +166,7 @@ class App(Tk):
                     lb = Label(f, text=col[1])
                     lb.pack(side=TOP, fill=BOTH)
 
+                    print(f'<KeyPress-{col[2]}>')
                     self.bind(
                         f'<KeyPress-{col[2]}>',
                         d.mid_press_cb,
@@ -156,18 +180,22 @@ class App(Tk):
         for b, bank in enumerate(self.buttons):
             for r, row in enumerate(bank):
                 for c, col in enumerate(row):
+                    if col[0] is None:
+                        continue
+
                     f = Frame(frames[b+2])
                     f.grid(row=r, column=c)
-                    bt = Button(f, height=3, width=4)
+                    bt = Button(f, height=3, width=4, text=col[2])
 
+                    print(f'<KeyPress-{col[2]}>')
                     self.bind(
                         f'<KeyPress-{col[2]}>',
-                        lambda *args, row=r, col=c, **kwargs: self.button_press(row, col, b, *args, **kwargs)
+                        lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_press_repeat(rowx, colx, bankx, *args, **kwargs)
                     )
 
                     self.bind(
                         f'<KeyRelease-{col[2]}>',
-                        lambda *args, row=r, col=c, **kwargs: self.button_release(row, col, b, *args, **kwargs)
+                        lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_release_repeat(rowx, colx, bankx, *args, **kwargs)
                     )
 
                     bt.bind(
@@ -193,21 +221,58 @@ class App(Tk):
     def dial_callback(self, row, col, bank, degrees):
         print("dial", row, col, bank, degrees)
 
-    def button_press(self, row, col, bank, *args, **kwargs):
-        print('press', row, col, bank, *args, **kwargs)
+    def button_command(self, row, col, bank, press=False):
+        button = self.buttons[bank][row][col]
+        if len(button) > 3:
+            cmd = button[3][0 if press else 1]
+        else:
+            cmd = None
 
-    def button_release(self, row, col, bank, *args, **kwargs):
-        print('press', row, col, bank, *args, **kwargs)
+        return cmd if not cmd else getattr(self, cmd)
 
-    def press(self, button, callback=None, illumuinate=None):
-        self.pressed.append(button)
+    def button_release_repeat(self, row, col, bank, event):
+        bkey = (row, col, bank)
+        self.has_prev_key_release[bkey] = self.after_idle(lambda: self.button_release(row, col, bank, event))
 
-    def unpress(self, button, callback=None, deluminate=None):
-        i = self.pressed.index(button)
-        if i > -1:
-            self.pressed.pop(i)
+    def button_press_repeat(self, row, col, bank, event):
+        bkey = (row, col, bank)
+
+        hkr = self.has_prev_key_release.get(bkey)
+        if hkr:
+            self.after_cancel(hkr)
+            self.has_prev_key_release[bkey] = None
+        else:
+            self.button_press(row, col, bank, event)
+
+    def button_press(self, row, col, bank, event, *args, **kwargs):
+        bkey = (row, col, bank)
+        if bkey in self.button_pressed:
+            return
+
+        self.button_pressed[bkey] = 1
+
+        print(f'press row={row} col={col} bank={bank} event={event} serial={event.serial}')
+        cmd = self.button_command(row, col, bank, press=True)
+        if cmd:
+            cmd()
+
+    def button_release(self, row, col, bank, event, *args, **kwargs):
+        bkey = (row, col, bank)
+
+        self.has_prev_key_release[bkey] = None
+
+        if bkey not in self.button_pressed:
+            return
+
+        self.button_pressed.pop(bkey)
+
+        print(f'release row={row} col={col} bank={bank} event={event} serial={event.serial}')
+        cmd = self.button_command(row, col, bank, press=False)
+        if cmd:
+            cmd()
 
     def play_pause(self):
+        print("play_pause")
         self.torso.play_pause()
 
 

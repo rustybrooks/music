@@ -101,6 +101,7 @@ class TorsoTrack:
         self._sequence_start = None
         self._bpm = None
         self._beat = None
+        self._step = 1
 
     def set_bpm(self, value):
         self._bpm = value
@@ -221,7 +222,7 @@ class TorsoTrack:
 
                 vmax = (vleft >= r) + (self.voicing+1+self.repeats)//(self.repeats+1)
 
-                print("repeat", r, vmax, self.voicing // (1+self.repeats))
+                # print("repeat", r, vmax, self.voicing // (1+self.repeats))
 
                 for voicing in range(0, vmax):
                     events.extend([
@@ -244,8 +245,8 @@ class TorsoSequencer(threading.Thread):
         self.midiout = midiout
         self.interval = interval
         self.lookahead = lookahead
-        self.start_time = None
-        self.last_lookahead = None
+        self._start_time = None
+        self._last_lookahead = None
         self.pending = []
 
         self.tracks = {}
@@ -281,38 +282,45 @@ class TorsoSequencer(threading.Thread):
         else:
             self._paused.set()
 
+    def pause(self):
+        self._paused.set()
+
     def fill_lookahead(self):
-        next_lookahead = self.last_lookahead + self.lookahead
+        next_lookahead = self._last_lookahead + self.lookahead
         for v in self.tracks.values():
-            new = v.fill_lookahead(self.last_lookahead, next_lookahead)
+            new = v.fill_lookahead(self._last_lookahead, next_lookahead)
             if new:
                 for n in new:
                     heappush(self.pending, n)
 
-        self.last_lookahead = next_lookahead
+        self._last_lookahead = next_lookahead
 
     def reset(self):
-        self.start_time = time.time()
-        self.last_lookahead = self.start_time
+        self._step = 0
+        self.pending = []
+        self._start_time = time.time()
+        self._last_lookahead = self._start_time
         for t in self.tracks.values():
-            t._sequence_start = self.start_time
+            t._sequence_start = self._start_time
 
         self.fill_lookahead()
         self.fill_lookahead()
 
     def run(self):
-        steps = 0
         try:
             self.reset()
 
             while not self._stopped.is_set():
+                reset = False
                 while self._paused.is_set():
-                    time.sleep(.1)
+                    time.sleep(.2)
+                    reset = True
                 else:
-                    self.reset()
+                    if reset:
+                        self.reset()
 
                 t1 = time.time()
-                t1o = t1 - self.start_time
+                t1o = t1 - self._start_time
                 due = []
                 while True:
                     if not self.pending or self.pending[0].tick > t1o:
@@ -323,15 +331,14 @@ class TorsoSequencer(threading.Thread):
                 if due:
                     for i in range(len(due)):
                         m = heappop(due)
-                        # print(f"{t1o:.04f} - self.start_time {m}")
                         self.midiout.send_message(m.message)
 
-                if t1 >= self.last_lookahead:
+                if t1 >= self._last_lookahead:
                     self.fill_lookahead()
                     continue
 
-                steps += 1
-                left = (self.interval*steps) - (time.time() - self.start_time)
+                self._step += 1
+                left = (self.interval*self._step) - (time.time() - self._start_time)
                 if left <= 0:
                     print(f"overflow time {1000*left:.2f}ms")
                 else:

@@ -15,7 +15,8 @@ class Dial:
         command=None, press_command=None, release_command=None,
         initAngle=0.0,
         zeroAxis='x', rotDir='counterclockwise',
-        fill=None, outline='black', line='black'
+        fill=None, outline='black', line='black',
+        label=''
     ):
 
         self.command = command
@@ -37,25 +38,32 @@ class Dial:
         if outline is not None:
             kw['outline'] = outline
         self.main = c.create_oval(cx-r, cy-r, cx+r, cy+r, **kw)
-        c.tag_bind(self.main, '<ButtonPress-1>', self.button_press_cb)
-        c.tag_bind(self.main, '<Button1-Motion>', self.pointer_drag_cb)
-        c.tag_bind(self.main, '<ButtonRelease-1>', self.button_release_cb)
 
         self.mid = c.create_oval(cx-r//2, cy-r//2, cx+r//2, cy+r//2, fill='white')
         c.tag_bind(self.mid, '<ButtonPress-1>', self.mid_press_cb)
         c.tag_bind(self.mid, '<ButtonRelease-1>', self.mid_release_cb)
 
+        if label:
+            c.create_text(cx, cy, text=label, anchor='c', fill='black')
+
         bs = self.bump_size
         kw = {'width': bs}
         if line is not None:
             kw['fill'] = line
-        id = c.create_line(cx, cy, cx+r + bs, cy, **kw)
+        id = c.create_line(cx+r//5, cy, cx+r + bs, cy, **kw)
         self.line_id = id
         self.canvas = c
         self.widget = c
         self.rotDir = rotDir
         self.zeroAxis = zeroAxis
         self.setAngle(initAngle, doCallback=0)
+
+        c.tag_bind(self.main, '<ButtonPress-1>', self.button_press_cb)
+        c.tag_bind(self.main, '<Button1-Motion>', self.pointer_drag_cb)
+        c.tag_bind(self.main, '<ButtonRelease-1>', self.button_release_cb)
+        c.tag_bind(self.line_id, '<ButtonPress-1>', self.button_press_cb)
+        c.tag_bind(self.line_id, '<Button1-Motion>', self.pointer_drag_cb)
+        c.tag_bind(self.line_id, '<ButtonRelease-1>', self.button_release_cb)
 
         self.c = c
 
@@ -153,7 +161,9 @@ class Dial:
         rad = math.pi * cartesian / 180.0
         ox = d * math.cos(rad)
         oy = d * math.sin(rad)
-        self.canvas.coords(self.line_id, cx, cy, cx + ox, cy - oy)
+        ox2 = d/5 * math.cos(rad)
+        oy2 = d/5 * math.sin(rad)
+        self.canvas.coords(self.line_id, cx+ox2, cy-oy2, cx + ox, cy - oy)
 
         #
         # Call callback
