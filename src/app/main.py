@@ -9,6 +9,12 @@ sys.path.append(lp)
 from tkinter import *
 from app.dial import Dial
 
+import time
+from miditool import torso_sequencer, notes
+from rtmidi.midiutil import open_midiport
+from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
+from miditool.sequencer import Sequencer
+
 
 knobs1 = [
     [
@@ -82,9 +88,22 @@ buttons2 = [
 ]
 
 
-
 class App(Tk):
     def __init__(self):
+        midiout, port = open_midiport(
+            None,
+            "TORSO",
+            use_virtual=True,
+            client_name="TORSO"
+        )
+
+        self.torso = torso_sequencer.TorsoSequencer(
+            midiout=midiout,
+            lookahead=0.02,
+            bpm=60,
+        )
+        self.torso.start()
+
         Tk.__init__(self)
         self.title("boobs")
 
@@ -156,3 +175,5 @@ class App(Tk):
 if __name__ == '__main__':
     app = App()
     app.mainloop()
+    app.torso.join()
+    app.midiout.close_port()
