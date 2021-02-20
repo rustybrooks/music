@@ -35,7 +35,8 @@ class TorsoTrack:
     ]
 
     def __init__(
-        self, channel=0, steps=16,
+        self, channel=0,
+        steps=16,
         pulses=1,  # number of euclidean pulses to apply, 1 to steps
         pitch=0,  # pitch shift to apply to all notes, integer (FIXME add intelligent shifting?)
         harmony=0,  # transpose notes defined in pitch up one at a time?
@@ -51,9 +52,9 @@ class TorsoTrack:
         delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
         repeats=0,  # number of repeats to add, integer, will be is divisions of self.time
         repeat_offset=0,  # this delays the repeats, in units of 1 beat
-        repeat_time=2,  # this is the same as divion, but for repeats, minimum is 2
+        repeat_time=2,  # this is the same as divsion, but for repeats, minimum is 2
         pace=None,  # supposed to accelerate or decelerate repeats - not implemented
-        voicing=0,  # adds notes an octave above, 1 means just first note
+        voicing=0,  # adds notes an octave above
         style=0,  # integer, picks
         melody=0,  # "depth" LFO for phrase (speed?)
         phrase=0,  # integer, picks phrase from a list
@@ -63,7 +64,7 @@ class TorsoTrack:
         random_rate=None,
     ):
         self.channel = channel
-        self.notes = [note_to_number(x) for x in notes] or []
+        self.notes = [note_to_number(x) for x in notes or []]
         self.manual_steps = manual_steps or []
         self.pitch = pitch
         self.rotate = rotate
@@ -107,14 +108,6 @@ class TorsoTrack:
         self._bpm = value
         # self._beat = 60. / (value*self.division)
         self._beat = 60. / (value)
-
-    # # FIXME come back and clean up the math when I'm sure it works
-    # def set_division(self, value, now=None):
-    #     now = now or time.time()
-    #     old_offset = now - self._sequence_start
-    #     multiplier = self.division / value
-    #     new_offset = old_offset * multiplier
-    #     self._sequence_start = now - new_offset
 
     def set_accent_curve(self, value):
         self.accent_curve = self.accent_curves[value]
@@ -266,6 +259,12 @@ class TorsoSequencer(threading.Thread):
         self.tracks[track_name] = track
         track.set_bpm(self.bpm)
         track.generate()
+
+    def get_track(self, track_name, create=True):
+        if track_name not in self.tracks and create:
+            self.add_track(track_name, TorsoTrack())
+
+        return self.tracks[track_name]
 
     def stop(self, timeout=5):
         """Set thread stop event, causing it to exit its mainloop."""

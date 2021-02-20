@@ -27,36 +27,35 @@ class App(Tk):
         'passive': '#26d4c0'
     }
 
-    knobs = [
+    dials = [
         [
             [
-                ['steps', '',          'a', ],
-                ['pulses', 'rotate',   's', ],
-                ['cycles', '',         'd', ],
-                ['division', '',       'f', ],
-                ['velocity', '',       'g', ],
-                ['sustain', '',        'h', ],
+                ['steps', '',          'a', ['set_track_value', 'steps', int, 1, torso_sequencer.MAX_PULSE]],
+                ['pulses', 'rotate',   's', ['set_track_value', 'pulses', int, 1, torso_sequencer.MAX_PULSE], ['set_track_value', 'pulses', int, 1, torso_sequencer.MAX_PULSE]],
+                ['cycles', '',         'd', [], []],
+                ['division', '',       'f', [], []],
+                ['velocity', '',       'g', ['set_track_value', 'velocity', int, 0, 127], []],
+                ['sustain', '',        'h', ['set_track_value', 'sustain', int, 0, 127], []],
             ],
             [
-                ['repeats', 'offset',  'z', ],
-                ['time', 'pace',       'x', ],
-                ['voicing', 'style',   'c', ],
-                ['melody', 'phrase',   'v', ],
-                ['accent', 'curve',    'b', ],
-                ['timing', 'delay',    'n', ],
-
+                ['repeats', 'offset',  'z', ['set_track_value', 'repeats', int, 0, 4], ['set_track_value', 'repeats_offset', float, 0, 1]],  # This should be a function of division
+                ['time', 'pace',       'x', [], []],
+                ['voicing', 'style',   'c', ['set_track_value', 'voicing', int, 0, 16], ['set_track_value', 'style', int, 0, len(torso_sequencer.TorsoTrack.styles)-1]],
+                ['melody', 'phrase',   'v', ['set_track_value', 'melody', float, 0, 1], ['set_track_value', 'phrase', int, 0, len(torso_sequencer.TorsoTrack.phrases)-1]],
+                ['accent', 'curve',    'b', ['set_track_value', 'accent', float, 0, 1], ['set_track_value', 'accent_curve', int, 0, len(torso_sequencer.TorsoTrack.accent_curves)-1]],
+                ['timing', 'delay',    'n', ['set_track_value', 'timing', float, 0, 1], ['set_track_value', 'delay', float, 0, 1]],
             ]
         ],
         [
             [
-                ['pitch', 'harmony',   'j', ],
-                ['length', 'quantize', 'k', ],
-                ['tempo', '',          'l', ],
+                ['pitch', 'harmony',   'j', ['set_track_value', 'pitch', int, -36, 36], []],
+                ['length', 'quantize', 'k', [], []],
+                ['tempo', '',          'l', ['set_track_value', 'bpm', int, 50, 300], []],  # FIXME make bpm property
             ],
             [
-                ['scale', 'root',      'm', ],
-                ['midi ch', '',        ',', ],
-                ['random', 'rate',     '.', ],
+                ['scale', 'root',      'm', [], []],
+                ['midi ch', '',        ',', ['set_track_value', 'channel', int, 0, 15], []],
+                ['random', 'rate',     '.', [], []],
             ]
         ]
     ]
@@ -175,7 +174,7 @@ class App(Tk):
 
         frames = [flt, frt, flb, frb]
 
-        for b, bank in enumerate(self.knobs):
+        for b, bank in enumerate(self.dials):
             for r, row in enumerate(bank):
                 for c, col in enumerate(row):
                     f = Frame(frames[b], bg=self.colors['bg'])
@@ -254,6 +253,24 @@ class App(Tk):
 
     def dial_callback(self, row, col, bank, degrees):
         print("dial", row, col, bank, degrees)
+        dial = self.dials[bank][row][col]
+        if self.control:
+            cmd = dial[4]
+        else:
+            cmd = dial[3]
+
+        if not cmd:
+            return
+
+        if cmd[0] == "set_track_value":
+            if self.pattern is None or self.bank is None:
+                print(f"need pattern or bank - bank={self.bank} pattern={self.pattern}")
+                return
+            track = self.torso.get_track((self.bank, self.pattern))
+            field, ftype, fmin, fmax = cmd[1:]
+            value = ftype(fmin + (fmax - fmin)*degrees/360.0)
+            print(f"set {field}={value}")
+            setattr(track, field, value)
 
     def button_command(self, row, col, bank, press=False):
         button = self.buttons[bank][row][col]
@@ -290,6 +307,7 @@ class App(Tk):
         if bank == 0:
             if self.mode == MODE_PATTERNS:
                 self.pattern = row*self.cols + col
+                self.update_dials()
             elif self.mode == MODE_MUTE:
                 pattern = row*self.cols + col
                 bank = self.active_patterns[self.bank]
@@ -343,6 +361,10 @@ class App(Tk):
             print(f"unknown mode {self.mode}")
 
         self.update(); self.update_idletasks()
+
+    def update_dials(self):
+        track = self.torso.get_track((self.bank, self.pattern))
+        
 
     def play_pause(self):
         print("play_pause")

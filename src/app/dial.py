@@ -15,7 +15,7 @@ class Dial:
         command=None, press_command=None, release_command=None,
         initAngle=0.0,
         zeroAxis='x',
-        rotDir='counterclockwise',
+        rotDir='clockwise',
         fill=None,
         outline='black',
         line='black',
@@ -124,7 +124,7 @@ class Dial:
         (x, y) = canvas_coordinates(self.canvas, event)
         (dx, dy) = (x - self.center_xy[0], self.center_xy[1] - y)
         rad = math.atan2(dy, dx)
-        deg = 180 * rad / math.pi
+        deg = math.degrees(rad)
         if self.zeroAxis == 'y':
             deg = deg + 270
         elif self.zeroAxis == '-x':
@@ -135,9 +135,9 @@ class Dial:
         if self.rotDir == 'clockwise':
             deg = 360 - deg
 
-        while deg > 180.0:
+        while deg > 360.0:
             deg = deg - 360
-        while deg <= -180.0:
+        while deg <= 0:
             deg = deg + 360
         return deg
 
@@ -159,9 +159,9 @@ class Dial:
             cartesian = cartesian + 180
         elif self.zeroAxis == '-y':
             cartesian = cartesian + 270
-        while cartesian > 180.0:
+        while cartesian > 360.0:
             cartesian = cartesian - 360
-        while cartesian <= -180.0:
+        while cartesian <= 0.0:
             cartesian = cartesian + 360
         rad = math.pi * cartesian / 180.0
         ox = d * math.cos(rad)
