@@ -9,13 +9,31 @@ sys.path.append(lp)
 from tkinter import *
 from tkmacosx import Button
 from app.dial import Dial
+import json
 
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
 from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 
 MODE_PATTERNS = 'patterns'
+MODE_STEPS = 'steps'
+MODE_PULSES = 'pulses'
+MODE_ROTATE = 'rotate'
+MODE_CYCLES = 'cycles'
+MODE_DIVISION = 'division'
+MODE_VELOCITY = 'velocity'
+MODE_SUSTAIN = 'sustain'
 MODE_MUTE = 'mute'
+MODE_REPEATS = 'repeats'
+MODE_REPEATS_OFFSET = 'repeats_offset'
+MODE_REPEATS_TIME = 'repeats_time'
+MODE_PACE = 'pace'
+MODE_VOICING = 'voicing'
+MODE_MELODY = 'melody'
+MODE_PHRASE = 'phrase'
+MODE_ACCENT_CURVE = 'accent_curve'
+MODE_STYLE = 'style'
+MODE_SCALE = 'scale'
 
 
 class App(Tk):
@@ -28,36 +46,103 @@ class App(Tk):
     }
 
     dials = [
-        [
-            [
-                ['steps', '',          'a', ['set_track_value', 'steps', int, 1, torso_sequencer.MAX_PULSE]],
-                ['pulses', 'rotate',   's', ['set_track_value', 'pulses', int, 1, torso_sequencer.MAX_PULSE], ['set_track_value', 'pulses', int, 1, torso_sequencer.MAX_PULSE]],
-                ['cycles', '',         'd', [], []],
-                ['division', '',       'f', [], []],
-                ['velocity', '',       'g', ['set_track_value', 'velocity', int, 0, 127], []],
-                ['sustain', '',        'h', ['set_track_value', 'sustain', int, 0, 127], []],
-            ],
-            [
-                ['repeats', 'offset',  'z', ['set_track_value', 'repeats', int, 0, 4], ['set_track_value', 'repeats_offset', float, 0, 1]],  # This should be a function of division
-                ['time', 'pace',       'x', [], []],
-                ['voicing', 'style',   'c', ['set_track_value', 'voicing', int, 0, 16], ['set_track_value', 'style', int, 0, len(torso_sequencer.TorsoTrack.styles)-1]],
-                ['melody', 'phrase',   'v', ['set_track_value', 'melody', float, 0, 1], ['set_track_value', 'phrase', int, 0, len(torso_sequencer.TorsoTrack.phrases)-1]],
-                ['accent', 'curve',    'b', ['set_track_value', 'accent', float, 0, 1], ['set_track_value', 'accent_curve', int, 0, len(torso_sequencer.TorsoTrack.accent_curves)-1]],
-                ['timing', 'delay',    'n', ['set_track_value', 'timing', float, 0, 1], ['set_track_value', 'delay', float, 0, 1]],
-            ]
-        ],
-        [
-            [
-                ['pitch', 'harmony',   'j', ['set_track_value', 'pitch', int, -36, 36], []],
-                ['length', 'quantize', 'k', [], []],
-                ['tempo', '',          'l', ['set_track_value', 'bpm', int, 50, 300], []],  # FIXME make bpm property
-            ],
-            [
-                ['scale', 'root',      'm', [], []],
-                ['midi ch', '',        ',', ['set_track_value', 'channel', int, 0, 15], []],
-                ['random', 'rate',     '.', [], []],
-            ]
-        ]
+        {
+            'row': 0, 'col': 0, 'pos': 0, 'label': 'steps', 'alt_label': '', 'keybind': 'a',
+            'dial_cmd': ['set_real_value', 'steps', int, 1, 16],
+            'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': [],
+        },
+        {
+            'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
+            'dial_cmd': ['set_real_value', 'pulses', int, 1, 16],
+            'alt_dial_cmd': ['set_real_value', 'pulses', int, 1, 16],
+            'press_cmd': [], 'alt_press_cmd': [],
+        },
+        {
+            'row': 0, 'col': 2, 'pos': 0, 'label': 'cycles', 'alt_label': '', 'keybind': 'd',
+            'dial_cmd': [], 'alt_dial_cmd': [], 'press_cmd': [], 'alt_press_cmd': [],
+        },
+        {
+            'row': 0, 'col': 3, 'pos': 0, 'label': 'division', 'alt_label': '', 'keybind': 'f',
+            'dial_cmd': [], 'alt_dial_cmd': [], 'press_cmd': [], 'alt_press_cmd': [],
+        },
+        {
+            'row': 0, 'col': 4, 'pos': 0, 'label': 'velocity', 'alt_label': '', 'keybind': 'g',
+            'dial_cmd': ['set_real_value', 'velocity', int, 0, 127],
+            'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': [],
+        },
+        {
+            'row': 0, 'col': 5, 'pos': 0, 'label': 'sustain', 'alt_label': '', 'keybind': 'h',
+            'dial_cmd': ['set_real_value', 'sustain', int, 0, 127],
+            'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 0, 'col': 0, 'pos': 1, 'label': 'pitch', 'alt_label': 'harmony', 'keybind': 'j',
+            'dial_cmd': ['set_real_value', 'pitch', int, -36, 36],
+            'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 0, 'col': 1, 'pos': 1, 'label': 'length', 'alt_label': 'quantize', 'keybind': 'k',
+            'dial_cmd': [], 'alt_dial_cmd': [], 'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 0, 'col': 2, 'pos': 1, 'label': 'tempo', 'alt_label': '', 'keybind': 'l',
+            'dial_cmd': ['set_real_value', 'bpm', int, 50, 300],
+            'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+
+        {
+            'row': 1, 'col': 0, 'pos': 0, 'label': 'repeats', 'alt_label': 'offset', 'keybind': 'z',
+            'dial_cmd': ['set_real_value', 'repeats', int, 0, 4],
+            'alt_dial_cmd': ['set_real_value', 'repeats_offset', float, 0, 1],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 1, 'pos': 0, 'label': 'time', 'alt_label': 'pace', 'keybind': 'x',
+            'dial_cmd': [], 'alt_dial_cmd': [], 'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
+            'dial_cmd': ['set_real_value', 'voicing', int, 0, 16],
+            'alt_dial_cmd': ['set_real_value', 'style', int, 0, 1],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
+            'dial_cmd': ['set_real_value', 'melody', float, 0, 1],
+            'alt_dial_cmd': ['set_real_value', 'phrase', int, 0, 0],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 4, 'pos': 0, 'label': 'accent', 'alt_label': 'curve', 'keybind': 'b',
+            'dial_cmd': ['set_real_value', 'accent', float, 0, 1],
+            'alt_dial_cmd': ['set_real_value', 'accent_curve', int, 0, 0], 'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 5, 'pos': 0, 'label': 'timing', 'alt_label': 'delay', 'keybind': 'n',
+            'dial_cmd': ['set_real_value', 'timing', float, 0, 1],
+            'alt_dial_cmd': ['set_real_value', 'delay', float, 0, 1],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
+            'dial_cmd': [], 'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 1, 'pos': 1, 'label': 'midi ch', 'alt_label': '', 'keybind': ',',
+            'dial_cmd': ['set_real_value', 'channel', int, 0, 15],
+            'alt_dial_cmd': [],
+            'press_cmd': [], 'alt_press_cmd': []
+        },
+        {
+            'row': 1, 'col': 2, 'pos': 1, 'label': 'random', 'alt_label': 'rate', 'keybind': '.',
+            'dial_cmd': [], 'alt_dial_cmd': [], 'press_cmd': [], 'alt_press_cmd': []
+        },
     ]
     buttons = [
         [
@@ -174,36 +259,34 @@ class App(Tk):
 
         frames = [flt, frt, flb, frb]
 
-        for b, bank in enumerate(self.dials):
-            for r, row in enumerate(bank):
-                for c, col in enumerate(row):
-                    f = Frame(frames[b], bg=self.colors['bg'])
-                    f.grid(row=r, column=c)
-                    d = Dial(
-                        parent=f,
-                        command=lambda degrees, rowx=r, colx=c, bankx=b: self.dial_callback(rowx, colx, bankx, degrees),
-                        zeroAxis='y',
-                        fill='#aaaaaa',
-                        press_command=self.dial_press,
-                        release_command=self.dial_release,
-                        label=col[2],
-                        bg=self.colors['bg'],
-                    )
-                    d.pack(side=TOP, fill=BOTH)
-                    lb = Label(f, text=col[0], bg=self.colors['bg'])
-                    lb.pack(side=TOP, fill=BOTH)
-                    lb = Label(f, text=col[1], bg=self.colors['bg'])
-                    lb.pack(side=TOP, fill=BOTH)
+        for dial in self.dials:
+            f = Frame(frames[dial['pos']], bg=self.colors['bg'])
+            f.grid(row=dial['row'], column=dial['col'])
+            d = Dial(
+                parent=f,
+                command=lambda degrees, rowx=dial['row'], colx=dial['col'], bankx=dial['pos']: self.dial_callback(rowx, colx, bankx, degrees),
+                zeroAxis='y',
+                fill='#aaaaaa',
+                press_command=self.dial_press,
+                release_command=self.dial_release,
+                label=dial['keybind'],
+                bg=self.colors['bg'],
+            )
+            d.pack(side=TOP, fill=BOTH)
+            lb = Label(f, text=dial['label'], bg=self.colors['bg'])
+            lb.pack(side=TOP, fill=BOTH)
+            lb = Label(f, text=dial['alt_label'], bg=self.colors['bg'])
+            lb.pack(side=TOP, fill=BOTH)
 
-                    self.bind(
-                        f'<KeyPress-{col[2]}>',
-                        d.mid_press_cb,
-                    )
+            self.bind(
+                f'<KeyPress-{dial["keybind"]}>',
+                d.mid_press_cb,
+            )
 
-                    self.bind(
-                        f'<KeyRelease-{col[2]}>',
-                        d.mid_release_cb,
-                    )
+            self.bind(
+                f'<KeyRelease-{dial["keybind"]}>',
+                d.mid_release_cb,
+            )
 
         for b, bank in enumerate(self.buttons):
             for r, row in enumerate(bank):
@@ -253,16 +336,18 @@ class App(Tk):
 
     def dial_callback(self, row, col, bank, degrees):
         print("dial", row, col, bank, degrees)
-        dial = self.dials[bank][row][col]
-        if self.control:
-            cmd = dial[4]
-        else:
-            cmd = dial[3]
+        dial = next(x for x in self.dials if bank == x['pos'] and row == x['row'] and col == x['col'])
+
+        print(f"{row} {col} {bank} ctrl={self.control}-- {dial}")
+
+        cmd = dial['alt_dial_cmd'] if self.control else dial['dial_cmd']
+
+        print(f"cmd = {cmd}")
 
         if not cmd:
             return
 
-        if cmd[0] == "set_track_value":
+        if cmd[0] == "set_real_value":
             if self.pattern is None or self.bank is None:
                 print(f"need pattern or bank - bank={self.bank} pattern={self.pattern}")
                 return
@@ -364,7 +449,7 @@ class App(Tk):
 
     def update_dials(self):
         track = self.torso.get_track((self.bank, self.pattern))
-        
+
 
     def play_pause(self):
         print("play_pause")
