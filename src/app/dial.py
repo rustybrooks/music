@@ -59,7 +59,7 @@ class Dial:
         self.widget = c
         self.rotDir = rotDir
         self.zeroAxis = zeroAxis
-        self.setAngle(initAngle, doCallback=0)
+        self.setAngle(initAngle, doCallback=False)
 
         c.tag_bind(self.main, '<ButtonPress-1>', self.button_press_cb)
         c.tag_bind(self.main, '<Button1-Motion>', self.pointer_drag_cb)
@@ -148,7 +148,7 @@ class Dial:
 
     # ---------------------------------------------------------------------------
     #
-    def set_angle(self, a, doCallback=1):
+    def set_angle(self, a, doCallback=True):
 
         #
         # Move dial pointer

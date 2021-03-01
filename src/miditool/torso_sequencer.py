@@ -157,7 +157,8 @@ class TorsoTrack:
         sequence = [0]*self.steps
 
         for i in range(self.pulses):
-            sequence[int(i*interval)] = 1
+            print("int", interval, i*interval, round(i*interval))
+            sequence[round(i*interval)] = 1
 
         for i, v in enumerate(self.manual_steps):
             if v < 0:
