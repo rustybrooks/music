@@ -19,6 +19,11 @@ MAX_PULSE = 16
 
 
 class TorsoTrack:
+    divisions = [
+        1, 2, 4, 8, 16, 32, 64,
+        3, 6, 12, 24, 48,
+    ]
+
     accent_curves = [
         [128*x/100. for x in [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20, 70]],
     ]
@@ -53,7 +58,7 @@ class TorsoTrack:
         repeats=0,  # number of repeats to add, integer, will be is divisions of self.time
         repeat_offset=0,  # this delays the repeats, in units of 1 beat
         repeat_time=2,  # this is the same as divsion, but for repeats, minimum is 2
-        pace=None,  # supposed to accelerate or decelerate repeats - not implemented
+        repeat_pace=None,  # supposed to accelerate or decelerate repeats - not implemented
         voicing=0,  # adds notes an octave above
         style=0,  # integer, picks
         melody=0,  # "depth" LFO for phrase (speed?)
@@ -77,7 +82,7 @@ class TorsoTrack:
         self.repeats = repeats
         self.repeat_offset = repeat_offset
         self.repeat_time = repeat_time
-        self.pace = pace
+        self.repeat_pace = repeat_pace
         self.voicing = voicing
         self.melody = melody
 
