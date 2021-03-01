@@ -58,98 +58,89 @@ class App(Tk):
         {
             'row': 0, 'col': 0, 'pos': 0, 'label': 'steps', 'alt_label': '', 'keybind': 'a',
             'dial_press_cmd': ['push_mode', [[MODE_STEPS]]], 'dial_release_cmd': ['pop_mode'],
-            'property': 'steps',
-            'min': 0, 'max': 16, 'type': int,
+            'property': 'steps', 'min': 0, 'max': 16, 'type': int,
         },
         {
             'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
             'dial_press_cmd': ['push_mode', [[MODE_PULSES, MODE_ROTATE]]], 'dial_release_cmd': ['pop_mode'],
-            'property': 'pulses', 'alt_property': 'rotate',
-            'min': 0, 'max': 16, 'type': int
+            'property': 'pulses', 'alt_property': 'rotate', 'min': 0, 'max': 16, 'type': int
         },
         {
             'row': 0, 'col': 2, 'pos': 0, 'label': 'cycles', 'alt_label': '', 'keybind': 'd',
-            'dial_cmd': [], 'alt_dial_cmd': [],
         },
         {
             'row': 0, 'col': 3, 'pos': 0, 'label': 'division', 'alt_label': '', 'keybind': 'f',
             'dial_press_cmd': ['push_mode', [[MODE_DIVISION]]], 'dial_release_cmd': ['pop_mode'],
+            'property': 'division',
             'list': torso_sequencer.TorsoTrack.divisions,
         },
         {
             'row': 0, 'col': 4, 'pos': 0, 'label': 'velocity', 'alt_label': '', 'keybind': 'g',
             'dial_press_cmd': ['push_mode', [[MODE_VELOCITY]]], 'dial_release_cmd': ['pop_mode'],
-            'alt_dial_cmd': [],
+            'property': 'velocity', 'min': 0, 'max': 127, 'type': int,
         },
         {
             'row': 0, 'col': 5, 'pos': 0, 'label': 'sustain', 'alt_label': '', 'keybind': 'h',
             'dial_press_cmd': ['push_mode', [[MODE_SUSTAIN]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'sustain', int, 0, 127],
-            'alt_dial_cmd': [],
+            'property': 'sustain', 'min': 0, 'max': 127, 'type': int,
         },
         {
             'row': 0, 'col': 0, 'pos': 1, 'label': 'pitch', 'alt_label': 'harmony', 'keybind': 'j',
             'dial_press_cmd': ['push_mode', [[MODE_PITCH, MODE_HARMONY]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'pitch', int, -36, 36],
-            'alt_dial_cmd': [],
+            'property': 'pitch', 'min': -36, 'max': 36, 'type': int,
+            'alt_property': 'harmony',  # FIXME min/max etc?
         },
         {
             'row': 0, 'col': 1, 'pos': 1, 'label': 'length', 'alt_label': 'quantize', 'keybind': 'k',
             'dial_press_cmd': ['push_mode', [[MODE_LENGTH, MODE_QUANTIZE]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': [], 'alt_dial_cmd': [],
         },
         {
             'row': 0, 'col': 2, 'pos': 1, 'label': 'tempo', 'alt_label': '', 'keybind': 'l',
             'dial_press_cmd': ['push_mode', [[MODE_TEMPO]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'bpm', int, 50, 300],
-            'alt_dial_cmd': [],
+            'property': 'bpm', 'min': 50, 'max': 300, 'type': int,
         },
-
         {
             'row': 1, 'col': 0, 'pos': 0, 'label': 'repeats', 'alt_label': 'offset', 'keybind': 'z',
             'dial_press_cmd': ['push_mode', [[MODE_REPEATS, MODE_REPEATS_OFFSET]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'repeats', int, 0, 4],
-            'alt_dial_cmd': ['set_real_value', 'repeats_offset', float, 0, 1],
+            'property': 'repeats', 'min': 0, 'max': 4, 'type': int,
+            'alt_property': 'repeats_offset', 'alt_min': 0, 'alt_max': 4, 'alt_type': int,
         },
         {
             'row': 1, 'col': 1, 'pos': 0, 'label': 'time', 'alt_label': 'pace', 'keybind': 'x',
             'dial_press_cmd': ['push_mode', [[MODE_REPEATS_TIME, MODE_REPEATS_PACE]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': [], 'alt_dial_cmd': [],
         },
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
             'dial_press_cmd': ['push_mode', [[MODE_VOICING, MODE_STYLE]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'voicing', int, 0, 16],
-            'alt_dial_cmd': ['set_real_value', 'style', int, 0, 1],
+            'property': 'voicing', 'min': 0, 'max': 15, 'type': int,
+            'alt_property': 'style', 'alt_min': 0, 'alt_max': 1, 'alt_type': int,  # FIXME pick from list
         },
         {
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
             'dial_press_cmd': ['push_mode', [[MODE_MELODY, MODE_PHRASE]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'melody', float, 0, 1],
-            'alt_dial_cmd': ['set_real_value', 'phrase', int, 0, 0],
+            'property': 'melody', 'min': 0, 'max': 1, 'type': int,  # FIXME pick from list
+            'alt_property': 'phrase', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
         },
         {
             'row': 1, 'col': 4, 'pos': 0, 'label': 'accent', 'alt_label': 'curve', 'keybind': 'b',
             'dial_press_cmd': ['push_mode', [[MODE_ACCENT, MODE_ACCENT_CURVE]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'accent', float, 0, 1],
-            'alt_dial_cmd': ['set_real_value', 'accent_curve', int, 0, 0],
+            'property': 'accent', 'min': 0, 'max': 1, 'type': float,  # FIXME should do in int 0-127 maybe?
+            'alt_property': 'accent_curve', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
         },
         {
             'row': 1, 'col': 5, 'pos': 0, 'label': 'timing', 'alt_label': 'delay', 'keybind': 'n',
             'dial_press_cmd': ['push_mode', [[MODE_TIMING, MODE_DELAY]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'timing', float, 0, 1],
-            'alt_dial_cmd': ['set_real_value', 'delay', float, 0, 1],
+            'property': 'timing', 'min': 0, 'max': 1, 'type': float,
+            'alt_property': 'delay',
         },
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
             'dial_press_cmd': ['push_mode', [[MODE_SCALE, MODE_ROOT]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': [], 'alt_dial_cmd': [],
         },
         {
             'row': 1, 'col': 1, 'pos': 1, 'label': 'midi ch', 'alt_label': '', 'keybind': ',',
             'dial_press_cmd': ['push_mode', [[MODE_SCALE, MODE_ROOT]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': ['set_real_value', 'channel', int, 0, 15],
-            'alt_dial_cmd': [],
+            'property': 'channel', 'min': 0, 'max': 16, 'type': int,
         },
         {
             'row': 1, 'col': 2, 'pos': 1, 'label': 'random', 'alt_label': 'rate', 'keybind': '.',
@@ -284,16 +275,19 @@ class App(Tk):
 
         for dial in self.dials:
             if 'property' in dial and 'dial_cmd' not in dial:
-                dial['dial_cmd'] = ['set_real_value', dial['property'], dial['type'], dial['min'], dial['max']]
+                if 'list' in dial:
+                    pass
+                else:
+                    dial['dial_cmd'] = ['set_real_value', dial['property'], dial['type'], dial['min'], dial['max']]
 
-                if dial.get('alt_property'):
-                    dial['alt_cmd'] = [
-                        'set_real_value',
-                        dial['alt_label'],
-                        dial.get('type', dial.get('alt_type')),
-                        dial.get('min', dial.get('alt_min')),
-                        dial.get('max', dial.get('alt_max')),
-                    ]
+                    if dial.get('alt_property'):
+                        dial['alt_cmd'] = [
+                            'set_real_value',
+                            dial['alt_label'],
+                            dial.get('type', dial.get('alt_type')),
+                            dial.get('min', dial.get('alt_min')),
+                            dial.get('max', dial.get('alt_max')),
+                        ]
 
             f = Frame(frames[dial['pos']], bg=self.colors['bg'])
             f.grid(row=dial['row'], column=dial['col'])
@@ -384,8 +378,16 @@ class App(Tk):
         if self.old_modes:
             return  # for now no mode stack, one mode at a time
 
+        if self.control:
+            mode = new_mode[1] if len(new_mode) > 1 else None
+        else:
+            mode = new_mode[0]
+
+        if not mode:
+            return
+
         self.old_modes.append(self.mode)
-        self.mode = new_mode
+        self.mode = mode
         self.update_display()
 
     def pop_mode(self):
@@ -399,14 +401,14 @@ class App(Tk):
         pass
 
     def dial_callback(self, row, col, bank, degrees):
-        print("dial", row, col, bank, degrees)
+        # print("dial", row, col, bank, degrees)
         dial = next(x for x in self.dials if bank == x['pos'] and row == x['row'] and col == x['col'])
 
-        print(f"{row} {col} {bank} ctrl={self.control}-- {dial}")
+        # print(f"{row} {col} {bank} ctrl={self.control}-- {dial}")
 
         cmd = dial['alt_dial_cmd'] if self.control else dial['dial_cmd']
 
-        print(f"cmd = {cmd}")
+        # print(f"cmd = {cmd}")
 
         if not cmd:
             return
@@ -556,15 +558,23 @@ class App(Tk):
         for dial in self.dials:
             prop = dial.get('alt_property' if self.control else 'property')
             if prop:
-                index = self.cols*dial['row'] + dial['col']
+                c = 6 if dial['pos'] == 0 else 3
+                index = c*dial['row'] + dial['col']
                 value = getattr(track, prop)
-                a = min(359, 360*(value - dial['min']) / (dial['max'] - dial['min']))
-                print("dial index", index, value, dial['max'] - dial['min'], a)
+                print("prop...", prop, index, dial['pos'], len(self.w_dials[dial['pos']]))
+                if 'list' in dial:
+                    value = dial['list'].index(value)
+                    dmin = 0
+                    dmax = len(dial['list']) - 1
+                else:
+                    dmin = dial['min']
+                    dmax = dial['max']
+
+                a = min(359, 360*(value - dmin) / (dmax - dmin))
                 w = self.w_dials[dial['pos']][index]
                 w.set_angle(a, doCallback=False)
 
     def play_pause(self):
-        print("play_pause")
         self.torso.play_pause()
 
     def set_control(self):
@@ -576,7 +586,6 @@ class App(Tk):
     def set_mute(self):
         self.old_mode = self.mode
         self.mode = MODE_MUTE
-        print(self.w_buttons[1])
         self.w_buttons[1][6].configure(bg=self.colors['active'])
 
     def release_mute(self):
