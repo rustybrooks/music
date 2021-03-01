@@ -78,11 +78,13 @@ class Dial:
 
     def mid_press_cb(self, event):
         self.c.itemconfigure(self.mid, fill='red')
-        self.press_command()
+        if self.press_command:
+            self.press_command()
 
     def mid_release_cb(self, event):
         self.c.itemconfigure(self.mid, fill='white')
-        self.release_command()
+        if self.release_command:
+            self.release_command()
 
     def button_press_cb(self, event):
         try:

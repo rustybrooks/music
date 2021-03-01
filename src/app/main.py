@@ -9,11 +9,9 @@ sys.path.append(lp)
 from tkinter import *
 from tkmacosx import Button
 from app.dial import Dial
-import json
 
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
-from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 
 MODE_PATTERNS = 'patterns'
 MODE_STEPS = 'steps'
@@ -58,6 +56,8 @@ class App(Tk):
             'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
             'dial_cmd': ['set_real_value', 'pulses', int, 1, 16],
             'alt_dial_cmd': ['set_real_value', 'pulses', int, 1, 16],
+            'dial_press_cmd': ['push_mode', [MODE_PULSES]],
+            'dial_release_cmd': ['pop_mode'],
             'press_cmd': [], 'alt_press_cmd': [],
         },
         {
@@ -214,8 +214,17 @@ class App(Tk):
         self.torso = torso_sequencer.TorsoSequencer(
             midiout=midiout,
             lookahead=0.02,
-            bpm=60,
+            bpm=120,
         )
+
+        tp = torso_sequencer.TorsoTrack(
+            notes=[('C', 4)],
+            pulses=8,
+            steps=16,
+        )
+        self.torso.add_track(track_name=(0, 0), track=tp)
+        self.pattern = 0
+        self.bank = 0
 
         # tp = torso_sequencer.TorsoTrack(
         #     notes=[
@@ -235,7 +244,7 @@ class App(Tk):
         # self.torso.add_track(track_name='piano', track=tp)
 
         self.torso.pause()
-        # self.torso.start()
+        self.torso.start()
 
         Tk.__init__(self)
         self.title("boobs")
@@ -348,6 +357,9 @@ class App(Tk):
         return lambda: fn(*a, **kw)
 
     def push_mode(self, new_mode):
+        if self.old_modes:
+            return  # for now no mode stack, one mode at a time
+
         print("push mode")
         self.old_modes.append(self.mode)
         self.mode = new_mode
@@ -383,7 +395,10 @@ class App(Tk):
                 return
             track = self.torso.get_track((self.bank, self.pattern))
             field, ftype, fmin, fmax = cmd[1:]
-            value = ftype(fmin + (fmax - fmin)*degrees/360.0)
+            value = fmin + (fmax - fmin)*degrees/360.0
+            if ftype is int:
+                value = round(value)
+            value = ftype(value)
             print(f"set {field}={value}")
             setattr(track, field, value)
 
@@ -490,6 +505,21 @@ class App(Tk):
                         color = 'inactive'
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
+        elif self.mode in [MODE_PULSES]:
+            track = self.torso.get_track((self.bank, self.pattern))
+            seq = track.sequence
+            print(seq)
+
+            for row in range(2):
+                for col in range(8):
+                    index = row*self.cols + col
+                    if seq[index]:
+                        color = 'active2'
+                    else:
+                        color = 'inactive'
+
+                    self.w_buttons[0][index].configure(bg=self.colors[color])
+
 
         else:
             print(f"unknown mode {self.mode}")

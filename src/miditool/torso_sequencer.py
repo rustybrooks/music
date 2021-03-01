@@ -92,21 +92,45 @@ class TorsoTrack:
         self.set_phrase(phrase)
 
         # require re-sequencing:
-        self.steps = steps
-        self.pulses = pulses
 
         self.sequence = []
         self.randoms = {}
 
         # some internal params
         self._sequence_start = None
-        self._bpm = None
         self._beat = None
         self._step = 1
 
-    def set_bpm(self, value):
-        self._bpm = value
-        # self._beat = 60. / (value*self.division)
+        # for property getter/setters
+        self.__steps = steps
+        self.__bpm = None
+        self.__pulses = pulses
+
+    @property
+    def pulses(self):
+        return self.__pulses
+
+    @pulses.setter
+    def pulses(self, value):
+        self.__pulses = value
+        self.generate()
+
+    @property
+    def steps(self):
+        return self.__steps
+
+    @steps.setter
+    def steps(self, value):
+        self.__steps = value
+        self.generate()
+
+    @property
+    def bpm(self):
+        return self.__bpm
+
+    @bpm.setter
+    def bpm(self, value):
+        self.__bpm = value
         self._beat = 60. / (value)
 
     def set_accent_curve(self, value):
@@ -257,7 +281,7 @@ class TorsoSequencer(threading.Thread):
 
     def add_track(self, track_name, track):
         self.tracks[track_name] = track
-        track.set_bpm(self.bpm)
+        track.bpm = self.bpm
         track.generate()
 
     def get_track(self, track_name, create=True):
@@ -277,8 +301,10 @@ class TorsoSequencer(threading.Thread):
 
     def play_pause(self):
         if self._paused.is_set():
+            print("play")
             self._paused.clear()
         else:
+            print("pause")
             self._paused.set()
 
     def pause(self):
