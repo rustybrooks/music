@@ -22,8 +22,6 @@ class Dial:
         label='',
         bg=None,
     ):
-
-
         self.command = command
         self.press_command = press_command
         self.release_command = release_command
@@ -92,6 +90,8 @@ class Dial:
         except ValueError:
             pass
 
+        self.mid_press_cb(event)
+
     def pointer_drag_cb(self, event):
         if self.drag_from_angle == None:
             return
@@ -116,6 +116,9 @@ class Dial:
             delta = a - self.drag_from_angle
             self.drag_from_angle = None
             self.set_angle(a)
+
+        self.mid_release_cb(event)
+
 
     # ---------------------------------------------------------------------------
     #

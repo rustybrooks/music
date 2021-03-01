@@ -50,6 +50,8 @@ class App(Tk):
             'row': 0, 'col': 0, 'pos': 0, 'label': 'steps', 'alt_label': '', 'keybind': 'a',
             'dial_cmd': ['set_real_value', 'steps', int, 1, 16],
             'alt_dial_cmd': [],
+            'dial_press_cmd': ['push_mode', [MODE_STEPS]],
+            'dial_release_cmd': ['pop_mode'],
             'press_cmd': [], 'alt_press_cmd': [],
         },
         {
@@ -198,7 +200,7 @@ class App(Tk):
         self.selected_track = None
         self.has_prev_key_release = {}
 
-        self.old_mode = None
+        self.old_modes = []
         self.mode = MODE_PATTERNS
         self.control = False
         self.pattern = None
@@ -267,8 +269,8 @@ class App(Tk):
                 command=lambda degrees, rowx=dial['row'], colx=dial['col'], bankx=dial['pos']: self.dial_callback(rowx, colx, bankx, degrees),
                 zeroAxis='y',
                 fill='#aaaaaa',
-                press_command=self.dial_press,
-                release_command=self.dial_release,
+                press_command=self.make_callback(dial.get('dial_press_cmd')),
+                release_command=self.make_callback(dial.get('dial_release_cmd')),
                 label=dial['keybind'],
                 bg=self.colors['bg'],
             )
@@ -328,6 +330,34 @@ class App(Tk):
 
         self.update_display()
 
+    def make_callback(self, args):
+        print("mc", args)
+        if args is None:
+            return None
+
+        print("making callback")
+        fn = getattr(self, args[0])
+
+        if len(args) < 3:
+            args.extend([None, None])
+        elif len(args) < 2:
+            args.append(None)
+
+        a = args[1] or []
+        kw = args[2] or {}
+        return lambda: fn(*a, **kw)
+
+    def push_mode(self, new_mode):
+        print("push mode")
+        self.old_modes.append(self.mode)
+        self.mode = new_mode
+        self.update_display()
+
+    def pop_mode(self):
+        print("pop mode")
+        self.mode = self.old_modes.pop()
+        self.update_display()
+
     def dial_press(self, *args, **kwargs):
         pass
 
@@ -356,6 +386,9 @@ class App(Tk):
             value = ftype(fmin + (fmax - fmin)*degrees/360.0)
             print(f"set {field}={value}")
             setattr(track, field, value)
+
+            # FIXME make this into a proper pushing thing or context manager or something
+            self.update_display()
 
     def button_command(self, row, col, bank, press=False):
         button = self.buttons[bank][row][col]
@@ -427,6 +460,7 @@ class App(Tk):
 
     def update_display(self):
         bank = self.active_patterns[self.bank]
+        print(f"update display mode={self.mode}")
 
         if self.mode in [MODE_PATTERNS, MODE_MUTE]:
             for row in range(2):
@@ -442,6 +476,21 @@ class App(Tk):
                         color = 'inactive'
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
+
+        elif self.mode in [MODE_STEPS]:
+            track = self.torso.get_track((self.bank, self.pattern))
+            value = track.steps
+
+            for row in range(2):
+                for col in range(8):
+                    index = row*self.cols + col
+                    if index <= value:
+                        color = 'active2'
+                    else:
+                        color = 'inactive'
+
+                    self.w_buttons[0][index].configure(bg=self.colors[color])
+
         else:
             print(f"unknown mode {self.mode}")
 
@@ -449,7 +498,6 @@ class App(Tk):
 
     def update_dials(self):
         track = self.torso.get_track((self.bank, self.pattern))
-
 
     def play_pause(self):
         print("play_pause")
