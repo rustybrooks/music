@@ -25,9 +25,9 @@ MODE_PITCH = 'pitch'
 MODE_HARMONY = 'harmony'
 MODE_MUTE = 'mute'
 MODE_REPEATS = 'repeats'
-MODE_REPEATS_OFFSET = 'repeats_offset'
-MODE_REPEATS_TIME = 'repeats_time'
-MODE_REPEATS_PACE = 'repeats_pace'
+MODE_REPEAT_OFFSET = 'repeat_offset'
+MODE_REPEAT_TIME = 'repeat_time'
+MODE_REPEAT_PACE = 'repeat_pace'
 MODE_PACE = 'pace'
 MODE_VOICING = 'voicing'
 MODE_MELODY = 'melody'
@@ -83,7 +83,7 @@ class App(Tk):
         },
         {
             'row': 0, 'col': 5, 'pos': 0, 'label': 'sustain', 'alt_label': '', 'keybind': 'h',
-            'property': 'sustain', 'min': 0, 'max': 127, 'type': int,
+            'property': 'sustain', 'min': 0, 'max': 1, 'type': float,
             'mode': MODE_SUSTAIN,
         },
         {
@@ -103,13 +103,14 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 0, 'pos': 0, 'label': 'repeats', 'alt_label': 'offset', 'keybind': 'z',
-            'property': 'repeats', 'min': 0, 'max': 4, 'type': int,
-            'alt_property': 'repeats_offset', 'alt_min': 0, 'alt_max': 4, 'alt_type': int,
-            'mode': MODE_REPEATS, 'alt_mode': MODE_REPEATS_OFFSET,
+            'property': 'repeats', 'min': 0, 'max': 15, 'type': int,
+            'alt_property': 'repeat_offset', 'alt_min': 0, 'alt_max': 15, 'alt_type': int,
+            'mode': MODE_REPEATS, 'alt_mode': MODE_REPEAT_OFFSET,
         },
         {
             'row': 1, 'col': 1, 'pos': 0, 'label': 'time', 'alt_label': 'pace', 'keybind': 'x',
-            'mode': MODE_REPEATS_TIME, 'alt_mode': MODE_REPEATS_OFFSET,
+            'mode': MODE_REPEAT_TIME, 'alt_mode': MODE_REPEAT_PACE,
+            'property': 'repeat_time', 'list': torso_sequencer.TorsoTrack.divisions,
         },
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
@@ -119,7 +120,6 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
-            'dial_press_cmd': ['push_mode', [[MODE_MELODY, MODE_PHRASE]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'melody', 'min': 0, 'max': 1, 'type': int,  # FIXME pick from list
             'alt_property': 'phrase', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
             'mode': MODE_MELODY, 'alt_mode': MODE_PHRASE,
@@ -196,7 +196,8 @@ class App(Tk):
             None,
             "TORSO",
             use_virtual=True,
-            client_name="TORSO"
+            client_name="TORSO",
+            port_name="TORSO"
         )
 
         self.dial_map = {}
@@ -224,7 +225,7 @@ class App(Tk):
         )
 
         tp = torso_sequencer.TorsoTrack(
-            notes=[('C', 4)],
+            notes=[('D', 4)],
             pulses=8,
             steps=16,
         )
@@ -277,25 +278,14 @@ class App(Tk):
         frames = [flt, frt, flb, frb]
 
         for dial in self.dials:
-            dial['dial_cmd'] = None
-            if 'property' in dial:
-                if 'list' in dial:
-                    dial['dial_cmd'] = ['set_list_value', dial['property'], dial['list']]
-                else:
-                    dial['dial_cmd'] = ['set_real_value', dial['property'], dial['type'], dial['min'], dial['max']]
 
-                    if dial.get('alt_property'):
-                        dial['alt_cmd'] = [
-                            'set_real_value',
-                            dial['alt_label'],
-                            dial.get('type', dial.get('alt_type')),
-                            dial.get('min', dial.get('alt_min')),
-                            dial.get('max', dial.get('alt_max')),
-                        ]
+            dial_press_cmd = None
+            dial_release_cmd = None
+            dial_cmd = None
 
             if 'mode' in dial:
-                dial['dial_press_cmd'] = lambda _m=[dial['mode'], dial.get('alt_mode')]: self.push_mode(_m)
-                dial['dial_release_cmd'] = self.pop_mode
+                dial_press_cmd = lambda _m=[dial['mode'], dial.get('alt_mode')]: self.push_mode(_m)
+                dial_release_cmd = self.pop_mode
                 self.dial_map[dial['mode']] = dial
                 if 'alt_mode' in dial:
                     self.dial_map[dial['alt_mode']] = dial
@@ -304,11 +294,11 @@ class App(Tk):
             f.grid(row=dial['row'], column=dial['col'])
             d = Dial(
                 parent=f,
-                command=lambda degrees, rowx=dial['row'], colx=dial['col'], bankx=dial['pos']: self.dial_callback(rowx, colx, bankx, degrees),
+                command=self.dial_callback,
                 zeroAxis='y',
                 fill='#aaaaaa',
-                press_command=dial.get('dial_press_cmd'),
-                release_command=dial.get('dial_release_cmd'),
+                press_command=dial_press_cmd,
+                release_command=dial_release_cmd,
                 label=dial['keybind'],
                 bg=self.colors['bg'],
             )
@@ -396,42 +386,13 @@ class App(Tk):
     def dial_release(self, *args, **kwargs):
         pass
 
-    def dial_callback(self, row, col, bank, degrees):
-        # print("dial", row, col, bank, degrees)
-        dial = next(x for x in self.dials if bank == x['pos'] and row == x['row'] and col == x['col'])
-
-        # print(f"{row} {col} {bank} ctrl={self.control}-- {dial}")
-
-        cmd = dial['alt_dial_cmd'] if self.control else dial['dial_cmd']
-        if not cmd:
-            return
-
-        # print(f"cmd = {cmd}")
-
-        if not cmd:
-            return
-
+    def dial_callback(self, degrees):
         if self.pattern is None or self.bank is None:
             print(f"need pattern or bank - bank={self.bank} pattern={self.pattern}")
             return
 
-        track = self.torso.get_track((self.bank, self.pattern))
-
-        if cmd[0] == "set_real_value":
-            field, ftype, fmin, fmax = cmd[1:]
-            value = fmin + (fmax - fmin)*degrees/360.0
-            if ftype is int:
-                value = round(value)
-            value = ftype(value)
-            print(f"set {field}={value}")
-            setattr(track, field, value)
-
-            # FIXME make this into a proper pushing thing or context manager or something
-            self.update_display()
-        elif cmd[0] == "set_list_value":
-            field, lval = cmd[1:]
-            index = round(len(lval)*degrees/360.0)
-            setattr(track, field, lval[index])
+        self.set_value(degrees, interpolate=360)
+        self.update_display()
 
     def button_command(self, row, col, bank, press=False):
         button = self.buttons[bank][row][col]
@@ -501,9 +462,67 @@ class App(Tk):
 
         self.update_display()
 
+    def get_value(self, interpolate=None, asint=False):
+        track = self.torso.get_track((self.bank, self.pattern))
+        dial = self.dial_map.get(self.mode)
+
+        if not dial:
+            print(f"No dial map for mode={self.mode}")
+
+        if self.control and 'alt_property' not in dial:
+            print(f"No alt property for mode={self.mode}")
+            return None
+
+        value = getattr(track, dial['alt_property' if self.control else 'property'])
+
+        if interpolate is not None:
+            value = interpolate*(value - dial['min']) / (dial['max'] - dial['min'])
+
+        if asint:
+            value = int(value)
+
+        return value
+
+    def set_value(self, value, interpolate=None):
+        track = self.torso.get_track((self.bank, self.pattern))
+        dial = self.dial_map[self.mode]
+        prop = dial.get('alt_property' if self.control else 'property')
+        if not prop:
+            print(f"set_value - mode={self.mode} no property")
+            return
+
+        lval = None
+        if not self.control and 'list' in dial:
+            fmin = 0
+            fmax = len(dial['list']) - 1
+            ftype = int
+            lval = dial['list']
+        elif self.control and 'alt_list' in dial:
+            fmin = 0
+            fmax = len(dial['list']) - 1
+            ftype = int
+            lval = dial['alt_list']
+        else:
+            if self.control:
+                fmin, fmax, ftype = dial.get('alt_min', dial['min']), dial.get('alt_max', dial['max']), dial.get('alt_type', dial['type'])
+            else:
+                fmin, fmax, ftype = dial['min'], dial['max'], dial['type']
+
+        if interpolate:
+            value = fmin + (fmax - fmin)*value/360.0
+            if ftype is int:
+                value = round(value)
+
+            value = ftype(value)
+
+        print(f"setattr prop={prop} value={value}")
+        if lval:
+            setattr(track, prop, lval[value])
+        else:
+            setattr(track, prop, value)
+
     def update_display(self):
         bank = self.active_patterns[self.bank]
-        print(f"update display mode={self.mode}")
 
         if self.mode in [MODE_PATTERNS, MODE_MUTE]:
             for row in range(2):
@@ -521,14 +540,10 @@ class App(Tk):
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
         elif self.mode in [
-            MODE_STEPS, MODE_ROTATE, MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEATS, MODE_REPEATS_OFFSET,
+            MODE_STEPS, MODE_ROTATE, MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEATS, MODE_REPEAT_OFFSET,
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO
         ]:  # show all buttons from 0 to value
-            track = self.torso.get_track((self.bank, self.pattern))
-            dial = self.dial_map[self.mode]
-            value = getattr(track, self.mode)
-            value_index = min(15, 16*(value - dial['min']) / (dial['max'] - dial['min']))
-            print(f"value={value} vi={value_index}")
+            value_index = self.get_value(interpolate=16, asint=True)
 
             for row in range(2):
                 for col in range(8):
@@ -540,12 +555,9 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [
-            MODE_CHANNEL
+            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_VOICING
         ]:
-            track = self.torso.get_track((self.bank, self.pattern))
-            value = getattr(track, self.mode)
-            dial = self.dial_map[self.mode]
-            value_index = min(15, 16*(value - dial['min']) / (dial['max'] - dial['min'])) 
+            value_index = self.get_value(interpolate=16, asint=True)
 
             for row in range(2):
                 for col in range(8):
@@ -557,10 +569,13 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
+        elif self.mode in [
+            MODE_DIVISION, MODE_REPEAT_TIME
+        ]:
+            pass  # figure this shit out
         elif self.mode in [MODE_PULSES]:
             track = self.torso.get_track((self.bank, self.pattern))
             seq = track.sequence
-            print(seq)
 
             for row in range(2):
                 for col in range(8):
@@ -574,7 +589,6 @@ class App(Tk):
                         color = 'inactive'
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
-
 
         else:
             print(f"unknown mode {self.mode}")
