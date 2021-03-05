@@ -233,22 +233,22 @@ class App(Tk):
         self.pattern = 0
         self.bank = 0
 
-        # tp = torso_sequencer.TorsoTrack(
-        #     notes=[
-        #         ('C', 4),
-        #         ('E', 4),
-        #         ('G', 4),
-        #         # ('B', 4)
-        #     ],
-        #     pulses=8,
-        #     steps=16,
-        #     repeats=2,
-        #     # repeat_time=6,
-        #     sustain=1,
-        #     style=1,
-        #     voicing=3,
-        # )
-        # self.torso.add_track(track_name='piano', track=tp)
+        tp2 = torso_sequencer.TorsoTrack(
+            notes=[
+                ('C', 4),
+                ('E', 4),
+                ('G', 4),
+                # ('B', 4)
+            ],
+            pulses=8,
+            steps=16,
+            repeats=2,
+            # repeat_time=6,
+            sustain=1,
+            style=1,
+            voicing=3,
+        )
+        self.torso.add_track(track_name=(0, 1), track=tp2)
 
         self.torso.pause()
         self.torso.start()
@@ -541,7 +541,8 @@ class App(Tk):
 
         elif self.mode in [
             MODE_STEPS, MODE_ROTATE, MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEATS, MODE_REPEAT_OFFSET,
-            MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO
+            MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO,
+            MODE_VOICING
         ]:  # show all buttons from 0 to value
             value_index = self.get_value(interpolate=16, asint=True)
 
@@ -555,7 +556,7 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [
-            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_VOICING
+            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY
         ]:
             value_index = self.get_value(interpolate=16, asint=True)
 
