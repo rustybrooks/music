@@ -44,6 +44,8 @@ MODE_DELAY = 'delay'
 MODE_RANDOM = 'random'
 MODE_RANDOM_RATE = 'random_rate'
 MODE_TEMPO = 'tempo'
+MODE_CHANNEL = 'channel'
+
 
 class App(Tk):
     colors = {
@@ -57,95 +59,95 @@ class App(Tk):
     dials = [
         {
             'row': 0, 'col': 0, 'pos': 0, 'label': 'steps', 'alt_label': '', 'keybind': 'a',
-            'dial_press_cmd': ['push_mode', [[MODE_STEPS]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'steps', 'min': 0, 'max': 16, 'type': int,
+            'mode': MODE_STEPS,
         },
         {
             'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
-            'dial_press_cmd': ['push_mode', [[MODE_PULSES, MODE_ROTATE]]], 'dial_release_cmd': ['pop_mode'],
-            'property': 'pulses', 'alt_property': 'rotate', 'min': 0, 'max': 16, 'type': int
+            'property': 'pulses', 'alt_property': 'rotate', 'min': 0, 'max': 16, 'type': int,
+            'mode': MODE_PULSES, 'alt_mode': MODE_ROTATE,
         },
         {
             'row': 0, 'col': 2, 'pos': 0, 'label': 'cycles', 'alt_label': '', 'keybind': 'd',
         },
         {
             'row': 0, 'col': 3, 'pos': 0, 'label': 'division', 'alt_label': '', 'keybind': 'f',
-            'dial_press_cmd': ['push_mode', [[MODE_DIVISION]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'division',
             'list': torso_sequencer.TorsoTrack.divisions,
+            'mode': MODE_DIVISION,
         },
         {
             'row': 0, 'col': 4, 'pos': 0, 'label': 'velocity', 'alt_label': '', 'keybind': 'g',
-            'dial_press_cmd': ['push_mode', [[MODE_VELOCITY]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'velocity', 'min': 0, 'max': 127, 'type': int,
+            'mode': MODE_VELOCITY,
         },
         {
             'row': 0, 'col': 5, 'pos': 0, 'label': 'sustain', 'alt_label': '', 'keybind': 'h',
-            'dial_press_cmd': ['push_mode', [[MODE_SUSTAIN]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'sustain', 'min': 0, 'max': 127, 'type': int,
+            'mode': MODE_SUSTAIN,
         },
         {
             'row': 0, 'col': 0, 'pos': 1, 'label': 'pitch', 'alt_label': 'harmony', 'keybind': 'j',
-            'dial_press_cmd': ['push_mode', [[MODE_PITCH, MODE_HARMONY]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'pitch', 'min': -36, 'max': 36, 'type': int,
             'alt_property': 'harmony',  # FIXME min/max etc?
+            'mode': MODE_PITCH, 'alt_mode': MODE_HARMONY,
         },
         {
             'row': 0, 'col': 1, 'pos': 1, 'label': 'length', 'alt_label': 'quantize', 'keybind': 'k',
-            'dial_press_cmd': ['push_mode', [[MODE_LENGTH, MODE_QUANTIZE]]], 'dial_release_cmd': ['pop_mode'],
+            'mode': MODE_LENGTH, 'alt_mode': MODE_QUANTIZE,
         },
         {
             'row': 0, 'col': 2, 'pos': 1, 'label': 'tempo', 'alt_label': '', 'keybind': 'l',
-            'dial_press_cmd': ['push_mode', [[MODE_TEMPO]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'bpm', 'min': 50, 'max': 300, 'type': int,
+            'mode': MODE_TEMPO,
         },
         {
             'row': 1, 'col': 0, 'pos': 0, 'label': 'repeats', 'alt_label': 'offset', 'keybind': 'z',
-            'dial_press_cmd': ['push_mode', [[MODE_REPEATS, MODE_REPEATS_OFFSET]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'repeats', 'min': 0, 'max': 4, 'type': int,
             'alt_property': 'repeats_offset', 'alt_min': 0, 'alt_max': 4, 'alt_type': int,
+            'mode': MODE_REPEATS, 'alt_mode': MODE_REPEATS_OFFSET,
         },
         {
             'row': 1, 'col': 1, 'pos': 0, 'label': 'time', 'alt_label': 'pace', 'keybind': 'x',
-            'dial_press_cmd': ['push_mode', [[MODE_REPEATS_TIME, MODE_REPEATS_PACE]]], 'dial_release_cmd': ['pop_mode'],
+            'mode': MODE_REPEATS_TIME, 'alt_mode': MODE_REPEATS_OFFSET,
         },
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
-            'dial_press_cmd': ['push_mode', [[MODE_VOICING, MODE_STYLE]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'voicing', 'min': 0, 'max': 15, 'type': int,
             'alt_property': 'style', 'alt_min': 0, 'alt_max': 1, 'alt_type': int,  # FIXME pick from list
+            'mode': MODE_VOICING, 'alt_mode': MODE_STYLE,
         },
         {
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
             'dial_press_cmd': ['push_mode', [[MODE_MELODY, MODE_PHRASE]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'melody', 'min': 0, 'max': 1, 'type': int,  # FIXME pick from list
             'alt_property': 'phrase', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
+            'mode': MODE_MELODY, 'alt_mode': MODE_PHRASE,
         },
         {
             'row': 1, 'col': 4, 'pos': 0, 'label': 'accent', 'alt_label': 'curve', 'keybind': 'b',
-            'dial_press_cmd': ['push_mode', [[MODE_ACCENT, MODE_ACCENT_CURVE]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'accent', 'min': 0, 'max': 1, 'type': float,  # FIXME should do in int 0-127 maybe?
             'alt_property': 'accent_curve', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
+            'mode': MODE_ACCENT, 'alt_mode': MODE_ACCENT_CURVE,
         },
         {
             'row': 1, 'col': 5, 'pos': 0, 'label': 'timing', 'alt_label': 'delay', 'keybind': 'n',
-            'dial_press_cmd': ['push_mode', [[MODE_TIMING, MODE_DELAY]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'timing', 'min': 0, 'max': 1, 'type': float,
             'alt_property': 'delay',
+            'mode': MODE_TIMING, 'alt_mode': MODE_DELAY,
         },
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
-            'dial_press_cmd': ['push_mode', [[MODE_SCALE, MODE_ROOT]]], 'dial_release_cmd': ['pop_mode'],
+            'mode': MODE_SCALE, 'alt_mode': MODE_ROOT,
         },
         {
             'row': 1, 'col': 1, 'pos': 1, 'label': 'midi ch', 'alt_label': '', 'keybind': ',',
-            'dial_press_cmd': ['push_mode', [[MODE_SCALE, MODE_ROOT]]], 'dial_release_cmd': ['pop_mode'],
             'property': 'channel', 'min': 0, 'max': 16, 'type': int,
+            'mode': MODE_CHANNEL,
         },
         {
             'row': 1, 'col': 2, 'pos': 1, 'label': 'random', 'alt_label': 'rate', 'keybind': '.',
-            'dial_press_cmd': ['push_mode', [[MODE_RANDOM, MODE_RANDOM_RATE]]], 'dial_release_cmd': ['pop_mode'],
-            'dial_cmd': [], 'alt_dial_cmd': [],
+            'mode': MODE_RANDOM, 'alt_mode': MODE_RANDOM_RATE,
         },
     ]
     buttons = [
@@ -197,6 +199,7 @@ class App(Tk):
             client_name="TORSO"
         )
 
+        self.dial_map = {}
         self.button_pressed = {}
         self.dial_pressed = {}
         self.selected_track = None
@@ -274,9 +277,9 @@ class App(Tk):
         frames = [flt, frt, flb, frb]
 
         for dial in self.dials:
-            if 'property' in dial and 'dial_cmd' not in dial:
+            if 'property' in dial:
                 if 'list' in dial:
-                    pass
+                    dial['dial_cmd'] = ['set_list_value', dial['property'], dial['list']]
                 else:
                     dial['dial_cmd'] = ['set_real_value', dial['property'], dial['type'], dial['min'], dial['max']]
 
@@ -288,6 +291,13 @@ class App(Tk):
                             dial.get('min', dial.get('alt_min')),
                             dial.get('max', dial.get('alt_max')),
                         ]
+
+            if 'mode' in dial:
+                dial['dial_press_cmd'] = ['push_mode', [dial['mode'], dial.get('alt_mode')]]
+                dial['dial_release_cmd'] = ['pop_mode']
+                self.dial_map[dial['mode']] = dial
+                if 'alt_mode' in dial:
+                    self.dial_map[dial['alt_mode']] = dial
 
             f = Frame(frames[dial['pos']], bg=self.colors['bg'])
             f.grid(row=dial['row'], column=dial['col'])
@@ -413,11 +423,13 @@ class App(Tk):
         if not cmd:
             return
 
+        if self.pattern is None or self.bank is None:
+            print(f"need pattern or bank - bank={self.bank} pattern={self.pattern}")
+            return
+
+        track = self.torso.get_track((self.bank, self.pattern))
+
         if cmd[0] == "set_real_value":
-            if self.pattern is None or self.bank is None:
-                print(f"need pattern or bank - bank={self.bank} pattern={self.pattern}")
-                return
-            track = self.torso.get_track((self.bank, self.pattern))
             field, ftype, fmin, fmax = cmd[1:]
             value = fmin + (fmax - fmin)*degrees/360.0
             if ftype is int:
@@ -428,6 +440,10 @@ class App(Tk):
 
             # FIXME make this into a proper pushing thing or context manager or something
             self.update_display()
+        elif cmd[0] == "set_list_value":
+            field, lval = cmd[1:]
+            index = round(len(lval)*degrees/360.0)
+            setattr(track, field, lval[index])
 
     def button_command(self, row, col, bank, press=False):
         button = self.buttons[bank][row][col]
@@ -516,9 +532,13 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
-        elif self.mode in [MODE_STEPS]:
+        elif self.mode in [
+            MODE_STEPS, MODE_ROTATE, MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEATS, MODE_REPEATS_OFFSET,
+            MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO
+        ]:  # show all buttons from 0 to value
             track = self.torso.get_track((self.bank, self.pattern))
-            value = track.steps
+            value = getattr(track, self.mode)
+            value_index = (value - dial['min']) / (dial['max'] - dial['min'])
 
             for row in range(2):
                 for col in range(8):
@@ -529,6 +549,23 @@ class App(Tk):
                         color = 'inactive'
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
+        elif self.mode in [
+            MODE_CHANNEL
+        ]:
+            track = self.torso.get_track((self.bank, self.pattern))
+            value = getattr(track, self.mode)
+            value_index = 0
+
+            for row in range(2):
+                for col in range(8):
+                    index = row*self.cols + col
+                    if index == value_index:
+                        color = 'active2'
+                    else:
+                        color = 'inactive'
+
+                    self.w_buttons[0][index].configure(bg=self.colors[color])
+
         elif self.mode in [MODE_PULSES]:
             track = self.torso.get_track((self.bank, self.pattern))
             seq = track.sequence
