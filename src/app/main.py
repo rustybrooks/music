@@ -59,7 +59,7 @@ class App(Tk):
     dials = [
         {
             'row': 0, 'col': 0, 'pos': 0, 'label': 'steps', 'alt_label': '', 'keybind': 'a',
-            'property': 'steps', 'min': 0, 'max': 16, 'type': int,
+            'property': 'steps', 'min': 1, 'max': 16, 'type': int,
             'mode': MODE_STEPS,
         },
         {
@@ -277,6 +277,7 @@ class App(Tk):
         frames = [flt, frt, flb, frb]
 
         for dial in self.dials:
+            dial['dial_cmd'] = None
             if 'property' in dial:
                 if 'list' in dial:
                     dial['dial_cmd'] = ['set_list_value', dial['property'], dial['list']]
@@ -293,8 +294,8 @@ class App(Tk):
                         ]
 
             if 'mode' in dial:
-                dial['dial_press_cmd'] = ['push_mode', [dial['mode'], dial.get('alt_mode')]]
-                dial['dial_release_cmd'] = ['pop_mode']
+                dial['dial_press_cmd'] = lambda _m=[dial['mode'], dial.get('alt_mode')]: self.push_mode(_m)
+                dial['dial_release_cmd'] = self.pop_mode
                 self.dial_map[dial['mode']] = dial
                 if 'alt_mode' in dial:
                     self.dial_map[dial['alt_mode']] = dial
@@ -306,8 +307,8 @@ class App(Tk):
                 command=lambda degrees, rowx=dial['row'], colx=dial['col'], bankx=dial['pos']: self.dial_callback(rowx, colx, bankx, degrees),
                 zeroAxis='y',
                 fill='#aaaaaa',
-                press_command=self.make_callback(dial.get('dial_press_cmd')),
-                release_command=self.make_callback(dial.get('dial_release_cmd')),
+                press_command=dial.get('dial_press_cmd'),
+                release_command=dial.get('dial_release_cmd'),
                 label=dial['keybind'],
                 bg=self.colors['bg'],
             )
@@ -369,21 +370,6 @@ class App(Tk):
         self.update_display()
         self.update_dials()
 
-    def make_callback(self, args):
-        if args is None:
-            return None
-
-        fn = getattr(self, args[0])
-
-        if len(args) < 3:
-            args.extend([None, None])
-        elif len(args) < 2:
-            args.append(None)
-
-        a = args[1] or []
-        kw = args[2] or {}
-        return lambda: fn(*a, **kw)
-
     def push_mode(self, new_mode):
         if self.old_modes:
             return  # for now no mode stack, one mode at a time
@@ -417,6 +403,8 @@ class App(Tk):
         # print(f"{row} {col} {bank} ctrl={self.control}-- {dial}")
 
         cmd = dial['alt_dial_cmd'] if self.control else dial['dial_cmd']
+        if not cmd:
+            return
 
         # print(f"cmd = {cmd}")
 
@@ -537,13 +525,15 @@ class App(Tk):
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO
         ]:  # show all buttons from 0 to value
             track = self.torso.get_track((self.bank, self.pattern))
+            dial = self.dial_map[self.mode]
             value = getattr(track, self.mode)
-            value_index = (value - dial['min']) / (dial['max'] - dial['min'])
+            value_index = min(15, 16*(value - dial['min']) / (dial['max'] - dial['min']))
+            print(f"value={value} vi={value_index}")
 
             for row in range(2):
                 for col in range(8):
                     index = row*self.cols + col
-                    if index <= value:
+                    if index <= value_index:
                         color = 'active2'
                     else:
                         color = 'inactive'
@@ -554,7 +544,8 @@ class App(Tk):
         ]:
             track = self.torso.get_track((self.bank, self.pattern))
             value = getattr(track, self.mode)
-            value_index = 0
+            dial = self.dial_map[self.mode]
+            value_index = min(15, 16*(value - dial['min']) / (dial['max'] - dial['min'])) 
 
             for row in range(2):
                 for col in range(8):

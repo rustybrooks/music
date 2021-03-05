@@ -158,11 +158,12 @@ class TorsoTrack:
             self.randoms[parameter][i] += random.randrange(-strength, strength)
 
     def generate(self):
-        interval = self.steps / self.pulses
+        pulses = min(self.pulses, self.steps)
+        interval = self.steps / pulses
         sequence = [0]*self.steps
+        print(f"pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
 
-        for i in range(self.pulses):
-            print("int", interval, i*interval, round(i*interval))
+        for i in range(pulses):
             sequence[round(i*interval)] = 1
 
         for i, v in enumerate(self.manual_steps):
