@@ -25,15 +25,25 @@ class TorsoTrack:
     ]
 
     accent_curves = [
-        [128*x/100. for x in [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20, 70]],
+        [ 70,  20,  70,  20,  80,  90,  20,  60,  20,  60,  20,  60,  20,  90,  80,  20, 70 ],
+        [ 30,  20,  90,  30,  25,  20,  40,  50,  40,  70,  40,  30,  35,  60,  40,  25, 30 ],
+        [ 30,  40,  60,  30,  40,  40, 100,  35,  30,  35,  60,  40,  70,  40, 100,  20, 30 ],
+        [ 25,  60,  30,  35,  80,  25,  30,  60,  25,  35,  45,  80,  35,  45,  80,  35, 40 ],
+        [ 90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65, 90 ],
+        [ 85,  15,  25,  55,  50,  15,  25,  85,  50,  10,  40,  50,  45,  10,  45,  55, 80 ],
+        [100,  15,  20,  25,  35,  45, 100,  15, 100,  15,  35,  15,  60,  15,  25,  35, 90 ],
+        [ 70,  20,  20,  70,  20,  70,  20,  70,  70,  20,  70,  70,  20,  70,  20,  20, 70 ],
+        [  5,  12,  24,  36,  50,  62,  74,  86, 100,  12,  24,  36,  50,  62,  74,  86, 100],
+        [100,  86,  74,  62,  50,  36,  24,  12, 100,  86,  74,  62,  50,  36,  24,  12, 0  ],
+        [  0,  25,  50,  75,  100, 75,  50,  25,   0,  25,  50,  75, 100,  75,  50,  25, 0  ],
+        [100,  75,  50,  25,    0, 25,  50,  75, 100,  75,  50,  25,   0,  25,  50,  75, 100],
     ]
+    accent_curves = [[128*x/100. for x in c] for c in accent_curves]
     scales = [
         'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hex', 'aug', 'pentatonic_minor'
     ]
-    styles = [
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        [0, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9, 8],
-    ]
+    styles = ['chord', 'updward', 'downward', 'converge', 'diverge', 'random']
+
 
     phrases = [
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -57,7 +67,7 @@ class TorsoTrack:
         delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
         repeats=0,  # number of repeats to add, integer, will be is divisions of self.time
         repeat_offset=0,  # this delays the repeats, in units of 1 beat
-        repeat_time=2,  # this is the same as divsion, but for repeats, minimum is 2
+        repeat_time=16,  # this is the same as divsion, but for repeats, minimum is 1
         repeat_pace=None,  # supposed to accelerate or decelerate repeats - not implemented
         voicing=0,  # adds notes an octave above
         style=0,  # integer, picks
@@ -83,7 +93,6 @@ class TorsoTrack:
         self.repeat_offset = repeat_offset
         self.repeat_time = repeat_time
         self.repeat_pace = repeat_pace
-        self.voicing = voicing
         self.melody = melody
 
         self.phrase = None
@@ -91,10 +100,10 @@ class TorsoTrack:
         self.style = None
         self.scale = None
 
-        self.set_accent_curve(accent_curve)
-        self.set_style(style)
+        self.accent_curve = self.accent_curves[accent_curve]
+        self.style = self.styles[style]
         self.set_scale(scale, root=root)
-        self.set_phrase(phrase)
+        self.phrase = self.phrases[phrase]
 
         # require re-sequencing:
 
@@ -110,6 +119,8 @@ class TorsoTrack:
         self.__steps = steps
         self.__bpm = None
         self.__pulses = pulses
+        self.__voicing = voicing
+        self.__voiced_notes = notes
 
     @property
     def pulses(self):
@@ -138,17 +149,24 @@ class TorsoTrack:
         self.__bpm = value
         self._beat = 60. / (value)
 
-    def set_accent_curve(self, value):
-        self.accent_curve = self.accent_curves[value]
+    @property
+    def voicing(self):
+        return self.__voicing
 
-    def set_style(self, value):
-        self.style = self.styles[value]
+    @voicing.setter
+    def voicing(self, value):
+        self.__voiced_notes = self.notes
+        ln = len(self.notes)
+        for v in range(value):
+            n = self.notes[v % ln]
+            self.__voiced_notes.append(n + 12*(1+v//ln))
+
+    @property
+    def voiced_notes(self):
+        return self.__voiced_notes
 
     def set_scale(self, value, root):
         self.scale = get_scale_numbers(root-root, scale_type=self.scales[value])
-
-    def set_phrase(self, value):
-        self.phrase = self.phrases[value]
 
     def update_random(self, parameter, strength):
         if parameter not in self.randoms:
@@ -199,6 +217,9 @@ class TorsoTrack:
         else:
             return scale[overi]
 
+    def style_notes(self, index):
+        return self.notes[index % len(self.notes)]
+
     def fill_lookahead(self, start, end):
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
         # need to
@@ -209,54 +230,51 @@ class TorsoTrack:
             return []
 
         events = []
-        lnotes = len(self.notes)
         for step in range(first_step, last_step+1):
             if not self.sequence[(step+self.rotate) % self.steps]:
                 continue
 
-            note = self.notes[0]
-            melody_offset = None
-            if self.melody > 0:
-                melody_offset = note + self.phrase[step]*self.melody
-                note = self.quantize(note + melody_offset)
-
-            # do we want to step through accent curve, or apply it directly to sequence including
-            # off notes?
             accent = (self.accent_curve[(step+self.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
             vleft = (self.voicing+1+self.repeats) % (self.repeats+1)
             vmax = (vleft >= 0) + (self.voicing+1+self.repeats)//(self.repeats+1)
-            for voicing in range(0, vmax):
+
+            notes = self.style_notes(0)
+            for note in notes:
+                melody_offset = None
+#                if self.melody > 0:
+#                    melody_offset = note + self.phrase[step]*self.melody
+#                    # note = self.quantize(note + melody_offset)
+
+                # do we want to step through accent curve, or apply it directly to sequence including
+                # off notes?
                 events.extend([
                     MidiEvent(
                         (step + swing + self.delay)*self._beat/self.division,
-                        (NOTE_ON+self.channel, note+self.pitch+voicing*12, velocity)
+                        (NOTE_ON+self.channel, note+self.pitch, velocity)
                     ),
                     MidiEvent(
                         (step + self.sustain + self.delay)*self._beat/self.division,
-                        (NOTE_OFF+self.channel, note+self.pitch+voicing*12, 0)
+                        (NOTE_OFF+self.channel, note+self.pitch, 0)
                     ),
                 ])
 
             for r in range(1, self.repeats+1):
-                note = self.notes[self.style[r % len(self.sequence)] % lnotes]
-                if melody_offset:
-                    note = self.quantize(melody_offset)
-
+                notes = self.notes[self.style_notes(r)]
                 vmax = (vleft >= r) + (self.voicing+1+self.repeats)//(self.repeats+1)
+                for note in notes:
+#                    if melody_offset:
+#                        note = self.quantize(melody_offset)
 
-                # print("repeat", r, vmax, self.voicing // (1+self.repeats))
-
-                for voicing in range(0, vmax):
                     events.extend([
                         MidiEvent(
                             (step + swing + self.delay + self.repeat_offset + (r/self.repeat_time))*self._beat/self.division,
-                            (NOTE_ON+self.channel, note+self.pitch+voicing*12, velocity)
+                            (NOTE_ON+self.channel, note+self.pitch, velocity)
                         ),
                         MidiEvent(
                             (step + self.sustain + self.delay + self.repeat_offset + r/self.repeat_time)*self._beat/self.division,
-                            (NOTE_OFF+self.channel, note+self.pitch+voicing*12, 0)
+                            (NOTE_OFF+self.channel, note+self.pitch, 0)
                         ),
                     ])
 

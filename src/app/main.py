@@ -115,19 +115,19 @@ class App(Tk):
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
             'property': 'voicing', 'min': 0, 'max': 15, 'type': int,
-            'alt_property': 'style', 'alt_min': 0, 'alt_max': 1, 'alt_type': int,  # FIXME pick from list
+            'alt_property': 'style', 'alt_list': torso_sequencer.TorsoTrack.styles,
             'mode': MODE_VOICING, 'alt_mode': MODE_STYLE,
         },
         {
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
-            'property': 'melody', 'min': 0, 'max': 1, 'type': int,  # FIXME pick from list
-            'alt_property': 'phrase', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
-            'mode': MODE_MELODY, 'alt_mode': MODE_PHRASE,
+            'mode': MODE_MELODY, 'property': 'melody', 'min': 0, 'max': 1, 'type': float,
+            'alt_mode': MODE_PHRASE, 'alt_property': 'phrase', 'alt_list': torso_sequencer.TorsoTrack.phrases,
+
         },
         {
             'row': 1, 'col': 4, 'pos': 0, 'label': 'accent', 'alt_label': 'curve', 'keybind': 'b',
-            'property': 'accent', 'min': 0, 'max': 1, 'type': float,  # FIXME should do in int 0-127 maybe?
-            'alt_property': 'accent_curve', 'alt_min': 0, 'alt_max': 0, 'alt_type': int,  # FIXME pick from list
+            'property': 'accent', 'min': 0, 'max': 1, 'type': float,
+            'alt_property': 'accent_curve', 'alt_list': torso_sequencer.TorsoTrack.accent_curves,
             'mode': MODE_ACCENT, 'alt_mode': MODE_ACCENT_CURVE,
         },
         {
@@ -138,16 +138,17 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
-            'mode': MODE_SCALE, 'alt_mode': MODE_ROOT,
+            'mode': MODE_SCALE, 'list': torso_sequencer.TorsoTrack.scales,
+            'alt_mode': MODE_ROOT,  # FIXME pick from notes available?
         },
         {
             'row': 1, 'col': 1, 'pos': 1, 'label': 'midi ch', 'alt_label': '', 'keybind': ',',
-            'property': 'channel', 'min': 0, 'max': 16, 'type': int,
-            'mode': MODE_CHANNEL,
+            'mode': MODE_CHANNEL, 'property': 'channel', 'min': 0, 'max': 16, 'type': int,
         },
         {
             'row': 1, 'col': 2, 'pos': 1, 'label': 'random', 'alt_label': 'rate', 'keybind': '.',
-            'mode': MODE_RANDOM, 'alt_mode': MODE_RANDOM_RATE,
+            # 'mode': MODE_RANDOM, 'property': 'random', 'min': 0, 'max': 16, 'type': int,  # this is gonna be special
+            'alt_mode': MODE_RANDOM_RATE, 'alt_list': torso_sequencer.TorsoTrack.divisions,
         },
     ]
     buttons = [
