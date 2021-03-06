@@ -78,6 +78,8 @@ class TorsoTrack:
         random=None,
         random_rate=None,
     ):
+        self.muted = False
+
         self.channel = channel
         self.notes = [note_to_number(x) for x in notes or []]
         self.manual_steps = manual_steps or []
@@ -155,6 +157,7 @@ class TorsoTrack:
 
     @voicing.setter
     def voicing(self, value):
+        self.__voicing = value
         self.__voiced_notes = self.notes
         ln = len(self.notes)
         for v in range(value):
@@ -240,7 +243,7 @@ class TorsoTrack:
 
             for r in range(0, self.repeats+1):
                 notes = self.style_notes(r)
-                print(r, notes)
+                # print(r, notes)
                 for note in notes:
 #                    if melody_offset:
 #                        note = self.quantize(melody_offset)
@@ -316,6 +319,9 @@ class TorsoSequencer(threading.Thread):
     def fill_lookahead(self):
         next_lookahead = self._last_lookahead + self.lookahead
         for v in self.tracks.values():
+            if v.muted:
+                continue
+
             new = v.fill_lookahead(self._last_lookahead, next_lookahead)
             if new:
                 for n in new:

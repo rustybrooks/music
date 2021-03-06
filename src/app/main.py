@@ -114,9 +114,9 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
-            'property': 'voicing', 'min': 0, 'max': 15, 'type': int,
-            'alt_property': 'style', 'alt_list': torso_sequencer.TorsoTrack.styles,
-            'mode': MODE_VOICING, 'alt_mode': MODE_STYLE,
+            'mode': MODE_VOICING, 'property': 'voicing', 'min': 0, 'max': 15, 'type': int,
+            'alt_mode': MODE_STYLE, 'alt_property': 'style', 'alt_list': torso_sequencer.TorsoTrack.styles,
+
         },
         {
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
@@ -221,25 +221,27 @@ class App(Tk):
 
         self.torso = torso_sequencer.TorsoSequencer(
             midiout=midiout,
-            lookahead=0.02,
+            lookahead=0.05,
             bpm=120,
         )
 
-        tp = torso_sequencer.TorsoTrack(
-            notes=[('D', 4)],
-            pulses=8,
-            steps=16,
-        )
-        self.torso.add_track(track_name=(0, 0), track=tp)
-        self.pattern = 0
+        self.pattern = 1
         self.bank = 0
+
+        # tp = torso_sequencer.TorsoTrack(
+        #     notes=[('D', 4)],
+        #     pulses=8,
+        #     steps=16,
+        #     channel=0,
+        # )
+        # self.torso.add_track(track_name=(0, 0), track=tp)
 
         tp2 = torso_sequencer.TorsoTrack(
             notes=[
                 ('C', 4),
                 ('E', 4),
                 ('G', 4),
-                # ('B', 4)
+                ('B', 4)
             ],
             pulses=8,
             steps=16,
@@ -248,6 +250,7 @@ class App(Tk):
             sustain=1,
             style=1,
             voicing=3,
+            channel=1,
         )
         self.torso.add_track(track_name=(0, 1), track=tp2)
 
@@ -435,6 +438,8 @@ class App(Tk):
                 pattern = row*self.cols + col
                 bank = self.active_patterns[self.bank]
                 bank[pattern] = 'inactive' if bank.get(pattern) == 'active' else 'active'
+                track = self.torso.get_track((self.bank, self.pattern))
+                track.mute = bank['pattern'] == 'inactive'
         else:
             cmd = self.button_command(row, col, bank, press=True)
             if cmd:
@@ -463,18 +468,23 @@ class App(Tk):
 
         self.update_display()
 
-    def get_value(self, interpolate=None, asint=False):
+    def get_value(self, dial=None, interpolate=None, asint=False):
         track = self.torso.get_track((self.bank, self.pattern))
-        dial = self.dial_map.get(self.mode)
+        dial = dial or self.dial_map.get(self.mode)
 
         if not dial:
             print(f"No dial map for mode={self.mode}")
+            return None
 
         if self.control and 'alt_property' not in dial:
             print(f"No alt property for mode={self.mode}")
             return None
 
         value = getattr(track, dial['alt_property' if self.control else 'property'])
+
+        # lval = dial.get('alt_list' if self.control else 'list')
+        # if lval:
+        #    value = lval.index(value)
 
         if interpolate is not None:
             value = interpolate*(value - dial['min']) / (dial['max'] - dial['min'])
@@ -516,10 +526,11 @@ class App(Tk):
 
             value = ftype(value)
 
-        print(f"setattr prop={prop} value={value}")
         if lval:
+            print(f"setattr prop={prop} value={lval[value]}")
             setattr(track, prop, lval[value])
         else:
+            print(f"setattr prop={prop} value={value}")
             setattr(track, prop, value)
 
     def update_display(self):
@@ -598,14 +609,13 @@ class App(Tk):
         self.update(); self.update_idletasks()
 
     def update_dials(self):
-        track = self.torso.get_track((self.bank, self.pattern))
         for dial in self.dials:
             prop = dial.get('alt_property' if self.control else 'property')
             if prop:
                 c = 6 if dial['pos'] == 0 else 3
                 index = c*dial['row'] + dial['col']
-                value = getattr(track, prop)
-                print("prop...", prop, index, dial['pos'], len(self.w_dials[dial['pos']]))
+                value = self.get_value(dial=dial)
+                print(f"prop={prop} val={value}")
                 if 'list' in dial:
                     value = dial['list'].index(value)
                     dmin = 0
