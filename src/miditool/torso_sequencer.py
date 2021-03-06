@@ -1,3 +1,4 @@
+import copy
 import math
 import logging
 import threading
@@ -67,7 +68,7 @@ class TorsoTrack:
         delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
         repeats=0,  # number of repeats to add, integer, will be is divisions of self.time
         repeat_offset=0,  # this delays the repeats, in units of 1 beat
-        repeat_time=16,  # this is the same as divsion, but for repeats, minimum is 1
+        repeat_time=4,  # this is the same as divsion, but for repeats, minimum is 1
         repeat_pace=None,  # supposed to accelerate or decelerate repeats - not implemented
         voicing=0,  # adds notes an octave above
         style=0,  # integer, picks
@@ -121,8 +122,8 @@ class TorsoTrack:
         self.__steps = steps
         self.__bpm = None
         self.__pulses = pulses
-        self.__voicing = voicing
-        self.__voiced_notes = self.notes
+        self.voicing = voicing
+        # self.__voiced_notes = self.notes
 
     @property
     def pulses(self):
@@ -158,11 +159,13 @@ class TorsoTrack:
     @voicing.setter
     def voicing(self, value):
         self.__voicing = value
-        self.__voiced_notes = self.notes
+        self.__voiced_notes = copy.deepcopy(self.notes)
         ln = len(self.notes)
         for v in range(value):
             n = self.notes[v % ln]
             self.__voiced_notes.append(n + 12*(1+v//ln))
+
+        print(f"voicing settr, value={value} notes={self.__voiced_notes}")
 
     @property
     def voiced_notes(self):
@@ -263,7 +266,7 @@ class TorsoTrack:
 
 
 class TorsoSequencer(threading.Thread):
-    def __init__(self, midiout, interval=0.002, lookahead=.02, bpm=200):
+    def __init__(self, midiout, interval=0.003, lookahead=.01, bpm=200):
         super().__init__()
         self.midiout = midiout
         self.interval = interval

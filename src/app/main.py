@@ -243,11 +243,11 @@ class App(Tk):
                 ('G', 4),
                 ('B', 4)
             ],
-            pulses=8,
+            pulses=4,
             steps=16,
             repeats=2,
             # repeat_time=6,
-            sustain=1,
+            sustain=.25,
             style=1,
             voicing=3,
             channel=1,

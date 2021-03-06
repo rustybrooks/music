@@ -25,7 +25,7 @@ def open_midi(name):
     print(f"Opening {name}")
     while True:
         ports = midiin.get_ports()
-        matches = [x for x in enumerate(ports or []) if name in x[1]]
+        matches = [x for x in enumerate(ports or []) if x and name in x[1]]
         if matches:
             break
 
@@ -36,6 +36,7 @@ def open_midi(name):
     midis[name].set_callback(callback)
     midis[name].set_error_callback(error_callback)
     print(f"Opened {name}")
+
 
 if __name__ == '__main__':
     midiout, port = open_midioutput(
