@@ -120,7 +120,7 @@ class TorsoTrack:
         self.__bpm = None
         self.__pulses = pulses
         self.__voicing = voicing
-        self.__voiced_notes = notes
+        self.__voiced_notes = self.notes
 
     @property
     def pulses(self):
@@ -218,7 +218,7 @@ class TorsoTrack:
             return scale[overi]
 
     def style_notes(self, index):
-        return self.notes[index % len(self.notes)]
+        return [self.voiced_notes[index % len(self.voiced_notes)]]
 
     def fill_lookahead(self, start, end):
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
@@ -237,32 +237,10 @@ class TorsoTrack:
             accent = (self.accent_curve[(step+self.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
-            vleft = (self.voicing+1+self.repeats) % (self.repeats+1)
-            vmax = (vleft >= 0) + (self.voicing+1+self.repeats)//(self.repeats+1)
 
-            notes = self.style_notes(0)
-            for note in notes:
-                melody_offset = None
-#                if self.melody > 0:
-#                    melody_offset = note + self.phrase[step]*self.melody
-#                    # note = self.quantize(note + melody_offset)
-
-                # do we want to step through accent curve, or apply it directly to sequence including
-                # off notes?
-                events.extend([
-                    MidiEvent(
-                        (step + swing + self.delay)*self._beat/self.division,
-                        (NOTE_ON+self.channel, note+self.pitch, velocity)
-                    ),
-                    MidiEvent(
-                        (step + self.sustain + self.delay)*self._beat/self.division,
-                        (NOTE_OFF+self.channel, note+self.pitch, 0)
-                    ),
-                ])
-
-            for r in range(1, self.repeats+1):
-                notes = self.notes[self.style_notes(r)]
-                vmax = (vleft >= r) + (self.voicing+1+self.repeats)//(self.repeats+1)
+            for r in range(0, self.repeats+1):
+                notes = self.style_notes(r)
+                print(r, notes)
                 for note in notes:
 #                    if melody_offset:
 #                        note = self.quantize(melody_offset)
