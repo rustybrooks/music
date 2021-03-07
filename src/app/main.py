@@ -566,9 +566,35 @@ class App(Tk):
         elif self.mode in [
             MODE_DIVISION, MODE_REPEAT_TIME
         ]:
-            map = {
-                
+            dmap = {
+                1: [0, 0],
+                2: [0, 1],
+                4: [0, 2],
+                8: [0, 3],
+                16: [0, 4],
+                32: [0, 5],
+                64: [0, 6],
+                3: [1, 2],
+                6: [1, 3],
+                12: [1, 4],
+                24: [1, 5],
+                48: [1, 6],
             }
+
+            value = self.get_value()
+            r, c = dmap[value]
+
+            for row in range(2):
+                for col in range(8):
+                    index = row*self.cols + col
+
+                    if row == r and col == c:
+                        color = 'active2'
+                    else:
+                        color = 'inactive'
+
+                    self.w_buttons[0][index].configure(bg=self.colors[color])
+
         elif self.mode in [MODE_PULSES]:
             track = self.torso.get_track((self.bank, self.pattern))
             seq = track.sequence
