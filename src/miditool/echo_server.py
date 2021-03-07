@@ -25,7 +25,7 @@ def open_midi(name):
     print(f"Opening {name}")
     while True:
         ports = midiin.get_ports()
-        matches = [x for x in enumerate(ports or []) if x and name in x[1]]
+        matches = [x for x in enumerate(ports or []) if x[1] and name in x[1]]
         if matches:
             break
 

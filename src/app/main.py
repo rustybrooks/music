@@ -65,53 +65,48 @@ class App(Tk):
         },
         {
             'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
-            'property': 'pulses', 'alt_property': 'rotate', 'min': 0, 'max': 16, 'type': int,
-            'mode': MODE_PULSES, 'alt_mode': MODE_ROTATE,
+            'mode': MODE_PULSES, 'property': 'pulses', 'min': 1, 'max': 16, 'type': int,
+            'alt_mode': MODE_ROTATE, 'alt_property': 'rotate', 'alt_min': 0, 'alt_max': 15,
+
         },
         {
             'row': 0, 'col': 2, 'pos': 0, 'label': 'cycles', 'alt_label': '', 'keybind': 'd',
         },
         {
             'row': 0, 'col': 3, 'pos': 0, 'label': 'division', 'alt_label': '', 'keybind': 'f',
-            'property': 'division',
-            'list': torso_sequencer.TorsoTrack.divisions,
-            'mode': MODE_DIVISION,
+            'mode': MODE_DIVISION, 'property': 'division', 'list': torso_sequencer.TorsoTrack.divisions,
         },
         {
             'row': 0, 'col': 4, 'pos': 0, 'label': 'velocity', 'alt_label': '', 'keybind': 'g',
-            'property': 'velocity', 'min': 0, 'max': 127, 'type': int,
-            'mode': MODE_VELOCITY,
+            'mode': MODE_VELOCITY, 'property': 'velocity', 'min': 0, 'max': 127, 'type': int,
         },
         {
             'row': 0, 'col': 5, 'pos': 0, 'label': 'sustain', 'alt_label': '', 'keybind': 'h',
-            'property': 'sustain', 'min': 0, 'max': 1, 'type': float,
-            'mode': MODE_SUSTAIN,
+            'mode': MODE_SUSTAIN, 'property': 'sustain', 'min': 0, 'max': 1, 'type': float,
         },
         {
             'row': 0, 'col': 0, 'pos': 1, 'label': 'pitch', 'alt_label': 'harmony', 'keybind': 'j',
-            'property': 'pitch', 'min': -36, 'max': 36, 'type': int,
-            'alt_property': 'harmony',  # FIXME min/max etc?
-            'mode': MODE_PITCH, 'alt_mode': MODE_HARMONY,
+            'mode': MODE_PITCH, 'property': 'pitch', 'min': -36, 'max': 36, 'type': int,
+            'alt_mode': MODE_HARMONY, 'alt_property': 'harmony',  # FIXME min/max etc?
         },
         {
-            'row': 0, 'col': 1, 'pos': 1, 'label': 'length', 'alt_label': 'quantize', 'keybind': 'k',
-            'mode': MODE_LENGTH, 'alt_mode': MODE_QUANTIZE,
+            'row': 0, 'col': 1, 'pos': 1, 'keybind': 'k',
+            'mode': MODE_LENGTH, 'label': 'length',
+            'alt_mode': MODE_QUANTIZE, 'alt_label': 'quantize',
         },
         {
             'row': 0, 'col': 2, 'pos': 1, 'label': 'tempo', 'alt_label': '', 'keybind': 'l',
-            'property': 'bpm', 'min': 50, 'max': 300, 'type': int,
-            'mode': MODE_TEMPO,
+            'mode': MODE_TEMPO, 'property': 'bpm', 'min': 50, 'max': 300, 'type': int,
         },
         {
             'row': 1, 'col': 0, 'pos': 0, 'label': 'repeats', 'alt_label': 'offset', 'keybind': 'z',
-            'property': 'repeats', 'min': 0, 'max': 15, 'type': int,
-            'alt_property': 'repeat_offset', 'alt_min': 0, 'alt_max': 15, 'alt_type': int,
-            'mode': MODE_REPEATS, 'alt_mode': MODE_REPEAT_OFFSET,
+            'mode': MODE_REPEATS, 'property': 'repeats', 'min': 0, 'max': 15, 'type': int,
+            'alt_mode': MODE_REPEAT_OFFSET, 'alt_property': 'repeat_offset', 'alt_min': 0, 'alt_max': 15, 'alt_type': int,
         },
         {
             'row': 1, 'col': 1, 'pos': 0, 'label': 'time', 'alt_label': 'pace', 'keybind': 'x',
-            'mode': MODE_REPEAT_TIME, 'alt_mode': MODE_REPEAT_PACE,
-            'property': 'repeat_time', 'list': torso_sequencer.TorsoTrack.divisions,
+            'mode': MODE_REPEAT_TIME, 'property': 'repeat_time', 'list': torso_sequencer.TorsoTrack.divisions,
+            'alt_mode': MODE_REPEAT_PACE,
         },
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
@@ -123,19 +118,16 @@ class App(Tk):
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
             'mode': MODE_MELODY, 'property': 'melody', 'min': 0, 'max': 1, 'type': float,
             'alt_mode': MODE_PHRASE, 'alt_property': 'phrase', 'alt_list': torso_sequencer.TorsoTrack.phrases,
-
         },
         {
             'row': 1, 'col': 4, 'pos': 0, 'label': 'accent', 'alt_label': 'curve', 'keybind': 'b',
-            'property': 'accent', 'min': 0, 'max': 1, 'type': float,
-            'alt_property': 'accent_curve', 'alt_list': torso_sequencer.TorsoTrack.accent_curves,
-            'mode': MODE_ACCENT, 'alt_mode': MODE_ACCENT_CURVE,
+            'mode': MODE_ACCENT,  'property': 'accent', 'min': 0, 'max': 1, 'type': float,
+            'alt_mode': MODE_ACCENT_CURVE, 'alt_property': 'accent_curve', 'alt_list': torso_sequencer.TorsoTrack.accent_curves,
         },
         {
             'row': 1, 'col': 5, 'pos': 0, 'label': 'timing', 'alt_label': 'delay', 'keybind': 'n',
-            'property': 'timing', 'min': 0, 'max': 1, 'type': float,
-            'alt_property': 'delay',
-            'mode': MODE_TIMING, 'alt_mode': MODE_DELAY,
+            'mode': MODE_TIMING, 'property': 'timing', 'min': 0, 'max': 1, 'type': float,
+            'alt_mode': MODE_DELAY, 'alt_property': 'delay',
         },
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
@@ -148,7 +140,7 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 2, 'pos': 1, 'label': 'random', 'alt_label': 'rate', 'keybind': '.',
-            # 'mode': MODE_RANDOM, 'property': 'random', 'min': 0, 'max': 16, 'type': int,  # this is gonna be special
+            # 'mode': MODE_RANDOM, 'property': 'random', 'min': 0, 'max': 1, 'type': float,  # this is gonna be special
             'alt_mode': MODE_RANDOM_RATE, 'alt_list': torso_sequencer.TorsoTrack.divisions,
         },
     ]
@@ -192,8 +184,6 @@ class App(Tk):
     ]
 
     def __init__(self, bank_file):
-        # super().__init__()
-
         midiout, port = open_midiport(
             None,
             "TORSO",
@@ -233,7 +223,6 @@ class App(Tk):
         self.bank = 0
 
         for i, track in enumerate(tracks):
-            print("track", i)
             bank = track.get('bank', 0)
             pattern = track.get('pattern', i)
             t = torso_sequencer.TorsoTrack(**track)
@@ -265,6 +254,11 @@ class App(Tk):
         frb.pack(side=TOP, fill=BOTH, pady=[50, 0])
 
         frames = [flt, frt, flb, frb]
+
+        self.bind("KeyPress-Shift_L", self.set_control)
+        self.bind("KeyRelease-Shift_L", self.release_control)
+        self.bind("KeyPress-Shift", self.set_control)
+        self.bind("KeyRelease-Shift", self.release_control)
 
         for dial in self.dials:
 
@@ -322,13 +316,16 @@ class App(Tk):
                     )
                     self.w_buttons[b].append(bt)
 
+                    key = col[2]
+                    if key == '\\':
+                        key = "backslash"
                     self.bind(
-                        f'<KeyPress-{col[2]}>',
+                        f'<KeyPress-{key}>',
                         lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_press_repeat(rowx, colx, bankx, *args, **kwargs)
                     )
 
                     self.bind(
-                        f'<KeyRelease-{col[2]}>',
+                        f'<KeyRelease-{key}>',
                         lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_release_repeat(rowx, colx, bankx, *args, **kwargs)
                     )
 
@@ -464,9 +461,9 @@ class App(Tk):
 
         value = getattr(track, dial['alt_property' if self.control else 'property'])
 
-        # lval = dial.get('alt_list' if self.control else 'list')
-        # if lval:
-        #    value = lval.index(value)
+        lval = dial.get('alt_list' if self.control else 'list')
+        if lval:
+           value = lval.index(value)
 
         if interpolate is not None:
             value = interpolate*(value - dial['min']) / (dial['max'] - dial['min'])
@@ -533,7 +530,7 @@ class App(Tk):
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
         elif self.mode in [
-            MODE_STEPS, MODE_ROTATE, MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEATS, MODE_REPEAT_OFFSET,
+            MODE_STEPS, MODE_VELOCITY, MODE_SUSTAIN, MODE_REPEATS, MODE_REPEAT_OFFSET,
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO,
             MODE_VOICING
         ]:  # show all buttons from 0 to value
@@ -595,7 +592,7 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
-        elif self.mode in [MODE_PULSES]:
+        elif self.mode in [MODE_PULSES, MODE_ROTATE]:
             track = self.torso.get_track((self.bank, self.pattern))
             seq = track.sequence
 
@@ -605,13 +602,14 @@ class App(Tk):
                     if index >= len(seq):
                         continue
 
-                    if seq[index]:
+                    if seq[(index - track.rotate) % len(seq)]:
                         color = 'active2'
                     else:
                         color = 'inactive'
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
-
+        elif self.mode in [MODE_PITCH]:
+            pass
         else:
             print(f"unknown mode {self.mode}")
 
@@ -620,19 +618,20 @@ class App(Tk):
     def update_dials(self):
         for dial in self.dials:
             prop = dial.get('alt_property' if self.control else 'property')
+            list_key = 'alt_list' if self.control else 'list'
             if prop:
                 c = 6 if dial['pos'] == 0 else 3
                 index = c*dial['row'] + dial['col']
                 value = self.get_value(dial=dial)
-                print(f"prop={prop} val={value}")
-                if 'list' in dial:
-                    value = dial['list'].index(value)
+                if list_key in dial:
+                    # value = dial['list'].index(value)
                     dmin = 0
-                    dmax = len(dial['list']) - 1
+                    dmax = len(dial[list_key])
                 else:
-                    dmin = dial['min']
-                    dmax = dial['max']
+                    dmin = dial.get('alt_min' if self.control else 'min', dial['min'])
+                    dmax = dial.get('alt_max' if self.control else 'max', dial['max'])
 
+                print(f"prop={prop} val={value} min={dmin} max={dmax}")
                 a = min(359, 360*(value - dmin) / (dmax - dmin))
                 w = self.w_dials[dial['pos']][index]
                 w.set_angle(a, doCallback=False)
@@ -640,11 +639,15 @@ class App(Tk):
     def play_pause(self):
         self.torso.play_pause()
 
-    def set_control(self):
+    def set_control(self, *args, **kwargs):
+        # print("ctrl on")
         self.control = True
+        self.update_dials()
 
-    def release_control(self):
+    def release_control(self, *args, **kwargs):
+        # print("ctrl off")
         self.control = False
+        self.update_dials()
 
     def set_mute(self):
         self.old_mode = self.mode

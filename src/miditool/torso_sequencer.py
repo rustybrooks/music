@@ -100,6 +100,7 @@ class TorsoTrack:
         self.repeat_time = repeat_time
         self.repeat_pace = repeat_pace
         self.melody = melody
+        self.harmony = harmony
 
         self.phrase = None
         self.accent_curve = None
@@ -239,10 +240,10 @@ class TorsoTrack:
 
         events = []
         for step in range(first_step, last_step+1):
-            if not self.sequence[(step+self.rotate) % self.steps]:
+            if not self.sequence[(step-self.rotate) % self.steps]:
                 continue
 
-            accent = (self.accent_curve[(step+self.rotate) % len(self.accent_curve)])*self.accent
+            accent = (self.accent_curve[(step-self.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
 
