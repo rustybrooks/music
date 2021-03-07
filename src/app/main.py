@@ -566,7 +566,9 @@ class App(Tk):
         elif self.mode in [
             MODE_DIVISION, MODE_REPEAT_TIME
         ]:
-            pass  # figure this shit out
+            map = {
+                
+            }
         elif self.mode in [MODE_PULSES]:
             track = self.torso.get_track((self.bank, self.pattern))
             seq = track.sequence
