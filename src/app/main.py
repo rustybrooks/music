@@ -447,7 +447,7 @@ class App(Tk):
 
         self.update_display()
 
-    def get_value(self, dial=None, interpolate=None, asint=False):
+    def get_value(self, dial=None, interpolate=None, asint=False, asindex=True):
         track = self.torso.get_track((self.bank, self.pattern))
         dial = dial or self.dial_map.get(self.mode)
 
@@ -462,7 +462,8 @@ class App(Tk):
         value = getattr(track, dial['alt_property' if self.control else 'property'])
 
         lval = dial.get('alt_list' if self.control else 'list')
-        if lval:
+        print(f"get_value... lval={lval}")
+        if asindex and lval is not None:
            value = lval.index(value)
 
         if interpolate is not None:
@@ -475,7 +476,11 @@ class App(Tk):
 
     def set_value(self, value, interpolate=None):
         track = self.torso.get_track((self.bank, self.pattern))
-        dial = self.dial_map[self.mode]
+        dial = self.dial_map.get(self.mode)
+        if not dial:
+            print(f"No dial map for mode={self.mode}")
+            return None
+
         prop = dial.get('alt_property' if self.control else 'property')
         if not prop:
             print(f"set_value - mode={self.mode} no property")
@@ -578,7 +583,8 @@ class App(Tk):
                 48: [1, 6],
             }
 
-            value = self.get_value()
+            value = self.get_value(asindex=False)
+            print("division value = ", value)
             r, c = dmap[value]
 
             for row in range(2):
