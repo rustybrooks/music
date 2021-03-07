@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys
+import json
 basedir = os.path.dirname(os.path.realpath(__file__))
 lp = os.path.abspath(os.path.join(basedir, '..'))
 sys.path.append(lp)
@@ -190,7 +191,7 @@ class App(Tk):
         ],
     ]
 
-    def __init__(self):
+    def __init__(self, bank_file):
         # super().__init__()
 
         midiout, port = open_midiport(
@@ -212,47 +213,31 @@ class App(Tk):
         self.control = False
         self.pattern = None
         self.bank = 0
-        self.active_patterns = {i: {} for i in range(16)}  # 16 banks
 
         self.rows = 2
         self.cols = 8
         self.w_buttons = [[], []]
         self.w_dials = [[], []]
 
-        self.torso = torso_sequencer.TorsoSequencer(
-            midiout=midiout,
-            lookahead=0.05,
-            bpm=120,
-        )
+        with open(bank_file) as f:
+            data = json.load(f)
 
-        self.pattern = 1
+        targs = {
+            'midiout': midiout
+        }
+        tracks = data.pop('tracks', [])
+        targs.update(**data)
+        self.torso = torso_sequencer.TorsoSequencer(**targs)
+
+        self.pattern = 0
         self.bank = 0
 
-        # tp = torso_sequencer.TorsoTrack(
-        #     notes=[('D', 4)],
-        #     pulses=8,
-        #     steps=16,
-        #     channel=0,
-        # )
-        # self.torso.add_track(track_name=(0, 0), track=tp)
-
-        tp2 = torso_sequencer.TorsoTrack(
-            notes=[
-                ('C', 4),
-                ('E', 4),
-                ('G', 4),
-                ('B', 4)
-            ],
-            pulses=4,
-            steps=16,
-            repeats=2,
-            # repeat_time=6,
-            sustain=.25,
-            style=1,
-            voicing=3,
-            channel=1,
-        )
-        self.torso.add_track(track_name=(0, 1), track=tp2)
+        for i, track in enumerate(tracks):
+            print("track", i)
+            bank = track.get('bank', 0)
+            pattern = track.get('pattern', i)
+            t = torso_sequencer.TorsoTrack(**track)
+            self.torso.add_track(track_name=(bank, pattern), track=t)
 
         self.torso.pause()
         self.torso.start()
@@ -435,11 +420,8 @@ class App(Tk):
                 self.pattern = row*self.cols + col
                 self.update_dials()
             elif self.mode == MODE_MUTE:
-                pattern = row*self.cols + col
-                bank = self.active_patterns[self.bank]
-                bank[pattern] = 'inactive' if bank.get(pattern) == 'active' else 'active'
-                track = self.torso.get_track((self.bank, self.pattern))
-                track.mute = bank['pattern'] == 'inactive'
+                track = self.torso.get_track((self.bank, row*self.cols + col))
+                track.muted = not track.muted
         else:
             cmd = self.button_command(row, col, bank, press=True)
             if cmd:
@@ -534,17 +516,16 @@ class App(Tk):
             setattr(track, prop, value)
 
     def update_display(self):
-        bank = self.active_patterns[self.bank]
-
         if self.mode in [MODE_PATTERNS, MODE_MUTE]:
             for row in range(2):
                 for col in range(8):
                     index = row*self.cols + col
+                    track = self.torso.get_track((self.bank, index), create=False)
                     if index == self.pattern:
                         color = 'active'
-                    elif bank.get(index, None) in ['active']:
+                    elif track and not track.muted:
                         color = 'active2'
-                    elif bank.get(index, None) in ['inactive']:
+                    elif track and track.muted:
                         color = 'passive'
                     else:
                         color = 'inactive'
@@ -648,7 +629,7 @@ class App(Tk):
 
 
 if __name__ == '__main__':
-    app = App()
+    app = App(sys.argv[1])
     app.mainloop()
     app.torso.join()
     app.midiout.close_port()

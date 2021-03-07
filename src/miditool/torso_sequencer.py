@@ -78,8 +78,11 @@ class TorsoTrack:
         root=0,
         random=None,
         random_rate=None,
+        muted=False,
+        **kwargs,  # to absorb anything else added to the track files
     ):
-        self.muted = False
+        self.muted = muted
+        self.track_name = None
 
         self.channel = channel
         self.notes = [note_to_number(x) for x in notes or []]
@@ -123,7 +126,6 @@ class TorsoTrack:
         self.__bpm = None
         self.__pulses = pulses
         self.voicing = voicing
-        # self.__voiced_notes = self.notes
 
     @property
     def pulses(self):
@@ -165,7 +167,7 @@ class TorsoTrack:
             n = self.notes[v % ln]
             self.__voiced_notes.append(n + 12*(1+v//ln))
 
-        print(f"voicing settr, value={value} notes={self.__voiced_notes}")
+        print(f"[{self.track_name}] voicing settr, value={value} notes={self.notes} voiced notes={self.__voiced_notes}")
 
     @property
     def voiced_notes(self):
@@ -185,7 +187,7 @@ class TorsoTrack:
         pulses = min(self.pulses, self.steps)
         interval = self.steps / pulses
         sequence = [0]*self.steps
-        print(f"pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
+        print(f"[self.track_name] pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
 
         for i in range(pulses):
             sequence[round(i*interval)] = 1
@@ -291,13 +293,14 @@ class TorsoSequencer(threading.Thread):
     def add_track(self, track_name, track):
         self.tracks[track_name] = track
         track.bpm = self.bpm
+        track.track_name = track_name
         track.generate()
 
     def get_track(self, track_name, create=True):
         if track_name not in self.tracks and create:
             self.add_track(track_name, TorsoTrack())
 
-        return self.tracks[track_name]
+        return self.tracks.get(track_name)
 
     def stop(self, timeout=5):
         """Set thread stop event, causing it to exit its mainloop."""
@@ -310,10 +313,8 @@ class TorsoSequencer(threading.Thread):
 
     def play_pause(self):
         if self._paused.is_set():
-            print("play")
             self._paused.clear()
         else:
-            print("pause")
             self._paused.set()
 
     def pause(self):
