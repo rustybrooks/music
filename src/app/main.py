@@ -53,11 +53,15 @@ MODE_CHANNEL = 'channel'
 
 class App(Tk):
     colors = {
-        'bg': '#333333',
-        'active': '#bfd426',
-        'active2': '#4cd426',
-        'inactive': '#6b6b6b',
-        'passive': '#26d4c0'
+        'bg':             '#333333',
+        'active':         '#bfd426',
+        'active2':        '#4cd426',
+        'inactive':       '#6b6b6b',
+        'passive':        '#26d4c0',
+        'white_active':   '#eeeeee',
+        'white_inactive': '#bbbbbb',
+        'black_active':   '#777777',
+        'black_inactive': '#444444',
     }
 
     dials = [
@@ -633,16 +637,26 @@ class App(Tk):
             for row in range(2):
                 for col in range(8):
                     index = row*self.cols + col
-                    self.w_buttons[0][index].configure(bg=self.colors['default'])
+                    self.w_buttons[0][index].configure(bg=self.colors['inactive'])
 
+            track = self.torso.get_track((self.bank, self.pattern, self.track))
+            our_notes = [notes.number_to_note(x)[0] for x in track.notes]
             # white keys
-            for i in range(8):
+            for i, n in zip(range(8), ['C', 'D', 'E', 'F', 'G', 'A', 'C']):
                 row = 1
                 col = i
                 index = row*self.cols + col
-                self.w_buttons[0][index].configure(bg=white)
+                self.w_buttons[0][index].configure(bg=self.colors['white_active' if n in our_notes else 'white_inactive'])
+
+            # black keys
+            for i, n in zip([1, 2, 4, 5, 6], ['C#', 'D#', 'F#', 'G#', 'A#']):
+                row = 0
+                col = i
+                index = row*self.cols + col
+                self.w_buttons[0][index].configure(bg=self.colors['black_active' if n in our_notes else 'black_inactive'])
         else:
             print(f"unknown mode {self.mode}")
+
 
         self.update(); self.update_idletasks()
 
