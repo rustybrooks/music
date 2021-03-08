@@ -61,13 +61,13 @@ class TorsoTrack:
         accent=.5,  # 0-1 the percent of accent curve to apply
         accent_curve=0,  # select from predefined accent curves (FIXME make some)
         sustain=0.15,  # Note length, in increments of step, i.e. 0.5 = half step
-        division=1,  # how many pieces to divide a beat into
+        division=8,  # how many pieces to divide a beat into
         velocity=64,  # base velocity - accent gets added to this
         timing=0.5,  # swing timing, 0.5=even, less means every other beat is early, more means late
         delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
         repeats=0,  # number of repeats to add, integer, will be is divisions of self.time
         repeat_offset=0,  # this delays the repeats, in units of 1 beat
-        repeat_time=4,  # this is the same as divsion, but for repeats, minimum is 1
+        repeat_time=1,  # this is the same as divsion, but for repeats, minimum is 1
         repeat_pace=None,  # supposed to accelerate or decelerate repeats - not implemented
         voicing=0,  # adds notes an octave above
         style=0,  # integer, picks

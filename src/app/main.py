@@ -14,7 +14,10 @@ from app.dial import Dial
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
 
+MODE_TRACKS = 'tracks'
 MODE_PATTERNS = 'patterns'
+MODE_BANKS = 'banks'
+
 MODE_STEPS = 'steps'
 MODE_PULSES = 'pulses'
 MODE_ROTATE = 'rotate'
@@ -199,9 +202,10 @@ class App(Tk):
         self.has_prev_key_release = {}
 
         self.old_modes = []
-        self.mode = MODE_PATTERNS
+        self.mode = MODE_TRACKS
         self.control = False
-        self.pattern = None
+        self.track = 0
+        self.pattern = 0
         self.bank = 0
 
         self.rows = 2
@@ -219,14 +223,12 @@ class App(Tk):
         targs.update(**data)
         self.torso = torso_sequencer.TorsoSequencer(**targs)
 
-        self.pattern = 0
-        self.bank = 0
-
         for i, track in enumerate(tracks):
             bank = track.get('bank', 0)
-            pattern = track.get('pattern', i)
+            pattern = track.get('pattern', 0)
+            trackn = track.get('track', i)
             t = torso_sequencer.TorsoTrack(**track)
-            self.torso.add_track(track_name=(bank, pattern), track=t)
+            self.torso.add_track(track_name=(bank, pattern, trackn), track=t)
 
         self.torso.pause()
         self.torso.start()
@@ -373,8 +375,8 @@ class App(Tk):
         pass
 
     def dial_callback(self, degrees):
-        if self.pattern is None or self.bank is None:
-            print(f"need pattern or bank - bank={self.bank} pattern={self.pattern}")
+        if self.pattern is None or self.bank is None or self.track is None:
+            print(f"need pattern or bank - bank={self.bank} pattern={self.pattern} track={self.track}")
             return
 
         self.set_value(degrees, interpolate=360)
@@ -413,8 +415,22 @@ class App(Tk):
         print(f'press row={row} col={col} bank={bank} event={event} serial={event.serial}')
 
         if bank == 0:
-            if self.mode == MODE_PATTERNS:
+            if self.mode == MODE_TRACKS:
+                self.track = row*self.cols + col
+                self.update_dials()
+            elif self.mode == MODE_PATTERNS:
+#                for i in range(16):
+#                    t = self.torso.get_track((self.bank, self.pattern, i), create=False)
+#                    if t:
+#                        t.muted = True
                 self.pattern = row*self.cols + col
+                self.update_dials()
+            elif self.mode == MODE_BANKS:
+#                for i in range(16):
+#                    t = self.torso.get_track((self.bank, self.pattern, i), create=False)
+#                    if t:
+#                        t.muted = True
+                self.bank = row*self.cols + col
                 self.update_dials()
             elif self.mode == MODE_MUTE:
                 track = self.torso.get_track((self.bank, row*self.cols + col))
@@ -448,7 +464,7 @@ class App(Tk):
         self.update_display()
 
     def get_value(self, dial=None, interpolate=None, asint=False, asindex=True):
-        track = self.torso.get_track((self.bank, self.pattern))
+        track = self.torso.get_track((self.bank, self.pattern, self.track))
         dial = dial or self.dial_map.get(self.mode)
 
         if not dial:
@@ -475,7 +491,7 @@ class App(Tk):
         return value
 
     def set_value(self, value, interpolate=None):
-        track = self.torso.get_track((self.bank, self.pattern))
+        track = self.torso.get_track((self.bank, self.pattern, self.track))
         dial = self.dial_map.get(self.mode)
         if not dial:
             print(f"No dial map for mode={self.mode}")
@@ -518,12 +534,12 @@ class App(Tk):
             setattr(track, prop, value)
 
     def update_display(self):
-        if self.mode in [MODE_PATTERNS, MODE_MUTE]:
+        if self.mode in [MODE_TRACKS, MODE_MUTE]:
             for row in range(2):
                 for col in range(8):
                     index = row*self.cols + col
                     track = self.torso.get_track((self.bank, index), create=False)
-                    if index == self.pattern:
+                    if index == self.track:
                         color = 'active'
                     elif track and not track.muted:
                         color = 'active2'
@@ -584,7 +600,6 @@ class App(Tk):
             }
 
             value = self.get_value(asindex=False)
-            print("division value = ", value)
             r, c = dmap[value]
 
             for row in range(2):
@@ -599,7 +614,7 @@ class App(Tk):
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
         elif self.mode in [MODE_PULSES, MODE_ROTATE]:
-            track = self.torso.get_track((self.bank, self.pattern))
+            track = self.torso.get_track((self.bank, self.pattern, self.track))
             seq = track.sequence
 
             for row in range(2):
