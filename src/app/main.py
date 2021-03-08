@@ -630,7 +630,17 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [MODE_PITCH]:
-            pass
+            for row in range(2):
+                for col in range(8):
+                    index = row*self.cols + col
+                    self.w_buttons[0][index].configure(bg=self.colors['default'])
+
+            # white keys
+            for i in range(8):
+                row = 1
+                col = i
+                index = row*self.cols + col
+                self.w_buttons[0][index].configure(bg=white)
         else:
             print(f"unknown mode {self.mode}")
 
