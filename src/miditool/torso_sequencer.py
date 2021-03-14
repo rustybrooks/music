@@ -95,7 +95,6 @@ class TorsoTrack:
     ]
     styles = ['chord', 'updward', 'downward', 'converge', 'diverge', 'random']
 
-
     phrases = [
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     ]
@@ -184,6 +183,10 @@ class TorsoTrack:
     def slice(self, value):
         self.__slice_index = value
         self.voicing = self.__voicing  # to trigger a recalc of voicing
+
+    @property
+    def notes(self):
+        return self.slice.notes
 
     @property
     def steps(self):
