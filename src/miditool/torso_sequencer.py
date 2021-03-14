@@ -19,6 +19,57 @@ log = logging.getLogger(__name__)
 MAX_PULSE = 16
 
 
+class TrackSlice:
+    def __init__(
+        self, steps=16, pulses=1, notes=None, rotate=0, manual_steps=None,
+    ):
+        self.notes = [note_to_number(x) for x in notes or []]
+        self.rotate = rotate
+        self.manual_steps = manual_steps or []
+
+        self.__pulses = pulses
+        self.__steps = steps
+
+        self.sequence = []
+
+        self.generate()
+
+    @property
+    def steps(self):
+        return self.__steps
+
+    @steps.setter
+    def steps(self, value):
+        self.__steps = value
+        self.generate()
+
+    @property
+    def pulses(self):
+        return self.__pulses
+
+    @pulses.setter
+    def pulses(self, value):
+        self.__pulses = value
+        self.generate()
+
+    def generate(self):
+        pulses = min(self.pulses, self.steps)
+        interval = self.steps / pulses
+        sequence = [0]*self.steps
+        print(f"[self.track_name] pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
+
+        for i in range(pulses):
+            sequence[round(i*interval)] = 1
+
+        for i, v in enumerate(self.manual_steps):
+            if v < 0:
+                sequence[i] = 0
+            elif v > 0:
+                sequence[i] = v
+
+        self.sequence = sequence
+
+
 class TorsoTrack:
     divisions = [
         1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64,
@@ -83,11 +134,15 @@ class TorsoTrack:
         self.muted = muted
         self.track_name = None
 
+        self.slices = [TrackSlice(
+            steps=steps, pulses=pulses, notes=notes, rotate=rotate, manual_steps=manual_steps,
+        )]
+        self.__slice = self.slices[0]
+        self.__slice_index = 0
+
         self.channel = channel
-        self.notes = [note_to_number(x) for x in notes or []]
-        self.manual_steps = manual_steps or []
+
         self.pitch = pitch
-        self.rotate = rotate
         self.division = division  # ??
         self.accent = accent
         self.sustain = sustain
@@ -111,9 +166,6 @@ class TorsoTrack:
         self.set_scale(scale, root=root)
         self.phrase = self.phrases[phrase]
 
-        # require re-sequencing:
-
-        self.sequence = []
         self.randoms = {}
 
         # some internal params
@@ -122,28 +174,32 @@ class TorsoTrack:
         self._step = 1
 
         # for property getter/setters
-        self.__steps = steps
         self.__bpm = None
-        self.__pulses = pulses
         self.voicing = voicing
 
     @property
-    def pulses(self):
-        return self.__pulses
+    def slice(self):
+        return self.slices[self.__slice_index]
 
-    @pulses.setter
-    def pulses(self, value):
-        self.__pulses = value
-        self.generate()
+    @slice.setter
+    def slice(self, value):
+        self.__slice_index = value
 
     @property
     def steps(self):
-        return self.__steps
+        return self.slice.steps
 
     @steps.setter
     def steps(self, value):
-        self.__steps = value
-        self.generate()
+        self.slice.steps = value
+
+    @property
+    def pulses(self):
+        return self.slice.pulses
+
+    @pulses.setter
+    def pulses(self, value):
+        self.slice.pulses = value
 
     @property
     def bpm(self):
@@ -161,13 +217,14 @@ class TorsoTrack:
     @voicing.setter
     def voicing(self, value):
         self.__voicing = value
-        self.__voiced_notes = copy.deepcopy(self.notes)
-        ln = len(self.notes)
+        print(f"slice notes {self.slice.notes}")
+        self.__voiced_notes = copy.deepcopy(self.slice.notes)
+        ln = len(self.slice.notes)
         for v in range(value):
-            n = self.notes[v % ln]
+            n = self.slice.notes[v % ln]
             self.__voiced_notes.append(n + 12*(1+v//ln))
 
-        print(f"[{self.track_name}] voicing settr, value={value} notes={self.notes} voiced notes={self.__voiced_notes}")
+        print(f"[{self.track_name}] voicing settr, value={value} notes={self.slice.notes} voiced notes={self.__voiced_notes}")
 
     @property
     def voiced_notes(self):
@@ -182,26 +239,6 @@ class TorsoTrack:
 
         for i in range(MAX_PULSE):
             self.randoms[parameter][i] += random.randrange(-strength, strength)
-
-    def generate(self):
-        pulses = min(self.pulses, self.steps)
-        interval = self.steps / pulses
-        sequence = [0]*self.steps
-        print(f"[self.track_name] pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
-
-        for i in range(pulses):
-            sequence[round(i*interval)] = 1
-
-        for i, v in enumerate(self.manual_steps):
-            if v < 0:
-                sequence[i] = 0
-            elif v > 0:
-                sequence[i] = v
-
-        self.sequence = sequence
-
-        # lnotes = len(self.notes)
-        # self.sequence = [self.notes[i % lnotes] if v else None for i, v in enumerate(sequence)]
 
     def quantize(self, note):
         root = self.scale[0]
@@ -229,6 +266,7 @@ class TorsoTrack:
         return [self.voiced_notes[index % len(self.voiced_notes)]]
 
     def fill_lookahead(self, start, end):
+
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
         # need to
         first_step = math.ceil(self.division*(start - self._sequence_start + self.delay*self._beat)/self._beat)
@@ -239,10 +277,13 @@ class TorsoTrack:
 
         events = []
         for step in range(first_step, last_step+1):
-            if not self.sequence[(step-self.rotate) % self.steps]:
+            if step >= self.slice.steps:
+                self.slice = (self.__slice_index+1) % len(self.slices)
+
+            if not self.slice.sequence[(step-self.slice.rotate) % self.slice.steps]:
                 continue
 
-            accent = (self.accent_curve[(step-self.rotate) % len(self.accent_curve)])*self.accent
+            accent = (self.accent_curve[(step-self.slice.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
 
@@ -294,7 +335,6 @@ class TorsoSequencer(threading.Thread):
         self.tracks[track_name] = track
         track.bpm = self.bpm
         track.track_name = track_name
-        track.generate()
 
     def get_track(self, track_name, create=True):
         if track_name not in self.tracks and create:
