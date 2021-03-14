@@ -102,13 +102,13 @@ class TorsoTrack:
 
     def __init__(
         self, channel=0,
+        slices=None,
         pitch=0,  # pitch shift to apply to all notes, integer (FIXME add intelligent shifting?)
         harmony=0,  # transpose notes defined in pitch up one at a time?
-        rotate=0,  # number of steps to rotate sequence
         accent=.5,  # 0-1 the percent of accent curve to apply
         accent_curve=0,  # select from predefined accent curves (FIXME make some)
         sustain=0.15,  # Note length, in increments of step, i.e. 0.5 = half step
-        division=8,  # how many pieces to divide a beat into
+        division=4,  # how many pieces to divide a beat into
         velocity=64,  # base velocity - accent gets added to this
         timing=0.5,  # swing timing, 0.5=even, less means every other beat is early, more means late
         delay=0,  # delay pattern in relation to other patterns, +ve means later, in units of beat
@@ -130,9 +130,9 @@ class TorsoTrack:
         self.muted = muted
         self.track_name = None
 
-        self.slices = []
-        self.__slice = self.slices[0]
+        self.slices = slices or []
         self.__slice_index = 0
+        self.__slice_step = 0
 
         self.channel = channel
 
@@ -173,6 +173,8 @@ class TorsoTrack:
 
     def add_slice(self, slice):
         self.slices.append(slice)
+        if self.slice is None:
+            self.slice = 0
 
     @property
     def slice(self):
@@ -181,6 +183,7 @@ class TorsoTrack:
     @slice.setter
     def slice(self, value):
         self.__slice_index = value
+        self.voicing = self.__voicing  # to trigger a recalc of voicing
 
     @property
     def steps(self):
@@ -286,8 +289,9 @@ class TorsoTrack:
 
         events = []
         for step in range(first_step, last_step+1):
-            if step >= self.slice.steps:
+            if step - self.__slice_step >= self.slice.steps:
                 self.slice = (self.__slice_index+1) % len(self.slices)
+                self.__slice_step = step
 
             if not self.slice.sequence[(step-self.slice.rotate) % self.slice.steps]:
                 continue

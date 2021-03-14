@@ -231,9 +231,8 @@ class App(Tk):
             bank = track.get('bank', 0)
             pattern = track.get('pattern', 0)
             trackn = track.get('track', i)
+            track['slices'] = [torso_sequencer.TrackSlice(**s) for s in track.pop('slices', [])]
             t = torso_sequencer.TorsoTrack(**track)
-            for s in track.get('slices', []):
-                t.add_slice(torso_sequencer.TrackSlice(**s))
             self.torso.add_track(track_name=(bank, pattern, trackn), track=t)
 
         self.torso.pause()

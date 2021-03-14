@@ -1,5 +1,5 @@
 {
-  "bpm": 120,
+  "bpm": 60,
   "lookahead": 0.05,
   "interval": 0.003,
   "tracks": [
@@ -23,9 +23,9 @@
         {
           "pulses": 4,
           "steps": 16,
-          "notes": [["C", 2]],
+          "notes": [["C", 2]]
         }
-      ]
+      ],
       "muted": true
     }
   ]
