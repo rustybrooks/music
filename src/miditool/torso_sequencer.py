@@ -102,13 +102,9 @@ class TorsoTrack:
 
     def __init__(
         self, channel=0,
-        steps=16,
-        pulses=1,  # number of euclidean pulses to apply, 1 to steps
         pitch=0,  # pitch shift to apply to all notes, integer (FIXME add intelligent shifting?)
         harmony=0,  # transpose notes defined in pitch up one at a time?
-        notes=None,  # List of notes to play
         rotate=0,  # number of steps to rotate sequence
-        manual_steps=None,  # list of manual locations to apply hits, -1=remove, 0=nothing, 1=add
         accent=.5,  # 0-1 the percent of accent curve to apply
         accent_curve=0,  # select from predefined accent curves (FIXME make some)
         sustain=0.15,  # Note length, in increments of step, i.e. 0.5 = half step
@@ -134,9 +130,7 @@ class TorsoTrack:
         self.muted = muted
         self.track_name = None
 
-        self.slices = [TrackSlice(
-            steps=steps, pulses=pulses, notes=notes, rotate=rotate, manual_steps=manual_steps,
-        )]
+        self.slices = []
         self.__slice = self.slices[0]
         self.__slice_index = 0
 
@@ -176,6 +170,9 @@ class TorsoTrack:
         # for property getter/setters
         self.__bpm = None
         self.voicing = voicing
+
+    def add_slice(self, slice):
+        self.slices.append(slice)
 
     @property
     def slice(self):
