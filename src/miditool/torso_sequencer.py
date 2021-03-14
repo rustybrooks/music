@@ -202,6 +202,14 @@ class TorsoTrack:
         self.slice.pulses = value
 
     @property
+    def rotate(self):
+        return self.slice.rotate
+
+    @rotate.setter
+    def rotate(self, value):
+        self.slice.rotate = value
+
+    @property
     def bpm(self):
         return self.__bpm
 
@@ -209,6 +217,10 @@ class TorsoTrack:
     def bpm(self, value):
         self.__bpm = value
         self._beat = 60. / (value)
+
+    @property
+    def sequence(self):
+        return self.slice.sequence
 
     @property
     def voicing(self):

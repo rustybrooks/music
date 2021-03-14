@@ -423,21 +423,13 @@ class App(Tk):
                 self.track = row*self.cols + col
                 self.update_dials()
             elif self.mode == MODE_PATTERNS:
-#                for i in range(16):
-#                    t = self.torso.get_track((self.bank, self.pattern, i), create=False)
-#                    if t:
-#                        t.muted = True
                 self.pattern = row*self.cols + col
                 self.update_dials()
             elif self.mode == MODE_BANKS:
-#                for i in range(16):
-#                    t = self.torso.get_track((self.bank, self.pattern, i), create=False)
-#                    if t:
-#                        t.muted = True
                 self.bank = row*self.cols + col
                 self.update_dials()
             elif self.mode == MODE_MUTE:
-                track = self.torso.get_track((self.bank, row*self.cols + col))
+                track = self.torso.get_track((self.bank, self.pattern, row*self.cols + col))
                 track.muted = not track.muted
         else:
             cmd = self.button_command(row, col, bank, press=True)
@@ -542,7 +534,7 @@ class App(Tk):
             for row in range(2):
                 for col in range(8):
                     index = row*self.cols + col
-                    track = self.torso.get_track((self.bank, index), create=False)
+                    track = self.torso.get_track((self.bank, self.pattern, index), create=False)
                     if index == self.track:
                         color = 'active'
                     elif track and not track.muted:
