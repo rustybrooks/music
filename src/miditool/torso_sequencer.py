@@ -129,7 +129,7 @@ class TorsoTrack:
         self.muted = muted
         self.track_name = None
 
-        self.slices = slices or []
+        self.slices = slices or [TrackSlice()]
         self.__slice_index = 0
         self.__slice_step = 0
 

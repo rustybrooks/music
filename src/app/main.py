@@ -319,7 +319,7 @@ class App(Tk):
                     f.grid(row=r, column=c)
                     bt = Button(
                         f, height=70, width=70, text=col[2], bg=self.colors['inactive'], borderless=True,
-                        activebackground=self.colors['inactive'],
+                        # activebackground=self.colors['inactive'],
                     )
                     self.w_buttons[b].append(bt)
 
