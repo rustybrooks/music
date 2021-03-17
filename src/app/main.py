@@ -19,7 +19,13 @@ from app.dial import Dial
 
 MODE_TRACKS = 'tracks'
 MODE_PATTERNS = 'patterns'
+MODE_SAVE = 'save'
 MODE_BANKS = 'banks'
+MODE_SELECT = 'select'
+MODE_TEMP = 'temp'
+MODE_MULTI = 'multi'
+MODE_CLEAR = 'clear'
+MODE_COPY = 'copy'
 
 MODE_STEPS = 'steps'
 MODE_PULSES = 'pulses'
@@ -179,14 +185,14 @@ class App(Tk):
             [
                 ['play',     'stop',   '9',  ['play_pause', None]],
                 [None,       None,     None],
-                ['clear',    'copy',   '\-'],
+                ['clear',    'copy',   '\-', ['set_clear', 'release_mode']],
                 ['ctrl',     '',       '=', ['set_control', 'release_control']],
             ],
             [
-                ['bank',    'save',    'p'],
-                ['pattern', 'select',  '['],
-                ['temp',    'multi',   ']'],
-                ['mute',     '',       '\\', ['set_mute', 'release_mute']],
+                ['bank',    'save',    'p',  ['set_bank', 'release_mode']],
+                ['pattern', 'select',  '[',  ['set_pattern', 'release_mode']],
+                ['temp',    'multi',   ']',  ],
+                ['mute',     '',       '\\', ['set_mute', 'release_mode']],
             ],
         ],
     ]
@@ -264,10 +270,8 @@ class App(Tk):
 
         frames = [flt, frt, flb, frb]
 
-        self.bind("KeyPress-Shift_L", self.set_control)
-        self.bind("KeyRelease-Shift_L", self.release_control)
-        self.bind("KeyPress-Shift", self.set_control)
-        self.bind("KeyRelease-Shift", self.release_control)
+        self.bind("<KeyPress-Control_L>", self.set_control)
+        self.bind("<KeyRelease-Control_L>", self.release_control)
 
         for dial in self.dials:
 
@@ -413,7 +417,6 @@ class App(Tk):
         if bkey in self.button_pressed:
             return
 
-        print("press")
         self.button_pressed[bkey] = 1
 
         # print(f'press row={row} col={col} bank={bank} event={event} serial={event.serial}')
@@ -565,6 +568,28 @@ class App(Tk):
                     index = r*self.cols + c
                     self.w_buttons[0][index].configure(text=col[2])
 
+        self.w_buttons[1][0].configure(
+            bg=self.colors['active' if not self.torso._paused else 'inactive'],
+        )
+        self.w_buttons[1][1].configure(
+            bg=self.colors['active' if self.mode in [MODE_CLEAR, MODE_COPY] else 'inactive'],
+        )
+        self.w_buttons[1][2].configure(
+            bg=self.colors['active' if self.control else 'inactive'],
+        )
+        self.w_buttons[1][3].configure(
+            bg=self.colors['active' if self.mode in [MODE_BANKS, MODE_SELECT] else 'inactive'],
+        )
+        self.w_buttons[1][4].configure(
+            bg=self.colors['active' if self.mode in [MODE_PATTERNS, MODE_SAVE] else 'inactive'],
+        )
+        self.w_buttons[1][4].configure(
+            bg=self.colors['active' if self.mode in [MODE_TEMP, MODE_MULTI] else 'inactive'],
+        )
+        self.w_buttons[1][6].configure(
+            bg=self.colors['active' if self.mode in [MODE_MUTE] else 'inactive'],
+        )
+
         if self.mode in [MODE_TRACKS, MODE_MUTE]:
             for row in range(2):
                 for col in range(8):
@@ -580,7 +605,10 @@ class App(Tk):
                         color = 'inactive'
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
-
+        elif self.mode in [MODE_PATTERNS]:
+            pass
+        elif self.mode in [MODE_BANKS]:
+            pass
         elif self.mode in [
             MODE_STEPS, MODE_VELOCITY, MODE_SUSTAIN, MODE_REPEATS, MODE_REPEAT_OFFSET,
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO,
@@ -669,23 +697,23 @@ class App(Tk):
             track = self.torso.get_track((self.bank, self.pattern, self.track))
             our_notes = [notes.number_to_note(x)[0] for x in track.notes]
             # white keys
-            for i, n in zip(range(8), ['C', 'D', 'E', 'F', 'G', 'A', 'C']):
+            for i, n in zip(range(8), ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'UP']):
                 row = 1
                 col = i
                 index = row*self.cols + col
                 self.w_buttons[0][index].configure(
                     bg=self.colors['white_active' if n in our_notes else 'white_inactive'],
-                    text=f"{n} {self.pitch_octave}",
+                    text=f"{n}{self.pitch_octave if n and n not in ['UP', 'DN'] else ''}",
                 )
 
             # black keys
-            for i, n in zip(range(8), ['', 'C#', 'D#', '', 'F#', 'G#', 'A#', '']):
+            for i, n in zip(range(8), ['', 'C#', 'D#', '', 'F#', 'G#', 'A#', 'DN']):
                 row = 0
                 col = i
                 index = row*self.cols + col
                 self.w_buttons[0][index].configure(
                     bg=self.colors['black_active' if n in our_notes else 'black_inactive'],
-                    text=f"{n} {self.pitch_octave}",
+                    text=f"{n}{self.pitch_octave if n and n not in ['UP', 'DN'] else ''}",
                 )
         else:
             print(f"unknown mode {self.mode}")
@@ -726,15 +754,23 @@ class App(Tk):
         self.control = False
         self.update_dials()
 
+    def release_mode(self):
+        self.pop_mode()
+
+    def set_temp(self):
+        self.push_mode([MODE_TEMP, MODE_MULTI])
+
     def set_mute(self):
-        self.old_mode = self.mode
-        self.mode = MODE_MUTE
-        self.w_buttons[1][6].configure(bg=self.colors['active'])
+        self.push_mode([MODE_MUTE, None])
 
-    def release_mute(self):
-        self.mode = self.old_mode
-        self.w_buttons[1][6].configure(bg=self.colors['inactive'])
+    def set_bank(self):
+        self.push_mode([MODE_BANKS, MODE_SAVE])
 
+    def set_pattern(self):
+        self.push_mode([MODE_PATTERNS, MODE_SELECT])
+
+    def set_clear(self):
+        self.push_mode([MODE_CLEAR, MODE_COPY])
 
 if __name__ == '__main__':
     app = App(sys.argv[1])
