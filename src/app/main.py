@@ -432,6 +432,8 @@ class App(Tk):
             elif self.mode == MODE_MUTE:
                 track = self.torso.get_track((self.bank, self.pattern, row*self.cols + col))
                 track.muted = not track.muted
+            elif self.mode in [MODE_PITCH]:
+                pass
             elif self.mode in [
                 MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE,
             ]:
@@ -677,7 +679,7 @@ class App(Tk):
                 )
 
             # black keys
-            for i, n in zip([1, 2, 4, 5, 6], ['C#', 'D#', 'F#', 'G#', 'A#']):
+            for i, n in zip(range(8), ['', 'C#', 'D#', '', 'F#', 'G#', 'A#', '']):
                 row = 0
                 col = i
                 index = row*self.cols + col
