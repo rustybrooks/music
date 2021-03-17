@@ -433,6 +433,16 @@ class App(Tk):
                 track = self.torso.get_track((self.bank, self.pattern, row*self.cols + col))
                 track.muted = not track.muted
             elif self.mode in [
+                MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE,
+            ]:
+                if self.pattern is None or self.bank is None or self.track is None:
+                    print(f"need pattern or bank - bank={self.bank} pattern={self.pattern} track={self.track}")
+                    return
+
+                self.set_value(index)
+                self.update_display()
+
+            elif self.mode in [
                 MODE_STEPS, MODE_PULSES, MODE_ROTATE, MODE_REPEATS, MODE_REPEAT_OFFSET, MODE_VOICING,
                 MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEAT_PACE, MODE_MELODY, MODE_PHRASE, MODE_ACCENT,
                 MODE_ACCENT_CURVE, MODE_STYLE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,
@@ -487,9 +497,10 @@ class App(Tk):
         value = getattr(track, dial['alt_property' if self.control else 'property'])
 
         lval = dial.get('alt_list' if self.control else 'list')
-        print(f"get_value... lval={lval}")
         if asindex and lval is not None:
            value = lval.index(value)
+
+        print(f"get_value... lval={lval} value={value}")
 
         if interpolate is not None:
             value = interpolate*(value - dial['min']) / (dial['max'] - dial['min'])
@@ -519,7 +530,7 @@ class App(Tk):
             lval = dial['list']
         elif self.control and 'alt_list' in dial:
             fmin = 0
-            fmax = len(dial['list']) - 1
+            fmax = len(dial['alt_list']) - 1
             ftype = int
             lval = dial['alt_list']
         else:
@@ -585,9 +596,9 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [
-            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY
+            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE,
         ]:
-            value_index = self.get_value(interpolate=16, asint=True)
+            value_index = self.get_value(asint=True)
 
             for row in range(2):
                 for col in range(8):
