@@ -22,6 +22,7 @@ class Dial:
         label='',
         bg=None,
     ):
+        self.parent = parent
         self.command = command
         self.press_command = press_command
         self.release_command = release_command
@@ -43,11 +44,10 @@ class Dial:
         self.main = c.create_oval(cx-r, cy-r, cx+r, cy+r, **kw)
 
         self.mid = c.create_oval(cx-r//2, cy-r//2, cx+r//2, cy+r//2, fill='white')
-        c.tag_bind(self.mid, '<ButtonPress-1>', self.mid_press_cb)
-        c.tag_bind(self.mid, '<ButtonRelease-1>', self.mid_release_cb)
 
+        txt = None
         if label:
-            c.create_text(cx, cy, text=label, anchor='c', fill='black')
+            txt = c.create_text(cx, cy, text=label, anchor='c', fill='black')
 
         bs = self.bump_size
         kw = {'width': bs}
@@ -68,7 +68,14 @@ class Dial:
         c.tag_bind(self.line_id, '<Button1-Motion>', self.pointer_drag_cb)
         c.tag_bind(self.line_id, '<ButtonRelease-1>', self.button_release_cb)
 
+        if txt:
+            c.tag_bind(txt, '<ButtonPress-1>', self.mid_press_cb)
+            c.tag_bind(txt, '<ButtonRelease-1>', self.mid_release_cb)
+        c.tag_bind(self.mid, '<ButtonPress-1>', self.mid_press_cb)
+        c.tag_bind(self.mid, '<ButtonRelease-1>', self.mid_release_cb)
+
         self.c = c
+        self.pressed = False
 
     def pack(self, *args, **kwargs):
         self.c.pack(*args, **kwargs)
@@ -85,6 +92,18 @@ class Dial:
         self.c.itemconfigure(self.mid, fill='white')
         if self.release_command:
             self.release_command()
+
+        self.pressed = False
+
+    def mid_press_cb_repeat(self, event):
+        if self.pressed:
+            self.c.after_cancel(self.pressed)
+            self.pressed = None
+        else:
+            self.mid_press_cb(event)
+
+    def mid_release_cb_repeat(self, event):
+        self.pressed = self.c.after_idle(lambda: self.mid_release_cb(event))
 
     def button_press_cb(self, event):
         try:

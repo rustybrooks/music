@@ -2,6 +2,7 @@
 
 import os, sys
 import json
+
 basedir = os.path.dirname(os.path.realpath(__file__))
 lp = os.path.abspath(os.path.join(basedir, '..'))
 sys.path.append(lp)
@@ -9,10 +10,12 @@ sys.path.append(lp)
 
 from tkinter import *
 from tkmacosx import Button
-from app.dial import Dial
-
+import platform
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
+
+from app.dial import Dial
+
 
 MODE_TRACKS = 'tracks'
 MODE_PATTERNS = 'patterns'
@@ -32,7 +35,6 @@ MODE_REPEATS = 'repeats'
 MODE_REPEAT_OFFSET = 'repeat_offset'
 MODE_REPEAT_TIME = 'repeat_time'
 MODE_REPEAT_PACE = 'repeat_pace'
-MODE_PACE = 'pace'
 MODE_VOICING = 'voicing'
 MODE_MELODY = 'melody'
 MODE_PHRASE = 'phrase'
@@ -58,9 +60,9 @@ class App(Tk):
         'active2':        '#4cd426',
         'inactive':       '#6b6b6b',
         'passive':        '#26d4c0',
-        'white_active':   '#eeeeee',
+        'white_active':   '#ffdddd',
         'white_inactive': '#bbbbbb',
-        'black_active':   '#777777',
+        'black_active':   '#997777',
         'black_inactive': '#444444',
     }
 
@@ -74,7 +76,6 @@ class App(Tk):
             'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
             'mode': MODE_PULSES, 'property': 'pulses', 'min': 1, 'max': 16, 'type': int,
             'alt_mode': MODE_ROTATE, 'alt_property': 'rotate', 'alt_min': 0, 'alt_max': 15,
-
         },
         {
             'row': 0, 'col': 2, 'pos': 0, 'label': 'cycles', 'alt_label': '', 'keybind': 'd',
@@ -211,6 +212,7 @@ class App(Tk):
         self.track = 0
         self.pattern = 0
         self.bank = 0
+        self.pitch_octave = 3
 
         self.rows = 2
         self.cols = 8
@@ -271,7 +273,6 @@ class App(Tk):
 
             dial_press_cmd = None
             dial_release_cmd = None
-            dial_cmd = None
 
             if 'mode' in dial:
                 dial_press_cmd = lambda _m=[dial['mode'], dial.get('alt_mode')]: self.push_mode(_m)
@@ -301,12 +302,12 @@ class App(Tk):
 
             self.bind(
                 f'<KeyPress-{dial["keybind"]}>',
-                d.mid_press_cb,
+                d.mid_press_cb_repeat,
             )
 
             self.bind(
                 f'<KeyRelease-{dial["keybind"]}>',
-                d.mid_release_cb,
+                d.mid_release_cb_repeat,
             )
 
         for b, bank in enumerate(self.buttons):
@@ -317,9 +318,12 @@ class App(Tk):
 
                     f = Frame(frames[b+2], bg=self.colors['bg'])
                     f.grid(row=r, column=c)
+                    kwargs = {}
+                    if platform.system in ['Darwin']:
+                        kwargs = {'activebackground': self.colors['inactive']}
                     bt = Button(
                         f, height=70, width=70, text=col[2], bg=self.colors['inactive'], borderless=True,
-                        # activebackground=self.colors['inactive'],
+                        **kwargs
                     )
                     self.w_buttons[b].append(bt)
 
@@ -373,12 +377,6 @@ class App(Tk):
         self.mode = self.old_modes.pop()
         self.update_display()
 
-    def dial_press(self, *args, **kwargs):
-        pass
-
-    def dial_release(self, *args, **kwargs):
-        pass
-
     def dial_callback(self, degrees):
         if self.pattern is None or self.bank is None or self.track is None:
             print(f"need pattern or bank - bank={self.bank} pattern={self.pattern} track={self.track}")
@@ -415,10 +413,12 @@ class App(Tk):
         if bkey in self.button_pressed:
             return
 
+        print("press")
         self.button_pressed[bkey] = 1
 
-        print(f'press row={row} col={col} bank={bank} event={event} serial={event.serial}')
+        # print(f'press row={row} col={col} bank={bank} event={event} serial={event.serial}')
 
+        index = row*self.cols + col
         if bank == 0:
             if self.mode == MODE_TRACKS:
                 self.track = row*self.cols + col
@@ -432,6 +432,18 @@ class App(Tk):
             elif self.mode == MODE_MUTE:
                 track = self.torso.get_track((self.bank, self.pattern, row*self.cols + col))
                 track.muted = not track.muted
+            elif self.mode in [
+                MODE_STEPS, MODE_PULSES, MODE_ROTATE, MODE_REPEATS, MODE_REPEAT_OFFSET, MODE_VOICING,
+                MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEAT_PACE, MODE_MELODY, MODE_PHRASE, MODE_ACCENT,
+                MODE_ACCENT_CURVE, MODE_STYLE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,
+            ]:
+                if self.pattern is None or self.bank is None or self.track is None:
+                    print(f"need pattern or bank - bank={self.bank} pattern={self.pattern} track={self.track}")
+                    return
+
+                self.set_value(index, interpolate=16)
+                self.update_display()
+
         else:
             cmd = self.button_command(row, col, bank, press=True)
             if cmd:
@@ -449,7 +461,7 @@ class App(Tk):
 
         self.button_pressed.pop(bkey)
 
-        print(f'release row={row} col={col} bank={bank} event={event} serial={event.serial}')
+        # print(f'release row={row} col={col} bank={bank} event={event} serial={event.serial}')
 
         if bank == 0:
             pass
@@ -517,7 +529,7 @@ class App(Tk):
                 fmin, fmax, ftype = dial['min'], dial['max'], dial['type']
 
         if interpolate:
-            value = fmin + (fmax - fmin)*value/360.0
+            value = fmin + (fmax - fmin)*value/interpolate
             if ftype is int:
                 value = round(value)
 
@@ -531,6 +543,15 @@ class App(Tk):
             setattr(track, prop, value)
 
     def update_display(self):
+        for b, bank in enumerate(self.buttons):
+            if b != 0:
+                continue
+
+            for r, row in enumerate(bank):
+                for c, col in enumerate(row):
+                    index = r*self.cols + c
+                    self.w_buttons[0][index].configure(text=col[2])
+
         if self.mode in [MODE_TRACKS, MODE_MUTE]:
             for row in range(2):
                 for col in range(8):
@@ -639,17 +660,22 @@ class App(Tk):
                 row = 1
                 col = i
                 index = row*self.cols + col
-                self.w_buttons[0][index].configure(bg=self.colors['white_active' if n in our_notes else 'white_inactive'])
+                self.w_buttons[0][index].configure(
+                    bg=self.colors['white_active' if n in our_notes else 'white_inactive'],
+                    text=f"{n} {self.pitch_octave}",
+                )
 
             # black keys
             for i, n in zip([1, 2, 4, 5, 6], ['C#', 'D#', 'F#', 'G#', 'A#']):
                 row = 0
                 col = i
                 index = row*self.cols + col
-                self.w_buttons[0][index].configure(bg=self.colors['black_active' if n in our_notes else 'black_inactive'])
+                self.w_buttons[0][index].configure(
+                    bg=self.colors['black_active' if n in our_notes else 'black_inactive'],
+                    text=f"{n} {self.pitch_octave}",
+                )
         else:
             print(f"unknown mode {self.mode}")
-
 
         self.update(); self.update_idletasks()
 
@@ -669,7 +695,7 @@ class App(Tk):
                     dmin = dial.get('alt_min' if self.control else 'min', dial['min'])
                     dmax = dial.get('alt_max' if self.control else 'max', dial['max'])
 
-                print(f"prop={prop} val={value} min={dmin} max={dmax}")
+                # print(f"prop={prop} val={value} min={dmin} max={dmax}")
                 a = min(359, 360*(value - dmin) / (dmax - dmin))
                 w = self.w_dials[dial['pos']][index]
                 w.set_angle(a, doCallback=False)

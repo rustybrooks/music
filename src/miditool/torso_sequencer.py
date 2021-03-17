@@ -124,6 +124,7 @@ class TorsoTrack:
         random=None,
         random_rate=None,
         muted=False,
+        slice_change_callback=None,
         **kwargs,  # to absorb anything else added to the track files
     ):
         self.muted = muted
@@ -281,7 +282,6 @@ class TorsoTrack:
         return [self.voiced_notes[index % len(self.voiced_notes)]]
 
     def fill_lookahead(self, start, end):
-
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
         # need to
         first_step = math.ceil(self.division*(start - self._sequence_start + self.delay*self._beat)/self._beat)
@@ -307,8 +307,8 @@ class TorsoTrack:
                 notes = self.style_notes(r)
                 # print(r, notes)
                 for note in notes:
-#                    if melody_offset:
-#                        note = self.quantize(melody_offset)
+                   # if melody_offset:
+                   #     note = self.quantize(melody_offset)
 
                     events.extend([
                         MidiEvent(
