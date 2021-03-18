@@ -28,6 +28,7 @@ MODE_CLEAR = 'clear'
 MODE_COPY = 'copy'
 
 MODE_STEPS = 'steps'
+MODE_MANUAL_STEPS = 'manual_steps'
 MODE_PULSES = 'pulses'
 MODE_ROTATE = 'rotate'
 MODE_CYCLES = 'cycles'
@@ -75,8 +76,8 @@ class App(Tk):
     dials = [
         {
             'row': 0, 'col': 0, 'pos': 0, 'label': 'steps', 'alt_label': '', 'keybind': 'a',
-            'property': 'steps', 'min': 1, 'max': 16, 'type': int,
-            'mode': MODE_STEPS,
+            'mode': MODE_STEPS, 'property': 'steps', 'min': 1, 'max': 16, 'type': int,
+            'alt_mode': MODE_MANUAL_STEPS, 'alt_property': 'manual_steps', 'alt_suppress_dial': True,
         },
         {
             'row': 0, 'col': 1, 'pos': 0, 'label': 'pulses', 'alt_label': 'rotate', 'keybind': 's',
@@ -458,6 +459,10 @@ class App(Tk):
 
                 self.set_value(index, interpolate=16)
                 self.update_display()
+            elif self.mode in [MODE_MANUAL_STEPS]:
+                steps = self.get_value()
+                steps[index] = 0 if steps[index] else 1
+                self.set_value(steps)
 
         else:
             cmd = self.button_command(row, col, bank, press=True)
@@ -487,25 +492,27 @@ class App(Tk):
 
         self.update_display()
 
-    def get_value(self, dial=None, interpolate=None, asint=False, asindex=True):
+    def get_value(self, dial=None, interpolate=None, asint=False, asindex=True, control=None):
         track = self.torso.get_track((self.bank, self.pattern, self.track))
         dial = dial or self.dial_map.get(self.mode)
+        control = control or self.control
 
         if not dial:
             print(f"No dial map for mode={self.mode}")
             return None
 
-        if self.control and 'alt_property' not in dial:
+        if control and 'alt_property' not in dial:
             print(f"No alt property for mode={self.mode}")
             return None
 
-        value = getattr(track, dial['alt_property' if self.control else 'property'])
+        prop_key = 'alt_property' if control else 'property'
+        value = getattr(track, dial[prop_key])
 
-        lval = dial.get('alt_list' if self.control else 'list')
+        lval = dial.get('alt_list' if control else 'list')
         if asindex and lval is not None:
            value = lval.index(value)
 
-        print(f"get_value... lval={lval} value={value}")
+        print(f"get_value... prop={prop_key} prop2={dial[prop_key]} lval={lval} value={value}")
 
         if interpolate is not None:
             value = interpolate*(value - dial['min']) / (dial['max'] - dial['min'])
@@ -610,7 +617,7 @@ class App(Tk):
         elif self.mode in [MODE_BANKS]:
             pass
         elif self.mode in [
-            MODE_STEPS, MODE_VELOCITY, MODE_SUSTAIN, MODE_REPEATS, MODE_REPEAT_OFFSET,
+            MODE_STEPS,  MODE_VELOCITY, MODE_SUSTAIN, MODE_REPEATS, MODE_REPEAT_OFFSET,
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO,
             MODE_VOICING
         ]:  # show all buttons from 0 to value
@@ -672,9 +679,14 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
-        elif self.mode in [MODE_PULSES, MODE_ROTATE]:
+        elif self.mode in [MODE_PULSES, MODE_ROTATE, MODE_MANUAL_STEPS]:
             track = self.torso.get_track((self.bank, self.pattern, self.track))
             seq = track.sequence
+
+            man_dial = self.dial_map.get(MODE_MANUAL_STEPS)
+            print("-----", man_dial)
+            man_steps = self.get_value(dial=man_dial, control=True)
+            print("-----")
 
             for row in range(2):
                 for col in range(8):
@@ -682,7 +694,9 @@ class App(Tk):
                     if index >= len(seq):
                         continue
 
-                    if seq[(index - track.rotate) % len(seq)]:
+                    if man_steps[(index - track.rotate) % len(seq)]:
+                        color = 'active'
+                    elif seq[(index - track.rotate) % len(seq)]:
                         color = 'active2'
                     else:
                         color = 'inactive'
@@ -724,6 +738,9 @@ class App(Tk):
         for dial in self.dials:
             prop = dial.get('alt_property' if self.control else 'property')
             list_key = 'alt_list' if self.control else 'list'
+            suppress_key = 'alt_suppress_dial' if self.control else 'suppress_dial'
+            if dial.get(suppress_key):
+                continue
             if prop:
                 c = 6 if dial['pos'] == 0 else 3
                 index = c*dial['row'] + dial['col']
@@ -771,6 +788,7 @@ class App(Tk):
 
     def set_clear(self):
         self.push_mode([MODE_CLEAR, MODE_COPY])
+
 
 if __name__ == '__main__':
     app = App(sys.argv[1])

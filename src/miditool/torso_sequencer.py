@@ -25,8 +25,9 @@ class TrackSlice:
     ):
         self.notes = [note_to_number(x) for x in notes or []]
         self.rotate = rotate
-        self.manual_steps = manual_steps or []
 
+        self.__manual_steps = manual_steps or []
+        self.__manual_steps += [0]*(MAX_PULSE - len(self.__manual_steps))
         self.__pulses = pulses
         self.__steps = steps
 
@@ -50,6 +51,15 @@ class TrackSlice:
     @pulses.setter
     def pulses(self, value):
         self.__pulses = value
+        self.generate()
+
+    @property
+    def manual_steps(self):
+        return self.__manual_steps
+
+    @manual_steps.setter
+    def manual_steps(self, value):
+        self.__manual_steps = value
         self.generate()
 
     def generate(self):
@@ -207,6 +217,14 @@ class TorsoTrack:
     @pulses.setter
     def pulses(self, value):
         self.slice.pulses = value
+
+    @property
+    def manual_steps(self):
+        return self.slice.manual_steps
+
+    @manual_steps.setter
+    def manual_steps(self, value):
+        self.slice.manual_steps = value
 
     @property
     def rotate(self):
