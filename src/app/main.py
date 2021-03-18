@@ -463,6 +463,10 @@ class App(Tk):
                 steps = self.get_value()
                 steps[index] = 0 if steps[index] else 1
                 self.set_value(steps)
+            elif self.mode in [MODE_PITCH]:
+                button_text = self.w_buttons[0][index].cget("text")
+                print(button_text)
+                pass
 
         else:
             cmd = self.button_command(row, col, bank, press=True)
@@ -684,9 +688,7 @@ class App(Tk):
             seq = track.sequence
 
             man_dial = self.dial_map.get(MODE_MANUAL_STEPS)
-            print("-----", man_dial)
             man_steps = self.get_value(dial=man_dial, control=True)
-            print("-----")
 
             for row in range(2):
                 for col in range(8):
