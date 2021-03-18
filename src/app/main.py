@@ -437,7 +437,16 @@ class App(Tk):
                 track = self.torso.get_track((self.bank, self.pattern, row*self.cols + col))
                 track.muted = not track.muted
             elif self.mode in [MODE_PITCH]:
-                pass
+                button_text = self.w_buttons[0][index].cget("text")
+                print(button_text)
+                if button_text == 'UP':
+                    self.pitch_octave = min(self.pitch_octave + 1, 6)
+                elif button_text == 'DN':
+                    self.pitch_octave = max(self.pitch_octave - 1, 0)
+                else:
+                    note_vals = self.get_value()
+                    
+                    note_vals[index] = notes.notestr_to_number(button_text)
             elif self.mode in [
                 MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE,
             ]:
@@ -463,10 +472,6 @@ class App(Tk):
                 steps = self.get_value()
                 steps[index] = 0 if steps[index] else 1
                 self.set_value(steps)
-            elif self.mode in [MODE_PITCH]:
-                button_text = self.w_buttons[0][index].cget("text")
-                print(button_text)
-                pass
 
         else:
             cmd = self.button_command(row, col, bank, press=True)

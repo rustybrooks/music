@@ -4,6 +4,11 @@ note_list = {
 }
 
 
+def notestr_to_number(n):
+    nl = [n[:-1], int(n[-1])]
+    return note_to_number(nl)
+
+
 def note_to_number(n):
     if isinstance(n, int):
         return n
