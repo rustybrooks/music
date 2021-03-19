@@ -10,7 +10,7 @@ from heapq import heappush, heappop
 from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 
 
-from .notes import note_to_number
+from .notes import note_to_number, number_to_note
 from .scales import get_scale_numbers
 from .sequencer import MidiEvent
 
@@ -106,10 +106,10 @@ class TorsoTrack:
     styles = ['chord', 'updward', 'downward', 'converge', 'diverge', 'random']
 
     phrases = [
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        [1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2],
-        [1, 3, 2, 5, 4, 6, 5, 7, 6, 8, 7, 9],
-        [1, 5, 6, 2, 7, 8, 4, 3, 1, 1, 1, 2, 3],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0, 0],
+        [0, 1, 3, 2, 5, 4, 6, 5, 7, 6, 8, 7, 9],
+        [0, 1, 5, 6, 2, 7, 8, 4, 3, 1, 0, 1, 2, 3],
     ]
 
     def __init__(
@@ -143,6 +143,7 @@ class TorsoTrack:
         self.__slice_step = 0
         self.__bpm = None
         self.__scale = None
+        self.__scale_type = None
         self.__root = root
 
         self.muted = muted
@@ -198,6 +199,7 @@ class TorsoTrack:
         if value in self.scales:
             value = self.scales.index(value)
         self.__scale = get_scale_numbers(self.__root, scale_type=self.scales[value], octaves=10)
+        self.__scale_type = self.scales[value]
 
     @property
     def root(self):
@@ -205,7 +207,7 @@ class TorsoTrack:
 
     @root.setter
     def root(self, value):
-        self.__scale = get_scale_numbers(self.__root, scale_type=self.scales[value], octaves=10)
+        self.__scale = get_scale_numbers(self.__root, scale_type=self.__scale_type, octaves=10)
 
     @property
     def slice(self):
@@ -276,14 +278,14 @@ class TorsoTrack:
     @voicing.setter
     def voicing(self, value):
         self.__voicing = value
-        print(f"slice notes {self.slice.notes}")
+        # print(f"slice notes {self.slice.notes}")
         self.__voiced_notes = sorted(copy.deepcopy(self.slice.notes))
         ln = len(self.slice.notes)
         for v in range(value):
             n = self.slice.notes[v % ln]
             self.__voiced_notes.append(n + 12*(1+v//ln))
 
-        print(f"[{self.track_name}] voicing settr, value={value} notes={self.slice.notes} voiced notes={self.__voiced_notes}")
+        # print(f"[{self.track_name}] voicing settr, value={value} notes={self.slice.notes} voiced notes={self.__voiced_notes}")
 
     @property
     def voiced_notes(self):
@@ -298,18 +300,24 @@ class TorsoTrack:
 
     def add_note_quantized(self, note, offset):
         # quantize note first
-        note = self.quantize(note)
-        notei = self.scale.index(note)
-        return note + self.scale[int(round(notei+offset))]
+        qnote = self.quantize(note)
+        notei = self.scale.index(qnote)
+        snote = self.scale[int(round(notei+offset))]
+        # print(f"note={note} quant={qnote} {number_to_note(qnote) }-- offset={offset} ({int(round(notei+offset))}), notei={notei}, scalenote={snote} {number_to_note(snote)}")
+        return snote
 
     def quantize(self, note):
         overi = next(i for i, n in enumerate(self.scale) if n > note)
         underi = overi-1
+        # print(self.scale)
+        # print(f"note={note} overi={overi} overi-s={self.scale[overi]} underi-s={self.scale[underi]}")
 
         if (note - self.scale[underi]) < (self.scale[overi] - note):
-            return self.scale[underi]
+            val = self.scale[underi]
         else:
-            return self.scale[overi]
+            val = self.scale[overi]
+
+        return val
 
     def style_notes(self, index):
         return [self.voiced_notes[index % len(self.voiced_notes)]]
@@ -332,8 +340,8 @@ class TorsoTrack:
             if not self.slice.sequence[(step-self.slice.rotate) % self.slice.steps]:
                 continue
 
-            melody_offset = (self.phrase[(step - self.slice.rotate)] % len(self.phrase))*self.melody
-            accent = (self.accent_curve[(step-self.slice.rotate) % len(self.accent_curve)])*self.accent
+            melody_offset = self.phrase[(step - self.slice.rotate) % len(self.phrase)]*self.melody
+            accent = self.accent_curve[(step-self.slice.rotate) % len(self.accent_curve)]*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
 
@@ -341,7 +349,6 @@ class TorsoTrack:
                 notes = self.style_notes(r)
                 for note in notes:
                     note = self.add_note_quantized(note, melody_offset)
-
                     events.extend([
                         MidiEvent(
                             (step + swing + self.delay + self.repeat_offset + (r/self.repeat_time))*self._beat/self.division,

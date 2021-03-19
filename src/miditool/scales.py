@@ -1,4 +1,5 @@
 from . import notes
+import itertools
 
 scales = {
     "major": [2, 2, 1, 2, 2, 2, 1],
@@ -25,10 +26,12 @@ scales = {
 
 
 def get_scale_numbers(root, scale_type, octaves=1):
+    offsets = list(itertools.accumulate(scales[scale_type][:-1]))
+    print("offsets", offsets)
     out = []
     for o in range(octaves):
         out.append(root + o*12)
-        for n in scales[scale_type]:
-            out.append(out[-1]+n + o*12)
+        for offset in offsets:
+            out.append(root+offset + o*12)
 
     return out

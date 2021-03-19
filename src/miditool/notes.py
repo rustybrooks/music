@@ -3,6 +3,7 @@ note_list = {
     "flat": ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 }
 
+midi_note_offset = 12
 
 def notestr_to_number(n):
     nl = [n[:-1], int(n[-1])]
@@ -19,8 +20,8 @@ def note_to_number(n):
     if i == -1:
         i = note_list['flat'].index(note.upper())
 
-    return 36 + octave*12 + i
+    return 12 + octave*midi_note_offset + i
 
 
 def number_to_note(n, is_sharp=True):
-    return [note_list['sharp' if is_sharp else 'flat'][n % 12], (n-36) // 12]
+    return [note_list['sharp' if is_sharp else 'flat'][n % 12], (n-midi_note_offset) // 12]
