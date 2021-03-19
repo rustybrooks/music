@@ -86,18 +86,18 @@ class TorsoTrack:
     ]
 
     accent_curves = [
-        [ 70,  20,  70,  20,  80,  90,  20,  60,  20,  60,  20,  60,  20,  90,  80,  20, 70 ],
-        [ 30,  20,  90,  30,  25,  20,  40,  50,  40,  70,  40,  30,  35,  60,  40,  25, 30 ],
-        [ 30,  40,  60,  30,  40,  40, 100,  35,  30,  35,  60,  40,  70,  40, 100,  20, 30 ],
-        [ 25,  60,  30,  35,  80,  25,  30,  60,  25,  35,  45,  80,  35,  45,  80,  35, 40 ],
-        [ 90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65, 90 ],
-        [ 85,  15,  25,  55,  50,  15,  25,  85,  50,  10,  40,  50,  45,  10,  45,  55, 80 ],
-        [100,  15,  20,  25,  35,  45, 100,  15, 100,  15,  35,  15,  60,  15,  25,  35, 90 ],
-        [ 70,  20,  20,  70,  20,  70,  20,  70,  70,  20,  70,  70,  20,  70,  20,  20, 70 ],
-        [  5,  12,  24,  36,  50,  62,  74,  86, 100,  12,  24,  36,  50,  62,  74,  86, 100],
-        [100,  86,  74,  62,  50,  36,  24,  12, 100,  86,  74,  62,  50,  36,  24,  12, 0  ],
-        [  0,  25,  50,  75,  100, 75,  50,  25,   0,  25,  50,  75, 100,  75,  50,  25, 0  ],
-        [100,  75,  50,  25,    0, 25,  50,  75, 100,  75,  50,  25,   0,  25,  50,  75, 100],
+        [ 70,  20,  70,  20,  80,  90,  20,  60,  20,  60,  20,  60,  20,  90,  80,  20],
+        [ 30,  20,  90,  30,  25,  20,  40,  50,  40,  70,  40,  30,  35,  60,  40,  25],
+        [ 30,  40,  60,  30,  40,  40, 100,  35,  30,  35,  60,  40,  70,  40, 100,  20],
+        [ 25,  60,  30,  35,  80,  25,  30,  60,  25,  35,  45,  80,  35,  45,  80,  35],
+        [ 90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65],
+        [ 85,  15,  25,  55,  50,  15,  25,  85,  50,  10,  40,  50,  45,  10,  45,  55],
+        [100,  15,  20,  25,  35,  45, 100,  15, 100,  15,  35,  15,  60,  15,  25,  35],
+        [ 70,  20,  20,  70,  20,  70,  20,  70,  70,  20,  70,  70,  20,  70,  20,  20],
+        [  5,  12,  24,  36,  50,  62,  74,  86, 100,  12,  24,  36,  50,  62,  74,  86],
+        [100,  86,  74,  62,  50,  36,  24,  12, 100,  86,  74,  62,  50,  36,  24,  12],
+        [  0,  25,  50,  75,  100, 75,  50,  25,   0,  25,  50,  75, 100,  75,  50,  25],
+        [100,  75,  50,  25,    0, 25,  50,  75, 100,  75,  50,  25,   0,  25,  50,  75],
     ]
     accent_curves = [[128*x/100. for x in c] for c in accent_curves]
     scales = [
@@ -272,7 +272,7 @@ class TorsoTrack:
         return self.__voiced_notes
 
     def set_scale(self, value, root):
-        self.scale = get_scale_numbers(root-root, scale_type=self.scales[value])
+        self.scale = get_scale_numbers(root, scale_type=self.scales[value], octaves=10)
 
     def update_random(self, parameter, strength):
         if parameter not in self.randoms:
@@ -281,27 +281,20 @@ class TorsoTrack:
         for i in range(MAX_PULSE):
             self.randoms[parameter][i] += random.randrange(-strength, strength)
 
+    def add_note_quantized(self, note, offset):
+        # quantize note first
+        note = self.quantize(note)
+        notei = self.scale.index(note)
+        return note + self.scale[int(round(notei+offset))]
+
     def quantize(self, note):
-        root = self.scale[0]
-        while root > note:
-            root -= 12
-
-        while root+12 < note:
-            root += 12
-
-        diff = root - self.scale[0]
-        scale = [x+diff for x in self.scale]
-        overi = next(i for i, n in enumerate(scale) if n > note)
-        if overi is None:
-            overi = len(scale)
-            scale.append(scale[0]+12)
-
+        overi = next(i for i, n in enumerate(self.scale) if n > note)
         underi = overi-1
 
-        if (note - scale[underi]) < (scale[overi] - note):
-            return scale[underi]
+        if (note - self.scale[underi]) < (self.scale[overi] - note):
+            return self.scale[underi]
         else:
-            return scale[overi]
+            return self.scale[overi]
 
     def style_notes(self, index):
         return [self.voiced_notes[index % len(self.voiced_notes)]]
@@ -324,16 +317,15 @@ class TorsoTrack:
             if not self.slice.sequence[(step-self.slice.rotate) % self.slice.steps]:
                 continue
 
+            melody_offset = (self.phrase[(step - self.slice.rotate)] % len(self.phrase))*self.melody
             accent = (self.accent_curve[(step-self.slice.rotate) % len(self.accent_curve)])*self.accent
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
 
             for r in range(0, self.repeats+1):
                 notes = self.style_notes(r)
-                # print(r, notes)
                 for note in notes:
-                   # if melody_offset:
-                   #     note = self.quantize(melody_offset)
+                    note = self.add_note_quantized(note, melody_offset)
 
                     events.extend([
                         MidiEvent(

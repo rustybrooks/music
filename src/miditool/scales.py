@@ -24,7 +24,10 @@ scales = {
 }
 
 
-def get_scale_numbers(root, scale_type):
-    out = [notes.note_to_number(root)]
-    for n in scales[scale_type]:
-        out.append(out[-1]+n)
+def get_scale_numbers(root, scale_type, octaves=1):
+    out = []
+    for o in range(octaves):
+        out.append(root + o*12)
+        for n in scales[scale_type]:
+            out.append(out[-1]+n + o*12)
+
