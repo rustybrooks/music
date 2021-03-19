@@ -444,9 +444,18 @@ class App(Tk):
                 elif button_text == 'DN':
                     self.pitch_octave = max(self.pitch_octave - 1, 0)
                 else:
-                    note_vals = self.get_value()
-                    
-                    note_vals[index] = notes.notestr_to_number(button_text)
+                    track = self.torso.get_track((self.bank, self.pattern, self.track))
+                    note_vals = track.notes
+                    note = notes.notestr_to_number(button_text)
+                    print(f"before note={note} note_vals={note_vals}")
+                    try:
+                        i = note_vals.index(note)
+                        note_vals.pop(i)
+                    except ValueError:
+                        note_vals.append(note)
+
+                    print(f"after note={note} note_vals={note_vals}")
+                    track.notes = note_vals
             elif self.mode in [
                 MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE,
             ]:
@@ -457,7 +466,7 @@ class App(Tk):
                 self.set_value(index)
                 self.update_display()
 
-            elif self.mode in [
+            elif self.mode in j[
                 MODE_STEPS, MODE_PULSES, MODE_ROTATE, MODE_REPEATS, MODE_REPEAT_OFFSET, MODE_VOICING,
                 MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEAT_PACE, MODE_MELODY, MODE_PHRASE, MODE_ACCENT,
                 MODE_ACCENT_CURVE, MODE_STYLE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,
@@ -716,26 +725,32 @@ class App(Tk):
                     self.w_buttons[0][index].configure(bg=self.colors['inactive'])
 
             track = self.torso.get_track((self.bank, self.pattern, self.track))
-            our_notes = [notes.number_to_note(x)[0] for x in track.notes]
+            our_notes = [notes.number_to_note(x) for x in track.notes]
             # white keys
-            for i, n in zip(range(8), ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'UP']):
+            for i, n in zip(range(8), ['C', 'D', 'E', 'F', 'G', 'A', 'B']):
                 row = 1
                 col = i
                 index = row*self.cols + col
+                this_n = [n, self.pitch_octave if n else '']
                 self.w_buttons[0][index].configure(
-                    bg=self.colors['white_active' if n in our_notes else 'white_inactive'],
-                    text=f"{n}{self.pitch_octave if n and n not in ['UP', 'DN'] else ''}",
+                    bg=self.colors['white_active' if this_n in our_notes else 'white_inactive'],
+                    text=''.join([str(x) for x in this_n]),
                 )
 
             # black keys
-            for i, n in zip(range(8), ['', 'C#', 'D#', '', 'F#', 'G#', 'A#', 'DN']):
+            for i, n in zip(range(8), ['', 'C#', 'D#', '', 'F#', 'G#', 'A#']):
                 row = 0
                 col = i
                 index = row*self.cols + col
+                this_n = [n, self.pitch_octave if n else '']
                 self.w_buttons[0][index].configure(
-                    bg=self.colors['black_active' if n in our_notes else 'black_inactive'],
-                    text=f"{n}{self.pitch_octave if n and n not in ['UP', 'DN'] else ''}",
+                    bg=self.colors['inactive' if not n else ('black_active' if this_n in our_notes else 'black_inactive')],
+                    text=''.join([str(x) for x in this_n]),
                 )
+
+            self.w_buttons[0][7].configure(bg=self.colors['white_inactive'], text="UP")
+            self.w_buttons[0][15].configure(bg=self.colors['white_inactive'], text="DN")
+
         else:
             print(f"unknown mode {self.mode}")
 

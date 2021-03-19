@@ -202,6 +202,10 @@ class TorsoTrack:
     def notes(self):
         return self.slice.notes
 
+    @notes.setter
+    def notes(self, value):
+        self.slice.notes = value
+
     @property
     def steps(self):
         return self.slice.steps
@@ -255,7 +259,7 @@ class TorsoTrack:
     def voicing(self, value):
         self.__voicing = value
         print(f"slice notes {self.slice.notes}")
-        self.__voiced_notes = copy.deepcopy(self.slice.notes)
+        self.__voiced_notes = sorted(copy.deepcopy(self.slice.notes))
         ln = len(self.slice.notes)
         for v in range(value):
             n = self.slice.notes[v % ln]

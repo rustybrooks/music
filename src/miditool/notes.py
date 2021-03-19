@@ -6,6 +6,7 @@ note_list = {
 
 def notestr_to_number(n):
     nl = [n[:-1], int(n[-1])]
+    print(f"notestr {n} - {nl}")
     return note_to_number(nl)
 
 
@@ -18,7 +19,7 @@ def note_to_number(n):
     if i == -1:
         i = note_list['flat'].index(note.upper())
 
-    return 12 + octave*12 + i
+    return 36 + octave*12 + i
 
 
 def number_to_note(n, is_sharp=True):
