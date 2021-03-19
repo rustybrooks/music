@@ -466,7 +466,7 @@ class App(Tk):
                 self.set_value(index)
                 self.update_display()
 
-            elif self.mode in j[
+            elif self.mode in [
                 MODE_STEPS, MODE_PULSES, MODE_ROTATE, MODE_REPEATS, MODE_REPEAT_OFFSET, MODE_VOICING,
                 MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEAT_PACE, MODE_MELODY, MODE_PHRASE, MODE_ACCENT,
                 MODE_ACCENT_CURVE, MODE_STYLE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,

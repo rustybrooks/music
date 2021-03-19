@@ -345,10 +345,12 @@ class TorsoTrack:
             velocity = min(int(self.velocity + accent), 127)
             swing = 0 if step % 2 == 0 else (self.timing-0.5)
 
+            # print("-------")
             for r in range(0, self.repeats+1):
                 notes = self.style_notes(r)
-                for note in notes:
-                    note = self.add_note_quantized(note, melody_offset)
+                melody_notes = [self.add_note_quantized(note, melody_offset) for note in notes]
+                # print(f"{melody_offset} -- {[number_to_note(n) for n in notes]} -- {[number_to_note(n) for n in melody_notes]}")
+                for note in melody_notes:
                     events.extend([
                         MidiEvent(
                             (step + swing + self.delay + self.repeat_offset + (r/self.repeat_time))*self._beat/self.division,
