@@ -137,15 +137,18 @@ class TorsoTrack:
         random=None,
         random_rate=None,
         muted=False,
-        slice_change_callback=None,
         **kwargs,  # to absorb anything else added to the track files
     ):
+        self.__slice_index = 0
+        self.__slice_step = 0
+        self.__bpm = None
+        self.__scale = None
+        self.__root = root
+
         self.muted = muted
         self.track_name = None
 
         self.slices = slices or [TrackSlice()]
-        self.__slice_index = 0
-        self.__slice_step = 0
 
         self.channel = channel
 
@@ -162,15 +165,16 @@ class TorsoTrack:
         self.repeat_pace = repeat_pace
         self.melody = melody
         self.harmony = harmony
+        self.voicing = voicing
+        self.scale = scale
+        self.root = root
 
         self.phrase = None
         self.accent_curve = None
         self.style = None
-        self.scale = None
 
         self.accent_curve = self.accent_curves[accent_curve]
         self.style = self.styles[style]
-        self.set_scale(scale, root=root)
         self.phrase = self.phrases[phrase]
 
         self.randoms = {}
@@ -180,14 +184,28 @@ class TorsoTrack:
         self._beat = None
         self._step = 1
 
-        # for property getter/setters
-        self.__bpm = None
-        self.voicing = voicing
-
     def add_slice(self, slice):
         self.slices.append(slice)
         if self.slice is None:
             self.slice = 0
+
+    @property
+    def scale(self):
+        return self.__scale
+
+    @scale.setter
+    def scale(self, value):
+        if value in self.scales:
+            value = self.scales.index(value)
+        self.__scale = get_scale_numbers(self.__root, scale_type=self.scales[value], octaves=10)
+
+    @property
+    def root(self):
+        return self.__scale
+
+    @root.setter
+    def root(self, value):
+        self.__scale = get_scale_numbers(self.__root, scale_type=self.scales[value], octaves=10)
 
     @property
     def slice(self):
@@ -270,9 +288,6 @@ class TorsoTrack:
     @property
     def voiced_notes(self):
         return self.__voiced_notes
-
-    def set_scale(self, value, root):
-        self.scale = get_scale_numbers(root, scale_type=self.scales[value], octaves=10)
 
     def update_random(self, parameter, strength):
         if parameter not in self.randoms:

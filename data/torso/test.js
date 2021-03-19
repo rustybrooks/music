@@ -8,6 +8,7 @@
       "sustain": 0.25,
       "voicing": 3,
       "channel": 1,
+      "scale": "major",
       "slices": [
         {
           "pulses": 4,

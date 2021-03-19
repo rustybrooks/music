@@ -31,3 +31,4 @@ def get_scale_numbers(root, scale_type, octaves=1):
         for n in scales[scale_type]:
             out.append(out[-1]+n + o*12)
 
+    return out
