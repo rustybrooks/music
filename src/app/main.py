@@ -608,7 +608,7 @@ class App(Tk):
 
         if lval:
             print(f"setattr prop={prop} value={lval[value]}")
-            return lval[value]
+            return prop, lval[value]
         else:
             print(f"setattr prop={prop} value={value}")
             return prop, value
