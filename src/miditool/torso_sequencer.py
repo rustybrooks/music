@@ -134,7 +134,7 @@ class TorsoTrack:
         melody=0,  # "depth" LFO for phrase (speed?)
         phrase=0,  # integer, picks phrase from a list
         scale=0,  # integer, picks scale from a list for phrase to operate on (default = chromatic)
-        root=0,
+        root=0, # which note of the scale to set as the root
         random=None,
         random_rate=None,
         muted=False,
@@ -145,7 +145,6 @@ class TorsoTrack:
         self.__bpm = None
         self.__scale = None
         self.__scale_type = None
-        self.__root = root
 
         self.muted = muted
         self.track_name = None
@@ -205,23 +204,16 @@ class TorsoTrack:
 
         self.__scale_type = value
         print(value)
-        self.scale_notes = get_scale_numbers(self.__root, scale_type=value, octaves=10)
+        self.scale_notes = get_scale_numbers(0, scale_type=value, octaves=10)
 
     @property
     def scale_notes(self):
+        r = self.root % len(self.__scale)
         return self.__scale
 
     @scale_notes.setter
     def scale_notes(self, value):
         self.__scale = value
-
-    @property
-    def root(self):
-        return self.__scale
-
-    @root.setter
-    def root(self, value):
-        self.__scale = get_scale_numbers(self.__root, scale_type=self.__scale_type, octaves=10)
 
     @property
     def slice(self):
@@ -327,9 +319,9 @@ class TorsoTrack:
         # print(f"note={note} overi={overi} overi-s={self.scale[overi]} underi-s={self.scale[underi]}")
 
         if (note - self.scale_notes[underi]) < (self.scale_notes[overi] - note):
-            val = self.scale_notes[underi]
+            val = self.scale_notes[underi+self.root]
         else:
-            val = self.scale_notes[overi]
+            val = self.scale_notes[overi+self.root]
 
         return val
 

@@ -8,6 +8,7 @@
       "channel": 1,
       "scale": "major",
       "melody": 1.0,
+      "style": "upward",
       "slices": [
         {
           "pulses": 16,

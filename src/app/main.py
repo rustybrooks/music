@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # FIXME unhandle modes
-# MODE_ROOT
 # MODE_RANDOM
 # MODE_RANDOM_RATE
 # MODE_LENGTH
@@ -159,7 +158,7 @@ class App(Tk):
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
             'mode': MODE_SCALE, 'property': 'scale', 'list': torso_sequencer.TorsoTrack.scales,
-            'alt_mode': MODE_ROOT, 'alt_property': 'root', 'alt_list': ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+            'alt_mode': MODE_ROOT, 'alt_property': 'root', 'min': 0, 'max': 12, 'type': int,
         },
         {
             'row': 1, 'col': 1, 'pos': 1, 'label': 'midi ch', 'alt_label': '', 'keybind': ',',
@@ -666,7 +665,7 @@ class App(Tk):
         elif self.mode in [
             MODE_STEPS,  MODE_VELOCITY, MODE_SUSTAIN, MODE_REPEATS, MODE_REPEAT_OFFSET,
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO,
-            MODE_VOICING, MODE_MELODY,
+            MODE_VOICING, MODE_MELODY
         ]:  # show all buttons from 0 to value
             value_index = self.get_value(interpolate=16, asint=True)
 
@@ -680,7 +679,7 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [
-            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE,
+            MODE_CHANNEL, MODE_ACCENT_CURVE, MODE_MELODY, MODE_PHRASE, MODE_STYLE, MODE_ROOT
         ]:
             value_index = self.get_value(asint=True)
 
