@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 
+# FIXME unhandle modes
+# MODE_ROOT
+# MODE_RANDOM
+# MODE_RANDOM_RATE
+# MODE_LENGTH
+# MODE_QUANTIZE
+# MODE_REPEAT_PACE
+
+# FIXME broken modes
+# MODE_TEMPO
+
+
 import os, sys
 import json
 
@@ -146,8 +158,8 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
-            'mode': MODE_SCALE, 'list': torso_sequencer.TorsoTrack.scales,
-            'alt_mode': MODE_ROOT,  # FIXME pick from notes available?
+            'mode': MODE_SCALE, 'property': 'scale', 'list': torso_sequencer.TorsoTrack.scales,
+            'alt_mode': MODE_ROOT, 'alt_property': 'root', 'alt_list': ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
         },
         {
             'row': 1, 'col': 1, 'pos': 1, 'label': 'midi ch', 'alt_label': '', 'keybind': ',',
@@ -472,7 +484,7 @@ class App(Tk):
             elif self.mode in [
                 MODE_STEPS, MODE_PULSES, MODE_ROTATE, MODE_REPEATS, MODE_REPEAT_OFFSET, MODE_VOICING,
                 MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEAT_PACE, MODE_MELODY, MODE_PHRASE, MODE_ACCENT,
-                MODE_ACCENT_CURVE, MODE_STYLE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,
+                MODE_ACCENT_CURVE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,
             ]:
                 if self.pattern is None or self.bank is None or self.track is None:
                     print(f"need pattern or bank - bank={self.bank} pattern={self.pattern} track={self.track}")
@@ -480,6 +492,20 @@ class App(Tk):
 
                 self.set_value(index, interpolate=16)
                 self.update_display()
+            elif self.mode in [MODE_SCALE]:
+                imap = {
+                    8: 'chromatic',
+                    9: 'major',
+                    10: 'harmonic_minor',
+                    11: 'melodic_minor',
+                    12: 'hexatonic',
+                    13: 'augmented',
+                    14: 'pentatonic_minor'
+                }
+                if index in imap:
+                    self.set_value(torso_sequencer.TorsoTrack.scales.index(imap[index]))
+            elif self.mode in [MODE_DIVISION]:
+                pass
             elif self.mode in [MODE_MANUAL_STEPS]:
                 steps = self.get_value()
                 steps[index] = 0 if steps[index] else 1
@@ -640,7 +666,7 @@ class App(Tk):
         elif self.mode in [
             MODE_STEPS,  MODE_VELOCITY, MODE_SUSTAIN, MODE_REPEATS, MODE_REPEAT_OFFSET,
             MODE_ACCENT, MODE_LENGTH, MODE_TIMING, MODE_DELAY, MODE_RANDOM, MODE_RANDOM_RATE, MODE_TEMPO,
-            MODE_VOICING
+            MODE_VOICING, MODE_MELODY,
         ]:  # show all buttons from 0 to value
             value_index = self.get_value(interpolate=16, asint=True)
 
@@ -668,9 +694,30 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
 
-        elif self.mode in [
-            MODE_DIVISION, MODE_REPEAT_TIME
-        ]:
+        elif self.mode in [MODE_SCALE]:
+            dmap = {
+                'chromatic': [1, 0],
+                'major': [1, 1],
+                'harmonic_minor': [1, 2],
+                'melodic_minor': [1, 3],
+                'hexatonic': [1, 4],
+                'augmented': [1, 5],
+                'pentatonic_minor': [1, 6],
+            }
+            value = self.get_value(asindex=False)
+            r, c = dmap[value]
+
+            for row in range(2):
+                for col in range(8):
+                    index = row*self.cols + col
+
+                    if row == r and col == c:
+                        color = 'active2'
+                    else:
+                        color = 'inactive'
+
+                    self.w_buttons[0][index].configure(bg=self.colors[color])
+        elif self.mode in [MODE_DIVISION, MODE_REPEAT_TIME]:
             dmap = {
                 1: [0, 0],
                 2: [0, 1],

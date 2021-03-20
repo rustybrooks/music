@@ -102,7 +102,7 @@ class TorsoTrack:
     ]
     accent_curves = [[128*x/100. for x in c] for c in accent_curves]
     scales = [
-        'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hex', 'aug', 'pentatonic_minor'
+        'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hexatonic', 'augmented', 'pentatonic_minor'
     ]
     styles = ['chord', 'upward', 'downward', 'converge', 'diverge', 'random']
 
@@ -192,14 +192,28 @@ class TorsoTrack:
 
     @property
     def scale(self):
-        return self.__scale
+        return self.__scale_type
 
     @scale.setter
     def scale(self, value):
+        # ivalue = value
         if value in self.scales:
-            value = self.scales.index(value)
-        self.__scale = get_scale_numbers(self.__root, scale_type=self.scales[value], octaves=10)
-        self.__scale_type = self.scales[value]
+            pass
+            # ivalue = self.scales.index(value)
+        else:
+            value = self.scales[value]
+
+        self.__scale_type = value
+        print(value)
+        self.scale_notes = get_scale_numbers(self.__root, scale_type=value, octaves=10)
+
+    @property
+    def scale_notes(self):
+        return self.__scale
+
+    @scale_notes.setter
+    def scale_notes(self, value):
+        self.__scale = value
 
     @property
     def root(self):
@@ -301,21 +315,21 @@ class TorsoTrack:
     def add_note_quantized(self, note, offset):
         # quantize note first
         qnote = self.quantize(note)
-        notei = self.scale.index(qnote)
-        snote = self.scale[int(round(notei+offset))]
+        notei = self.scale_notes.index(qnote)
+        snote = self.scale_notes[int(round(notei+offset))]
         # print(f"note={note} quant={qnote} {number_to_note(qnote) }-- offset={offset} ({int(round(notei+offset))}), notei={notei}, scalenote={snote} {number_to_note(snote)}")
         return snote
 
     def quantize(self, note):
-        overi = next(i for i, n in enumerate(self.scale) if n > note)
+        overi = next(i for i, n in enumerate(self.scale_notes) if n > note)
         underi = overi-1
         # print(self.scale)
         # print(f"note={note} overi={overi} overi-s={self.scale[overi]} underi-s={self.scale[underi]}")
 
-        if (note - self.scale[underi]) < (self.scale[overi] - note):
-            val = self.scale[underi]
+        if (note - self.scale_notes[underi]) < (self.scale_notes[overi] - note):
+            val = self.scale_notes[underi]
         else:
-            val = self.scale[overi]
+            val = self.scale_notes[overi]
 
         return val
 

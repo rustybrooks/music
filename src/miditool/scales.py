@@ -22,6 +22,8 @@ scales = {
     "mixolydian": [2, 2, 1, 2, 2, 1, 2],
     "aeolian": [2, 1, 2, 2, 1, 2, 2],
     "aeoliant": [1, 2, 2, 1, 2, 2, 2],
+    "hexatonic": [2, 2, 2, 2, 2, 2],
+    "augmented": [3, 1, 3, 1, 3],
 }
 
 
