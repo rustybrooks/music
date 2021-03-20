@@ -19,6 +19,38 @@ log = logging.getLogger(__name__)
 MAX_PULSE = 16
 
 
+divisions = [
+    1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64,
+]
+
+accent_curves = [
+    [ 70,  20,  70,  20,  80,  90,  20,  60,  20,  60,  20,  60,  20,  90,  80,  20],
+    [ 30,  20,  90,  30,  25,  20,  40,  50,  40,  70,  40,  30,  35,  60,  40,  25],
+    [ 30,  40,  60,  30,  40,  40, 100,  35,  30,  35,  60,  40,  70,  40, 100,  20],
+    [ 25,  60,  30,  35,  80,  25,  30,  60,  25,  35,  45,  80,  35,  45,  80,  35],
+    [ 90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65],
+    [ 85,  15,  25,  55,  50,  15,  25,  85,  50,  10,  40,  50,  45,  10,  45,  55],
+    [100,  15,  20,  25,  35,  45, 100,  15, 100,  15,  35,  15,  60,  15,  25,  35],
+    [ 70,  20,  20,  70,  20,  70,  20,  70,  70,  20,  70,  70,  20,  70,  20,  20],
+    [  5,  12,  24,  36,  50,  62,  74,  86, 100,  12,  24,  36,  50,  62,  74,  86],
+    [100,  86,  74,  62,  50,  36,  24,  12, 100,  86,  74,  62,  50,  36,  24,  12],
+    [  0,  25,  50,  75,  100, 75,  50,  25,   0,  25,  50,  75, 100,  75,  50,  25],
+    [100,  75,  50,  25,    0, 25,  50,  75, 100,  75,  50,  25,   0,  25,  50,  75],
+]
+accent_curves = [[128*x/100. for x in c] for c in accent_curves]
+scales = [
+    'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hexatonic', 'augmented', 'pentatonic_minor'
+]
+styles = ['chord', 'upward', 'downward', 'converge', 'diverge', 'random']
+
+phrases = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0, 0],
+    [0, 1, 3, 2, 5, 4, 6, 5, 7, 6, 8, 7, 9],
+    [0, 1, 5, 6, 2, 7, 8, 4, 3, 1, 0, 1, 2, 3],
+]
+
+
 class TrackSlice:
     def __init__(
         self, steps=16, pulses=1, notes=None, rotate=0, manual_steps=None,
@@ -80,45 +112,52 @@ class TrackSlice:
         self.sequence = sequence
 
 
+class TrackRandomSequences:
+    steps = 32
+    ranges = {
+        'repeats': 1,
+    }
+
+    def __init__(self):
+        self.levels = {}
+        self.sequences = {}
+        self.random_rate = 1
+        self.random_level = 0
+
+    def set_level(self, attribute, level):
+        self.levels[attribute] = level
+        if attribute not in self.sequences:
+            self.sequences[attribute] = [0]*self.steps
+
+    def update(self):
+        for attribute in self.levels.keys():
+            if attribute in ['repeats']:
+                self.sequences[attribute] = [
+                    s + r for s, r in zip(
+                        self.sequences[attribute],
+                        self.generate_flat(range, self.levels[attribute])
+                    )
+                ]
+
+    def random_value(self, attribute, beat_fraction):
+        if attribute not in self.levels:
+            return 0
+
+        index = math.floor(beat_fraction/self.random_rate)
+        return self.sequences[attribute][index]
+
+    def generate_flat(self, range_min, range_max, strength):
+        return [random.randrange(range_min*strength, range_max*strength) for i in range(self.steps)]
+
+
 class TorsoTrack:
-    divisions = [
-        1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64,
-    ]
-
-    accent_curves = [
-        [ 70,  20,  70,  20,  80,  90,  20,  60,  20,  60,  20,  60,  20,  90,  80,  20],
-        [ 30,  20,  90,  30,  25,  20,  40,  50,  40,  70,  40,  30,  35,  60,  40,  25],
-        [ 30,  40,  60,  30,  40,  40, 100,  35,  30,  35,  60,  40,  70,  40, 100,  20],
-        [ 25,  60,  30,  35,  80,  25,  30,  60,  25,  35,  45,  80,  35,  45,  80,  35],
-        [ 90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65,  90,  25,  40,  65],
-        [ 85,  15,  25,  55,  50,  15,  25,  85,  50,  10,  40,  50,  45,  10,  45,  55],
-        [100,  15,  20,  25,  35,  45, 100,  15, 100,  15,  35,  15,  60,  15,  25,  35],
-        [ 70,  20,  20,  70,  20,  70,  20,  70,  70,  20,  70,  70,  20,  70,  20,  20],
-        [  5,  12,  24,  36,  50,  62,  74,  86, 100,  12,  24,  36,  50,  62,  74,  86],
-        [100,  86,  74,  62,  50,  36,  24,  12, 100,  86,  74,  62,  50,  36,  24,  12],
-        [  0,  25,  50,  75,  100, 75,  50,  25,   0,  25,  50,  75, 100,  75,  50,  25],
-        [100,  75,  50,  25,    0, 25,  50,  75, 100,  75,  50,  25,   0,  25,  50,  75],
-    ]
-    accent_curves = [[128*x/100. for x in c] for c in accent_curves]
-    scales = [
-        'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hexatonic', 'augmented', 'pentatonic_minor'
-    ]
-    styles = ['chord', 'upward', 'downward', 'converge', 'diverge', 'random']
-
-    phrases = [
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0, 0],
-        [0, 1, 3, 2, 5, 4, 6, 5, 7, 6, 8, 7, 9],
-        [0, 1, 5, 6, 2, 7, 8, 4, 3, 1, 0, 1, 2, 3],
-    ]
-
     def __init__(
         self, channel=0,
         slices=None,
-        pitch=0,  # pitch shift to apply to all notes, integer (FIXME add intelligent shifting?)
+        pitch=0,  # pitch shift to apply to all notes, integer
         harmony=0,  # transpose notes defined in pitch up one at a time?
         accent=.5,  # 0-1 the percent of accent curve to apply
-        accent_curve=0,  # select from predefined accent curves (FIXME make some)
+        accent_curve=0,  # select from predefined accent curves
         sustain=0.15,  # Note length, in increments of step, i.e. 0.5 = half step
         division=4,  # how many pieces to divide a beat into
         velocity=64,  # base velocity - accent gets added to this
@@ -134,8 +173,6 @@ class TorsoTrack:
         phrase=0,  # integer, picks phrase from a list
         scale=0,  # integer, picks scale from a list for phrase to operate on (default = chromatic)
         root=0, # which note of the scale to set as the root
-        random=None,
-        random_rate=None,
         muted=False,
         **kwargs,  # to absorb anything else added to the track files
     ):
@@ -172,16 +209,16 @@ class TorsoTrack:
         self.phrase = None
         self.accent_curve = None
 
-        self.accent_curve = self.accent_curves[accent_curve]
-        self.style = style if style in self.styles else self.styles[style]
-        self.phrase = self.phrases[phrase]
-
-        self.randoms = {}
+        self.accent_curve = accent_curves[accent_curve]
+        self.style = style if style in styles else styles[style]
+        self.phrase = phrases[phrase]
 
         # some internal params
         self._sequence_start = None
         self._beat = None
         self._step = 1
+
+        self.random = TrackRandomSequences()
 
     def add_slice(self, slice):
         self.slices.append(slice)
@@ -195,11 +232,11 @@ class TorsoTrack:
     @scale.setter
     def scale(self, value):
         # ivalue = value
-        if value in self.scales:
+        if value in scales:
             pass
-            # ivalue = self.scales.index(value)
+            # ivalue = scales.index(value)
         else:
-            value = self.scales[value]
+            value = scales[value]
 
         self.__scale_type = value
         print(value)
@@ -296,13 +333,6 @@ class TorsoTrack:
     def voiced_notes(self):
         return self.__voiced_notes
 
-    def update_random(self, parameter, strength):
-        if parameter not in self.randoms:
-            self.randoms[parameter] = [0] * MAX_PULSE
-
-        for i in range(MAX_PULSE):
-            self.randoms[parameter][i] += random.randrange(-strength, strength)
-
     def add_note_quantized(self, note, offset):
         # quantize note first
         qnote = self.quantize(note)
@@ -358,6 +388,9 @@ class TorsoTrack:
 
         events = []
         for step in range(first_step, last_step+1):
+            if step == 0:
+                self.random.update()
+
             if step - self.__slice_step >= self.slice.steps:
                 self.slice = (self.__slice_index+1) % len(self.slices)
                 self.__slice_step = step

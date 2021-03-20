@@ -97,7 +97,7 @@ class App(Tk):
         },
         {
             'row': 0, 'col': 3, 'pos': 0, 'label': 'division', 'alt_label': '', 'keybind': 'f',
-            'mode': MODE_DIVISION, 'property': 'division', 'list': torso_sequencer.TorsoTrack.divisions,
+            'mode': MODE_DIVISION, 'property': 'division', 'list': torso_sequencer.divisions,
         },
         {
             'row': 0, 'col': 4, 'pos': 0, 'label': 'velocity', 'alt_label': '', 'keybind': 'g',
@@ -128,24 +128,24 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 1, 'pos': 0, 'label': 'time', 'alt_label': 'pace', 'keybind': 'x',
-            'mode': MODE_REPEAT_TIME, 'property': 'repeat_time', 'list': torso_sequencer.TorsoTrack.divisions,
+            'mode': MODE_REPEAT_TIME, 'property': 'repeat_time', 'list': torso_sequencer.divisions,
             'alt_mode': MODE_REPEAT_PACE,
         },
         {
             'row': 1, 'col': 2, 'pos': 0, 'label': 'voicing', 'alt_label': 'style', 'keybind': 'c',
             'mode': MODE_VOICING, 'property': 'voicing', 'min': 0, 'max': 15, 'type': int,
-            'alt_mode': MODE_STYLE, 'alt_property': 'style', 'alt_list': torso_sequencer.TorsoTrack.styles,
+            'alt_mode': MODE_STYLE, 'alt_property': 'style', 'alt_list': torso_sequencer.styles,
 
         },
         {
             'row': 1, 'col': 3, 'pos': 0, 'label': 'melody', 'alt_label': 'phrase', 'keybind': 'v',
             'mode': MODE_MELODY, 'property': 'melody', 'min': 0, 'max': 1, 'type': float,
-            'alt_mode': MODE_PHRASE, 'alt_property': 'phrase', 'alt_list': torso_sequencer.TorsoTrack.phrases,
+            'alt_mode': MODE_PHRASE, 'alt_property': 'phrase', 'alt_list': torso_sequencer.phrases,
         },
         {
             'row': 1, 'col': 4, 'pos': 0, 'label': 'accent', 'alt_label': 'curve', 'keybind': 'b',
             'mode': MODE_ACCENT,  'property': 'accent', 'min': 0, 'max': 1, 'type': float,
-            'alt_mode': MODE_ACCENT_CURVE, 'alt_property': 'accent_curve', 'alt_list': torso_sequencer.TorsoTrack.accent_curves,
+            'alt_mode': MODE_ACCENT_CURVE, 'alt_property': 'accent_curve', 'alt_list': torso_sequencer.accent_curves,
         },
         {
             'row': 1, 'col': 5, 'pos': 0, 'label': 'timing', 'alt_label': 'delay', 'keybind': 'n',
@@ -154,7 +154,7 @@ class App(Tk):
         },
         {
             'row': 1, 'col': 0, 'pos': 1, 'label': 'scale', 'alt_label': 'root', 'keybind': 'm',
-            'mode': MODE_SCALE, 'property': 'scale', 'list': torso_sequencer.TorsoTrack.scales,
+            'mode': MODE_SCALE, 'property': 'scale', 'list': torso_sequencer.scales,
             'alt_mode': MODE_ROOT, 'alt_property': 'root', 'min': 0, 'max': 12, 'type': int,
         },
         {
@@ -164,7 +164,7 @@ class App(Tk):
         {
             'row': 1, 'col': 2, 'pos': 1, 'label': 'random', 'alt_label': 'rate', 'keybind': '.',
             # 'mode': MODE_RANDOM, 'property': 'random', 'min': 0, 'max': 1, 'type': float,  # this is gonna be special
-            'alt_mode': MODE_RANDOM_RATE, 'alt_list': torso_sequencer.TorsoTrack.divisions,
+            'alt_mode': MODE_RANDOM_RATE, 'alt_list': torso_sequencer.divisions,
         },
     ]
     buttons = [
@@ -499,7 +499,7 @@ class App(Tk):
                     14: 'pentatonic_minor'
                 }
                 if index in imap:
-                    self.set_value(torso_sequencer.TorsoTrack.scales.index(imap[index]))
+                    self.set_value(torso_sequencer.scales.index(imap[index]))
             elif self.mode in [MODE_DIVISION]:
                 pass
             elif self.mode in [MODE_MANUAL_STEPS]:
@@ -612,7 +612,6 @@ class App(Tk):
         else:
             print(f"setattr prop={prop} value={value}")
             return prop, value
-
 
     def set_value(self, value, interpolate=None):
         track = self.torso.get_track((self.bank, self.pattern, self.track))
