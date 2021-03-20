@@ -379,7 +379,10 @@ class App(Tk):
         self.update_display()
 
     def pop_mode(self):
-        self.mode = self.old_modes.pop()
+        if self.old_modes:
+            self.mode = self.old_modes.pop()
+        else:
+            self.mode = MODE_TRACKS
         self.update_display()
 
     def dial_callback(self, degrees):

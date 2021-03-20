@@ -1,0 +1,24 @@
+{
+  "bpm": 30,
+  "tracks": [
+    {
+      "comment": "Piano chord/arpeggio",
+      "division": 2,
+      "sustain": 0.25,
+      "voicing": 0,
+      "channel": 1,
+      "scale": "major",
+      "melody": 0,
+      "repeats": 4,
+      "repeat_time": 4,
+      "style": "diverge",
+      "slices": [
+        {
+          "pulses": 8,
+          "steps": 16,
+          "notes": [["C#", 4], ["E", 4], ["G", 4], ["B", 4], ["D", 5], ["F", 5], ["C", 6]]
+        }
+      ]
+    }
+  ]
+}

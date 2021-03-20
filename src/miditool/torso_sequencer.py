@@ -4,6 +4,7 @@ import logging
 import threading
 import time
 import random
+import itertools
 
 from heapq import heappush, heappop
 
@@ -103,7 +104,7 @@ class TorsoTrack:
     scales = [
         'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hex', 'aug', 'pentatonic_minor'
     ]
-    styles = ['chord', 'updward', 'downward', 'converge', 'diverge', 'random']
+    styles = ['chord', 'upward', 'downward', 'converge', 'diverge', 'random']
 
     phrases = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -172,10 +173,9 @@ class TorsoTrack:
 
         self.phrase = None
         self.accent_curve = None
-        self.style = None
 
         self.accent_curve = self.accent_curves[accent_curve]
-        self.style = self.styles[style]
+        self.style = style if style in self.styles else self.styles[style]
         self.phrase = self.phrases[phrase]
 
         self.randoms = {}
@@ -320,7 +320,27 @@ class TorsoTrack:
         return val
 
     def style_notes(self, index):
-        return [self.voiced_notes[index % len(self.voiced_notes)]]
+        lv = len(self.voiced_notes)
+        if self.style == 'chord':
+            return self.voiced_notes
+        elif self.style == 'upward':
+            return [self.voiced_notes[index % lv]]
+        elif self.style == 'downward':
+            return [self.voiced_notes[lv-(index % lv)-1]]
+        elif self.style == 'converge':
+            i = index % lv
+            if i % 2 == 0:
+                return [self.voiced_notes[i//2]]
+            else:
+                return [self.voiced_notes[-(i//2 + 1)]]
+        elif self.style == 'diverge':
+            i = lv - (index % lv) - 1
+            if i % 2 == 0:
+                return [self.voiced_notes[i//2]]
+            else:
+                return [self.voiced_notes[-(i//2 + 1)]]
+        elif self.style == 'random':
+            return [random.choice(self.voiced_notes) for r in range(random.randint(0, lv-1))]
 
     def fill_lookahead(self, start, end):
         # not sure it's right to add delay in here...  if we only hve +ve delay we def don't
@@ -348,6 +368,7 @@ class TorsoTrack:
             # print("-------")
             for r in range(0, self.repeats+1):
                 notes = self.style_notes(r)
+                # print(notes)
                 melody_notes = [self.add_note_quantized(note, melody_offset) for note in notes]
                 # print(f"{melody_offset} -- {[number_to_note(n) for n in notes]} -- {[number_to_note(n) for n in melody_notes]}")
                 for note in melody_notes:
