@@ -7,9 +7,6 @@
 # MODE_QUANTIZE
 # MODE_REPEAT_PACE
 
-# FIXME broken modes
-# MODE_TEMPO
-
 
 import os, sys
 import json
@@ -122,7 +119,7 @@ class App(Tk):
         },
         {
             'row': 0, 'col': 2, 'pos': 1, 'label': 'tempo', 'alt_label': '', 'keybind': 'l',
-            'mode': MODE_TEMPO, 'property': 'bpm', 'min': 50, 'max': 300, 'type': int,
+            'mode': MODE_TEMPO, 'property': 'bpm', 'min': 30, 'max': 300, 'type': int,
         },
         {
             'row': 1, 'col': 0, 'pos': 0, 'label': 'repeats', 'alt_label': 'offset', 'keybind': 'z',
@@ -483,7 +480,7 @@ class App(Tk):
             elif self.mode in [
                 MODE_STEPS, MODE_PULSES, MODE_ROTATE, MODE_REPEATS, MODE_REPEAT_OFFSET, MODE_VOICING,
                 MODE_VELOCITY, MODE_SUSTAIN, MODE_PITCH, MODE_REPEAT_PACE, MODE_MELODY, MODE_PHRASE, MODE_ACCENT,
-                MODE_ACCENT_CURVE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO, MODE_CHANNEL,
+                MODE_ACCENT_CURVE, MODE_ROOT, MODE_TIMING, MODE_DELAY, MODE_TEMPO
             ]:
                 if self.pattern is None or self.bank is None or self.track is None:
                     print(f"need pattern or bank - bank={self.bank} pattern={self.pattern} track={self.track}")
@@ -552,6 +549,10 @@ class App(Tk):
             return None
 
         prop_key = 'alt_property' if control else 'property'
+
+        if prop_key == 'bpm':
+            return self.torso.bpm
+
         value = getattr(track, dial[prop_key])
 
         lval = dial.get('alt_list' if control else 'list')
@@ -568,9 +569,9 @@ class App(Tk):
 
         return value
 
-    def set_value(self, value, interpolate=None):
-        track = self.torso.get_track((self.bank, self.pattern, self.track))
+    def interpolate_set_value(self, value, interpolate=None):
         dial = self.dial_map.get(self.mode)
+
         if not dial:
             print(f"No dial map for mode={self.mode}")
             return None
@@ -579,6 +580,7 @@ class App(Tk):
         if not prop:
             print(f"set_value - mode={self.mode} no property")
             return
+
 
         lval = None
         if not self.control and 'list' in dial:
@@ -606,9 +608,19 @@ class App(Tk):
 
         if lval:
             print(f"setattr prop={prop} value={lval[value]}")
-            setattr(track, prop, lval[value])
+            return lval[value]
         else:
             print(f"setattr prop={prop} value={value}")
+            return prop, value
+
+
+    def set_value(self, value, interpolate=None):
+        track = self.torso.get_track((self.bank, self.pattern, self.track))
+
+        prop, value =  self.interpolate_set_value(value, interpolate=interpolate)
+        if prop == 'bpm':
+            self.torso.set_bpm(value)
+        else:
             setattr(track, prop, value)
 
     def update_display(self):

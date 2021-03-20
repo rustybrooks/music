@@ -4,7 +4,6 @@ import logging
 import threading
 import time
 import random
-import itertools
 
 from heapq import heappush, heappop
 
@@ -411,7 +410,7 @@ class TorsoSequencer(threading.Thread):
 
     def set_bpm(self, value):
         for t in self.tracks.values():
-            t.set_bpm(value)
+            t.bpm = value
 
         self.bpm = value
 
