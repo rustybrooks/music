@@ -17,8 +17,14 @@ sys.path.append(lp)
 
 
 from tkinter import *
-from tkmacosx import Button
 import platform
+try:
+    from tkmacosx import Button
+except Exception:
+    pass
+
+from app.dial import Dial
+
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
 
