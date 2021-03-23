@@ -534,7 +534,8 @@ class TorsoSequencer(threading.Thread):
                 self._step += 1
                 left = (self.interval*self._step) - (time.time() - self._start_time)
                 if left <= 0:
-                    print(f"overflow time {1000*left:.2f}ms")
+                    # print(f"overflow time {1000*left:.2f}ms")
+                    pass
                 else:
                     time.sleep(left)
 

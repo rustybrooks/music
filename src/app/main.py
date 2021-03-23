@@ -10,6 +10,7 @@
 
 import os, sys
 import json
+import rtmidi
 
 basedir = os.path.dirname(os.path.realpath(__file__))
 lp = os.path.abspath(os.path.join(basedir, '..'))
@@ -213,13 +214,21 @@ class App(Tk):
     ]
 
     def __init__(self, bank_file):
-        midiout, port = open_midiport(
-            None,
-            "TORSO",
-            use_virtual=True,
-            client_name="TORSO",
-            port_name="TORSO"
-        )
+        if False:
+            midiout = rtmidi.MidiOut()
+
+            matches = [x for x in enumerate(midiout.get_ports()) if 'Studio' in x[1]]
+            device = matches[0]
+            print("opening device", device)
+            self.midi_out = midiout.open_port(device[0], name=device[1])
+        else:
+            midiout, port = open_midiport(
+                None,
+                "TORSO",
+                use_virtual=True,
+                client_name="TORSO",
+                port_name="TORSO"
+            )
 
         self.dial_map = {}
         self.button_pressed = {}
@@ -339,9 +348,11 @@ class App(Tk):
                     f.grid(row=r, column=c)
                     kwargs = {}
                     if platform.system in ['Darwin']:
-                        kwargs = {'activebackground': self.colors['inactive']}
+                        kwargs = {'activebackground': self.colors['inactive'], 'borderless': True, 'height': 70, 'width':70}
+                    else:
+                        kwargs = {'height': 4, 'width': 10}
                     bt = Button(
-                        f, height=70, width=70, text=col[2], bg=self.colors['inactive'], borderless=True,
+                        f,  text=col[2], bg=self.colors['inactive'],
                         **kwargs
                     )
                     self.w_buttons[b].append(bt)
