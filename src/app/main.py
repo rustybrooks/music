@@ -338,6 +338,15 @@ class App(Tk):
                 d.mid_release_cb_repeat,
             )
 
+        if platform.system() in ['Darwin']:
+            kwargs = {
+                'activebackground': self.colors['inactive'],
+                'borderless': True,
+                'height': 70, 'width': 70
+            }
+        else:
+            kwargs = {'height': 4, 'width': 10}
+
         for b, bank in enumerate(self.buttons):
             for r, row in enumerate(bank):
                 for c, col in enumerate(row):
@@ -346,11 +355,6 @@ class App(Tk):
 
                     f = Frame(frames[b+2], bg=self.colors['bg'])
                     f.grid(row=r, column=c)
-                    kwargs = {}
-                    if platform.system in ['Darwin']:
-                        kwargs = {'activebackground': self.colors['inactive'], 'borderless': True, 'height': 70, 'width':70}
-                    else:
-                        kwargs = {'height': 4, 'width': 10}
                     bt = Button(
                         f,  text=col[2], bg=self.colors['inactive'],
                         **kwargs
