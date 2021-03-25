@@ -39,12 +39,16 @@ def open_midi(name):
 
 
 if __name__ == '__main__':
-    midiout, port = open_midioutput(
-        port=None,
-        use_virtual=True,
-        client_name="echo server",
-        port_name="echo server"
-    )
+    midiout = rtmidi.MidiOut()
+
+    all_ports = midiout.get_ports()
+    print(all_ports)
+    matches = [x for x in enumerate(all_ports) if 'Studio' in x[1]]
+    device = matches[0]
+    print("opening device", device)
+    midiout = midiout.open_port(device[0], name=device[1])
+
+
     midiin = rtmidi.MidiIn()
 
     target = sys.argv[1]
@@ -52,7 +56,9 @@ if __name__ == '__main__':
 
     while(True):
         ports = midiin.get_ports()
+        # print(ports)
         for k, v in midis.items():
+            # print(f"{k} in ports? {k in ports}")
             if k not in ports:
                 v.close_port()
                 open_midi(k)
