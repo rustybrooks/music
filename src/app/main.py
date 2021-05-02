@@ -213,7 +213,7 @@ class App(Tk):
         ],
     ]
 
-    def __init__(self, bank_file):
+    def __init__(self, bank_files):
         if False:
             midiout = rtmidi.MidiOut()
 
@@ -249,23 +249,29 @@ class App(Tk):
         self.w_buttons = [[], []]
         self.w_dials = [[], []]
 
-        with open(bank_file) as f:
-            data = json.load(f)
+        for bank, bank_file in enumerate(bank_files):
+            with open(bank_file) as f:
+                data = json.load(f)
 
-        targs = {
-            'midiout': midiout
-        }
-        tracks = data.pop('tracks', [])
-        targs.update(**data)
-        self.torso = torso_sequencer.TorsoSequencer(**targs)
+            if "pattern_files" in data:
+                patterns = [json.load(open(f)) for f in data['pattern_files']]
+            else:
+                patterns = [data]
 
-        for i, track in enumerate(tracks):
-            bank = track.get('bank', 0)
-            pattern = track.get('pattern', 0)
-            trackn = track.get('track', i)
-            track['slices'] = [torso_sequencer.TrackSlice(**s) for s in track.pop('slices', [])]
-            t = torso_sequencer.TorsoTrack(**track)
-            self.torso.add_track(track_name=(bank, pattern, trackn), track=t)
+            for pattern, data in enumerate(patterns):
+                targs = {
+                    'midiout': midiout
+                }
+                tracks = data.pop('tracks', [])
+                targs.update(**data)
+                self.torso = torso_sequencer.TorsoSequencer(**targs)
+
+                for i, track in enumerate(tracks):
+                    pattern = track.get('pattern', 0)
+                    trackn = track.get('track', i)
+                    track['slices'] = [torso_sequencer.TrackSlice(**s) for s in track.pop('slices', [])]
+                    t = torso_sequencer.TorsoTrack(**track)
+                    self.torso.add_track(track_name=(bank, pattern, trackn), track=t)
 
         self.torso.pause()
         self.torso.start()
@@ -894,7 +900,7 @@ class App(Tk):
 
 
 if __name__ == '__main__':
-    app = App(sys.argv[1])
+    app = App(sys.argv[1:])
     app.mainloop()
     app.torso.join()
     app.midiout.close_port()
