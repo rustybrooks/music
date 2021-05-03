@@ -41,7 +41,10 @@ accent_curves = [[128*x/100. for x in c] for c in accent_curves]
 scales = [
     'chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hexatonic', 'augmented', 'pentatonic_minor'
 ]
-styles = ['chord', 'upward', 'downward', 'converge', 'diverge', 'random']
+styles = [
+    'chord', 'upward', 'downward', 'converge', 'diverge', 'alternate_bass', 'alternate_bass_2',
+    'alternate_melody', 'alternate_melody_2', 'random'
+]
 
 phrases = [
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -374,6 +377,38 @@ class TorsoTrack:
                 return [self.voiced_notes[i//2]]
             else:
                 return [self.voiced_notes[-(i//2 + 1)]]
+        elif self.style == 'alternate_bass':
+            rest = self.voiced_notes[1:]
+            note1 = [self.voiced_notes[0]]*len(rest)
+            notes = []
+            for r, n in zip(note1, rest):
+                notes.extend([r, n])
+            return notes
+        elif self.style == 'alternate_bass_2':
+            rest = self.voiced_notes[2:]
+            note1 = self.voiced_notes[:2]*(len(rest)//2)
+            if len(note1) < len(rest):
+                note1 += [note1[0]]
+            notes = []
+            for r, n in zip(note1, rest):
+                notes.extend([r, n])
+            return notes
+        elif self.style == 'alternate_melody':
+            rest = self.voiced_notes[:-1]
+            note1 = [self.voiced_notes[-1]]*len(rest)
+            notes = []
+            for r, n in zip(rest, note1):
+                notes.extend([r, n])
+            return notes
+        elif self.style == 'alternate_melody2':
+            rest = self.voiced_notes[:-2]
+            note1 = self.voiced_notes[-2:]*(len(rest)//2)
+            if len(note1) < len(rest):
+                note1 += [note1[0]]
+            notes = []
+            for r, n in zip(note1, rest):
+                notes.extend([r, n])
+            return notes
         elif self.style == 'random':
             return [random.choice(self.voiced_notes) for r in range(random.randint(0, lv-1))]
 
