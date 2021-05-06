@@ -11,15 +11,26 @@ import time
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
 from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
+import rtmidi
 from miditool.sequencer import Sequencer
 
+virtual = False
 
-midiout, port = open_midiport(
-    None,
-    "TORSO",
-    use_virtual=True,
-    client_name="TORSO"
-)
+if virtual:
+    midiout, port = open_midiport(
+        None,
+        "TORSO",
+        use_virtual=True,
+        client_name="TORSO"
+    )
+else:
+    midiout = rtmidi.MidiOut()
+    all_ports = midiout.get_ports()
+    print(all_ports)
+    matches = [x for x in enumerate(all_ports) if "MIDI4x4:MIDI4x4 MIDI" in x[1]]
+    device = matches[0]
+    midiout = midiout.open_port(device[0], name=device[1])
+
 time.sleep(1)
 
 t = torso_sequencer.TorsoSequencer(
@@ -27,40 +38,6 @@ t = torso_sequencer.TorsoSequencer(
     lookahead=0.02,
     bpm=60,
 )
-
-"""
-tt1 = torso_sequencer.TorsoTrack(
-    notes=[notes.note_to_number(['C', 3])],
-    pulses=16,
-    steps=16,
-    division=2,
-    accent=0,
-    velocity=127,
-    timing=.5,
-)
-tt2 = torso_sequencer.TorsoTrack(
-    notes=[notes.note_to_number(['E', 3])],
-    pulses=8,
-    division=2,
-    steps=16,
-)
-tt3 = torso_sequencer.TorsoTrack(
-    notes=[notes.note_to_number(['G', 2])],
-    pulses=8,
-    division=2,
-    steps=16,
-    accent=0,
-    velocity=127,
-    repeats=3,
-    time=4,
-    offset=.2,
-    # delay=0.25,
-)
-
-t.add_track(track_name='hihat', track=tt1)
-t.add_track(track_name='cymbal', track=tt2)
-t.add_track(track_name='clap', track=tt3)
-"""
 
 tp = torso_sequencer.TorsoTrack(
     notes=[
