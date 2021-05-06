@@ -323,12 +323,13 @@ class TorsoTrack:
     @voicing.setter
     def voicing(self, value):
         self.__voicing = value
-        # print(f"slice notes {self.slice.notes}")
+        print(f"slice notes {self.slice.notes}")
         self.__voiced_notes = sorted(copy.deepcopy(self.slice.notes))
         ln = len(self.slice.notes)
-        for v in range(value):
-            n = self.slice.notes[v % ln]
-            self.__voiced_notes.append(n + 12*(1+v//ln))
+        if ln:
+            for v in range(value):
+                n = self.slice.notes[v % ln]
+                self.__voiced_notes.append(n + 12*(1+v//ln))
 
         # print(f"[{self.track_name}] voicing settr, value={value} notes={self.slice.notes} voiced notes={self.__voiced_notes}")
 
@@ -359,6 +360,8 @@ class TorsoTrack:
 
     def style_notes(self, index):
         lv = len(self.voiced_notes)
+        if not lv:
+            return []
         if self.style == 'chord':
             return self.voiced_notes
         elif self.style == 'upward':
