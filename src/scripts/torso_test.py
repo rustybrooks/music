@@ -10,9 +10,7 @@ sys.path.append(lp)
 import time
 from miditool import torso_sequencer, notes
 from rtmidi.midiutil import open_midiport
-from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
 import rtmidi
-from miditool.sequencer import Sequencer
 
 virtual = False
 
