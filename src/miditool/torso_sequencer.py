@@ -175,7 +175,7 @@ class TorsoTrack:
         melody=0,  # "depth" LFO for phrase (speed?)
         phrase=0,  # integer, picks phrase from a list
         scale=0,  # integer, picks scale from a list for phrase to operate on (default = chromatic)
-        root=0, # which note of the scale to set as the root
+        root=0,  # which note of the scale to set as the root
         muted=False,
         **kwargs,  # to absorb anything else added to the track files
     ):

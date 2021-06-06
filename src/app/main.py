@@ -101,7 +101,7 @@ class App(Tk):
             "mode": MODE_STEPS,
             "property": "steps",
             "min": 1,
-            "max": 16,
+            "max": 'MAX_STEPS',
             "type": int,
             "alt_mode": MODE_MANUAL_STEPS,
             "alt_property": "manual_steps",
@@ -117,7 +117,7 @@ class App(Tk):
             "mode": MODE_PULSES,
             "property": "pulses",
             "min": 1,
-            "max": 16,
+            "max": 'MAX_STEPS',
             "type": int,
             "alt_mode": MODE_ROTATE,
             "alt_property": "rotate",
@@ -493,6 +493,7 @@ class App(Tk):
             config = json.load(f)
 
         midiout = self.open_midiout(config.pop("midi_output"))
+        self.max_steps = config.pop('max_steps', 16)
 
         targs = {"midiout": midiout}
         targs.update(config)
@@ -549,6 +550,8 @@ class App(Tk):
         self.bind("<KeyRelease-Control_L>", self.release_control)
 
         for dial in self.dials:
+            if dial.get('max') == 'MAX_STEPS':
+                dial['max'] = self.max_steps
 
             dial_press_cmd = None
             dial_release_cmd = None
@@ -601,6 +604,10 @@ class App(Tk):
             }
         else:
             kwargs = {"height": 4, "width": 10}
+
+        # value buttons
+
+        # UI buttons
 
         for b, bank in enumerate(self.buttons):
             for r, row in enumerate(bank):
@@ -796,7 +803,7 @@ class App(Tk):
                     )
                     return
 
-                self.set_value(index, interpolate=16)
+                self.set_value(index, interpolate=self.max_steps)
                 self.update_display()
             elif self.mode in [MODE_SCALE]:
                 imap = {
@@ -1016,7 +1023,7 @@ class App(Tk):
             MODE_VOICING,
             MODE_MELODY,
         ]:  # show all buttons from 0 to value
-            value_index = self.get_value(interpolate=16, asint=True)
+            value_index = self.get_value(interpolate=self.max_steps, asint=True)
 
             for row in range(2):
                 for col in range(8):
