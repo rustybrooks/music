@@ -432,7 +432,7 @@ class App(Tk):
             [
                 ["play", "stop", "9", ["play_pause", None]],
                 [None, None, None],
-                ["clear", "copy", "\-", ["set_clear", "release_mode"]],
+                ["clear", "copy", "-", ["set_clear", "release_mode"]],
                 ["ctrl", "", "=", ["set_control", "release_control"]],
             ],
             [
@@ -448,19 +448,28 @@ class App(Tk):
         ],
     ]
 
-    def __init__(self, bank_files, config_file):
-        if False:
-            midiout = rtmidi.MidiOut()
-
-            matches = [x for x in enumerate(midiout.get_ports()) if "Studio" in x[1]]
-            device = matches[0]
-            print("opening device", device)
-            self.midi_out = midiout.open_port(device[0], name=device[1])
-        else:
+    @classmethod
+    def open_midiout(cls, device):
+        if device.get("virtual", False):
             midiout, port = open_midiport(
-                None, "TORSO", use_virtual=True, client_name="TORSO", port_name="TORSO"
+                None,
+                device["device_match"],
+                use_virtual=True,
+                client_name=device["device_match"],
+                port_name=device["device_match"],
             )
+        else:
+            mo = rtmidi.MidiOut()
+            matches = [
+                x for x in enumerate(mo.get_ports()) if device["device_match"] in x[1]
+            ]
+            d = matches[0]
+            print("opening device", d)
+            midiout = mo.open_port(d[0], name=d[1])
 
+        return midiout
+
+    def __init__(self, bank_files, config_file):
         self.dial_map = {}
         self.button_pressed = {}
         self.dial_pressed = {}
@@ -480,7 +489,13 @@ class App(Tk):
         self.w_buttons = [[], []]
         self.w_dials = [[], []]
 
+        with open(config_file) as f:
+            config = json.load(f)
+
+        midiout = self.open_midiout(config.pop("midi_output"))
+
         targs = {"midiout": midiout}
+        targs.update(config)
         self.torso = torso_sequencer.TorsoSequencer(**targs)
         for bank, bank_file in enumerate(bank_files):
             with open(bank_file) as f:
@@ -539,10 +554,10 @@ class App(Tk):
             dial_release_cmd = None
 
             if "mode" in dial:
-                dial_press_cmd = lambda _m=[
+                dial_press_cmd = lambda _m=(
                     dial["mode"],
                     dial.get("alt_mode"),
-                ]: self.push_mode(_m)
+                ): self.push_mode(_m)
                 dial_release_cmd = self.pop_mode
                 self.dial_map[dial["mode"]] = dial
                 if "alt_mode" in dial:
@@ -1212,8 +1227,8 @@ class App(Tk):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-c', '--config', type=str, default='./data/torso/config.json')
-    parser.add_argument("bank_files")
+    parser.add_argument("-c", "--config", type=str, default="./data/torso/config.json")
+    parser.add_argument("bank_files", nargs='*')
 
     options = parser.parse_args()
 

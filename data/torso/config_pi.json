@@ -1,0 +1,9 @@
+{
+  "lookahead": 0.05,
+  "interval": 0.003,
+  "bpm": 60,
+  "midi_output": {
+    "device_match": "MIDI4x4:MIDI4x4 MIDI",
+    "virtual": false
+  }
+}
