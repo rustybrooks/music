@@ -448,6 +448,59 @@ class App(Tk):
         ],
     ]
 
+    def add_button(self, b, r, c, frames, col=None):
+        if platform.system() in ["Darwin"]:
+            kwargs = {
+                "activebackground": self.colors["inactive"],
+                "borderless": True,
+                "height": 50,
+                "width": 70,
+            }
+        else:
+            kwargs = {"height": 4, "width": 10}
+
+        f = Frame(frames[b + 2], bg=self.colors["bg"])
+        f.grid(row=r, column=c)
+        bt = Button(f, text=col[2] if col else '', bg=self.colors["inactive"], **kwargs)
+        self.w_buttons[b].append(bt)
+
+        if col:
+            key = col[2]
+            if key == "\\":
+                key = "backslash"
+            self.bind(
+                f"<KeyPress-{key}>",
+                lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_press_repeat(
+                    rowx, colx, bankx, *args, **kwargs
+                ),
+            )
+
+            self.bind(
+                f"<KeyRelease-{key}>",
+                lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_release_repeat(
+                    rowx, colx, bankx, *args, **kwargs
+                ),
+            )
+
+        bt.bind(
+            "<ButtonPress>",
+            lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_press(
+                rowx, colx, bankx, *args, **kwargs
+            ),
+        )
+        bt.bind(
+            "<ButtonRelease>",
+            lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_release(
+                rowx, colx, bankx, *args, **kwargs
+            ),
+        )
+        bt.pack(side=TOP, fill=X)
+        if col:
+            lb = Label(f, text=col[0] if col else '', bg=self.colors["bg"])
+            lb.pack(side=TOP, fill=X)
+            lb = Label(f, text=col[1] if col else '', bg=self.colors["bg"])
+            lb.pack(side=TOP, fill=X)
+
     @classmethod
     def open_midiout(cls, device):
         if device.get("virtual", False):
@@ -595,65 +648,24 @@ class App(Tk):
                 d.mid_release_cb_repeat,
             )
 
-        if platform.system() in ["Darwin"]:
-            kwargs = {
-                "activebackground": self.colors["inactive"],
-                "borderless": True,
-                "height": 70,
-                "width": 70,
-            }
-        else:
-            kwargs = {"height": 4, "width": 10}
-
-        # value buttons
-
-        # UI buttons
-
         for b, bank in enumerate(self.buttons):
             for r, row in enumerate(bank):
                 for c, col in enumerate(row):
                     if col[0] is None:
                         continue
 
-                    f = Frame(frames[b + 2], bg=self.colors["bg"])
-                    f.grid(row=r, column=c)
-                    bt = Button(f, text=col[2], bg=self.colors["inactive"], **kwargs)
-                    self.w_buttons[b].append(bt)
+                    self.add_button(b, r, c, frames, col)
 
-                    key = col[2]
-                    if key == "\\":
-                        key = "backslash"
-                    self.bind(
-                        f"<KeyPress-{key}>",
-                        lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_press_repeat(
-                            rowx, colx, bankx, *args, **kwargs
-                        ),
-                    )
+        b = 0
+        r = 2
+        c = 0
+        for i in range(max(0, self.max_steps - 16)):
+            self.add_button(b, r, c, frames)
 
-                    self.bind(
-                        f"<KeyRelease-{key}>",
-                        lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_release_repeat(
-                            rowx, colx, bankx, *args, **kwargs
-                        ),
-                    )
-
-                    bt.bind(
-                        "<ButtonPress>",
-                        lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_press(
-                            rowx, colx, bankx, *args, **kwargs
-                        ),
-                    )
-                    bt.bind(
-                        "<ButtonRelease>",
-                        lambda *args, rowx=r, colx=c, bankx=b, **kwargs: self.button_release(
-                            rowx, colx, bankx, *args, **kwargs
-                        ),
-                    )
-                    bt.pack(side=TOP, fill=X)
-                    lb = Label(f, text=col[0], bg=self.colors["bg"])
-                    lb.pack(side=TOP, fill=X)
-                    lb = Label(f, text=col[1], bg=self.colors["bg"])
-                    lb.pack(side=TOP, fill=X)
+            c += 1
+            if c == 8:
+                c = 0
+                r += 1
 
         self.update_display()
         self.update_dials()
