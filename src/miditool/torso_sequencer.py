@@ -16,7 +16,7 @@ from .sequencer import MidiEvent
 
 log = logging.getLogger(__name__)
 
-MAX_PULSE = 16
+MAX_PULSE = 64
 
 
 divisions = [
@@ -101,7 +101,7 @@ class TrackSlice:
         pulses = min(self.pulses, self.steps)
         interval = self.steps / pulses
         sequence = [0]*self.steps
-        print(f"[self.track_name] pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
+        # print(f"[self.track_name] pulses={pulses} interval={interval} steps={self.steps} sequence={sequence}")
 
         for i in range(pulses):
             sequence[round(i*interval)] = 1
@@ -242,7 +242,6 @@ class TorsoTrack:
             value = scales[value]
 
         self.__scale_type = value
-        print(value)
         self.scale_notes = get_scale_numbers(0, scale_type=value, octaves=10)
 
     @property
@@ -323,7 +322,7 @@ class TorsoTrack:
     @voicing.setter
     def voicing(self, value):
         self.__voicing = value
-        print(f"slice notes {self.slice.notes}")
+        # print(f"slice notes {self.slice.notes}")
         self.__voiced_notes = sorted(copy.deepcopy(self.slice.notes))
         ln = len(self.slice.notes)
         if ln:

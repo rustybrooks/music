@@ -2,7 +2,7 @@
   "lookahead": 0.05,
   "interval": 0.003,
   "bpm": 60,
-  "max_steps": 64,
+  "max_steps": 32,
   "midi_output": {
     "device_match": "TORSO",
     "virtual": true

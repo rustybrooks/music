@@ -890,9 +890,9 @@ class App(Tk):
         if asindex and lval is not None:
             value = lval.index(value)
 
-        print(
-            f"get_value... prop={prop_key} prop2={dial[prop_key]} lval={lval} value={value}"
-        )
+        # print(
+        #     f"get_value... prop={prop_key} prop2={dial[prop_key]} lval={lval} value={value}"
+        # )
 
         if interpolate is not None:
             value = interpolate * (value - dial["min"]) / (dial["max"] - dial["min"])
@@ -999,7 +999,7 @@ class App(Tk):
         )
 
         if self.mode in [MODE_TRACKS, MODE_MUTE]:
-            for row in range(2):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
                     track = self.torso.get_track(
@@ -1037,7 +1037,7 @@ class App(Tk):
         ]:  # show all buttons from 0 to value
             value_index = self.get_value(interpolate=self.max_steps, asint=True)
 
-            for row in range(2):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
                     if index <= value_index:
@@ -1056,7 +1056,7 @@ class App(Tk):
         ]:
             value_index = self.get_value(asint=True)
 
-            for row in range(2):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
                     if index == value_index:
@@ -1079,7 +1079,7 @@ class App(Tk):
             value = self.get_value(asindex=False)
             r, c = dmap[value]
 
-            for row in range(2):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
 
@@ -1108,7 +1108,7 @@ class App(Tk):
             value = self.get_value(asindex=False)
             r, c = dmap[value]
 
-            for row in range(2):
+            for row in range(int(self.max_steps/2)):
                 for col in range(8):
                     index = row * self.cols + col
 
@@ -1126,7 +1126,7 @@ class App(Tk):
             man_dial = self.dial_map.get(MODE_MANUAL_STEPS)
             man_steps = self.get_value(dial=man_dial, control=True)
 
-            for row in range(2):
+            for row in range(int(self.max_steps/2)):
                 for col in range(8):
                     index = row * self.cols + col
                     if index >= len(seq):
@@ -1141,7 +1141,7 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [MODE_PITCH]:
-            for row in range(2):
+            for row in range(int(self.max_steps/2)):
                 for col in range(8):
                     index = row * self.cols + col
                     self.w_buttons[0][index].configure(bg=self.colors["inactive"])
