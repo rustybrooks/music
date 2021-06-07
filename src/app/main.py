@@ -1032,8 +1032,6 @@ class App(Tk):
             MODE_RANDOM,
             MODE_RANDOM_RATE,
             MODE_TEMPO,
-            MODE_VOICING,
-            MODE_MELODY,
         ]:  # show all buttons from 0 to value
             value_index = self.get_value(interpolate=self.max_steps, asint=True)
 
@@ -1053,6 +1051,8 @@ class App(Tk):
             MODE_PHRASE,
             MODE_STYLE,
             MODE_ROOT,
+            MODE_VOICING,
+            MODE_MELODY,
         ]:
             value_index = self.get_value(asint=True)
 
@@ -1108,7 +1108,7 @@ class App(Tk):
             value = self.get_value(asindex=False)
             r, c = dmap[value]
 
-            for row in range(int(self.max_steps/2)):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
 
@@ -1126,7 +1126,7 @@ class App(Tk):
             man_dial = self.dial_map.get(MODE_MANUAL_STEPS)
             man_steps = self.get_value(dial=man_dial, control=True)
 
-            for row in range(int(self.max_steps/2)):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
                     if index >= len(seq):
@@ -1141,7 +1141,7 @@ class App(Tk):
 
                     self.w_buttons[0][index].configure(bg=self.colors[color])
         elif self.mode in [MODE_PITCH]:
-            for row in range(int(self.max_steps/2)):
+            for row in range(int(self.max_steps/8)):
                 for col in range(8):
                     index = row * self.cols + col
                     self.w_buttons[0][index].configure(bg=self.colors["inactive"])
