@@ -2,7 +2,7 @@ import copy
 import rtmidi
 from rtmidi.midiconstants import NOTE_OFF, NOTE_ON, CONTROL_CHANGE
 from itertools import accumulate
-
+import time
 
 from .notes import note_to_number, number_to_note
 from .scales import scales
@@ -46,8 +46,22 @@ class Launchpad(Instrument):
         )
         self.index = index
         self.clear()
+        self.lightshow()
 
         print(f"Launchpad {index} ready")
+
+    def lightshow(self):
+        d = .08
+        for i in range(11):
+            if i > 2:
+                self.send_note_on(i-3, i-3, 0)
+                self.send_note_on(7 - i + 3, i-3, 0)
+
+            if i < 8:
+                self.send_note_on(i, i, 20)
+                self.send_note_on(7-i, i, 20)
+
+            time.sleep(d)
 
     def clear(self):
         for i in range(9):
@@ -72,6 +86,20 @@ class Launchpad(Instrument):
 
     def send_cc2(self, button, value):
         self.send_note_on(8, button, value)
+
+
+class StatefulLaunchpad(Launchpad):
+    def __init__(self, index=0, callback=None):
+        super().__init__(index=index, callback=callback)
+        self.state = []
+        for x in range(8):
+            this = []
+            for y in range(8):
+                this.append({})
+
+            self.state.append(this)
+
+
 
 
 class MultiLaunchpadModes:

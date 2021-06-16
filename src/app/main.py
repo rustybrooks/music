@@ -28,7 +28,7 @@ except Exception:
 
 from app.dial import Dial
 
-from miditool import torso_sequencer, notes
+from miditool import torso_sequencer, notes, instruments
 from rtmidi.midiutil import open_midiport
 
 from app.dial import Dial
@@ -88,6 +88,18 @@ class App(Tk):
         "white_inactive": "#bbbbbb",
         "black_active": "#997777",
         "black_inactive": "#444444",
+    }
+
+    launchpad_colors = {
+        "bg": 0,
+        "active": 20,
+        "active2": 20,
+        "inactive": 0,
+        "passive": 20,
+        "white_active": 20,
+        "white_inactive": 20,
+        "black_active": 20,
+        "black_inactive": 20,
     }
 
     dials = [
@@ -548,6 +560,8 @@ class App(Tk):
         midiout = self.open_midiout(config.pop("midi_output"))
         self.max_steps = config.pop('max_steps', 16)
 
+        self.launchpad = instruments.Launchpad(index=0)
+
         targs = {"midiout": midiout}
         targs.update(config)
         self.torso = torso_sequencer.TorsoSequencer(**targs)
@@ -958,6 +972,19 @@ class App(Tk):
         else:
             setattr(track, prop, value)
 
+    def configure_button(self, row, col, color, text=None):
+        index = row * self.cols + col
+        kw = {
+            'bg': self.colors[color]
+        }
+        if text is not None:
+            kw['text'] = text
+
+        self.w_buttons[0][index].configure(**kw)
+
+        if self.launchpad is not None:
+            self.launchpad.send_note_on(col, row, self.launchpad_colors[color])
+
     def update_display(self):
         for b, bank in enumerate(self.buttons):
             if b != 0:
@@ -1014,7 +1041,7 @@ class App(Tk):
                     else:
                         color = "inactive"
 
-                    self.w_buttons[0][index].configure(bg=self.colors[color])
+                    self.configure_button(row, col, color)
         elif self.mode in [MODE_PATTERNS]:
             pass
         elif self.mode in [MODE_BANKS]:
@@ -1042,8 +1069,7 @@ class App(Tk):
                         color = "active2"
                     else:
                         color = "inactive"
-
-                    self.w_buttons[0][index].configure(bg=self.colors[color])
+                    self.configure_button(row, col, color)
         elif self.mode in [
             MODE_CHANNEL,
             MODE_ACCENT_CURVE,
@@ -1064,7 +1090,7 @@ class App(Tk):
                     else:
                         color = "inactive"
 
-                    self.w_buttons[0][index].configure(bg=self.colors[color])
+                    self.configure_button(row, col, color)
 
         elif self.mode in [MODE_SCALE]:
             dmap = {
@@ -1081,14 +1107,14 @@ class App(Tk):
 
             for row in range(int(self.max_steps/8)):
                 for col in range(8):
-                    index = row * self.cols + col
+                    # index = row * self.cols + col
 
                     if row == r and col == c:
                         color = "active2"
                     else:
                         color = "inactive"
 
-                    self.w_buttons[0][index].configure(bg=self.colors[color])
+                    self.configure_button(row, col, color)
         elif self.mode in [MODE_DIVISION, MODE_REPEAT_TIME]:
             dmap = {
                 1: [0, 0],
@@ -1110,14 +1136,14 @@ class App(Tk):
 
             for row in range(int(self.max_steps/8)):
                 for col in range(8):
-                    index = row * self.cols + col
+                    # index = row * self.cols + col
 
                     if row == r and col == c:
                         color = "active2"
                     else:
                         color = "inactive"
 
-                    self.w_buttons[0][index].configure(bg=self.colors[color])
+                    self.configure_button(row, col, color)
 
         elif self.mode in [MODE_PULSES, MODE_ROTATE, MODE_MANUAL_STEPS]:
             track = self.torso.get_track((self.bank, self.pattern, self.track))
@@ -1139,12 +1165,12 @@ class App(Tk):
                     else:
                         color = "inactive"
 
-                    self.w_buttons[0][index].configure(bg=self.colors[color])
+                    self.configure_button(row, col, color)
         elif self.mode in [MODE_PITCH]:
             for row in range(int(self.max_steps/8)):
                 for col in range(8):
-                    index = row * self.cols + col
-                    self.w_buttons[0][index].configure(bg=self.colors["inactive"])
+                    # index = row * self.cols + col
+                    self.configure_button(row, col, 'inactive')
 
             track = self.torso.get_track((self.bank, self.pattern, self.track))
             our_notes = [notes.number_to_note(x) for x in track.notes]
@@ -1154,12 +1180,12 @@ class App(Tk):
                 col = i
                 index = row * self.cols + col
                 this_n = [n, self.pitch_octave if n else ""]
-                self.w_buttons[0][index].configure(
-                    bg=self.colors[
-                        "white_active" if this_n in our_notes else "white_inactive"
-                    ],
-                    text="".join([str(x) for x in this_n]),
-                )
+                self.configure_button(
+                    row,
+                    col,
+                    color="white_active" if this_n in our_notes else "white_inactive",
+                    text="".join([str(x) for x in this_n])
+                ),
 
             # black keys
             for i, n in zip(range(8), ["", "C#", "D#", "", "F#", "G#", "A#"]):
@@ -1178,8 +1204,9 @@ class App(Tk):
                     text="".join([str(x) for x in this_n]),
                 )
 
-            self.w_buttons[0][7].configure(bg=self.colors["white_inactive"], text="UP")
-            self.w_buttons[0][15].configure(bg=self.colors["white_inactive"], text="DN")
+            self.configure_button(0, 7, "white_inactive")
+            self.configure_button(0, 15, "white_inactive")
+
 
         else:
             print(f"unknown mode {self.mode}")
