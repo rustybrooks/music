@@ -93,9 +93,9 @@ class App(Tk):
     launchpad_colors = {
         "bg": 0,
         "active": 20,
-        "active2": 20,
+        "active2": 40,
         "inactive": 0,
-        "passive": 20,
+        "passive": 60,
         "white_active": 20,
         "white_inactive": 20,
         "black_active": 20,
@@ -957,10 +957,10 @@ class App(Tk):
             value = ftype(value)
 
         if lval:
-            print(f"setattr prop={prop} value={lval[value]}")
+            # print(f"setattr prop={prop} value={lval[value]}")
             return prop, lval[value]
         else:
-            print(f"setattr prop={prop} value={value}")
+            # print(f"setattr prop={prop} value={value}")
             return prop, value
 
     def set_value(self, value, interpolate=None):
@@ -985,6 +985,14 @@ class App(Tk):
         if self.launchpad is not None:
             self.launchpad.send_note_on(col, row, self.launchpad_colors[color])
 
+    def configure_control_button(self, index, color, text=None):
+        self.w_buttons[1][index].configure(
+            bg=self.colors[color],
+        )
+
+        if self.launchpad is not None:
+            self.launchpad.send_cc(button=index, value=self.launchpad_colors[color])
+
     def update_display(self):
         for b, bank in enumerate(self.buttons):
             if b != 0:
@@ -995,35 +1003,13 @@ class App(Tk):
                     index = r * self.cols + c
                     self.w_buttons[0][index].configure(text=col[2])
 
-        self.w_buttons[1][0].configure(
-            bg=self.colors["active" if not self.torso._paused else "inactive"],
-        )
-        self.w_buttons[1][1].configure(
-            bg=self.colors[
-                "active" if self.mode in [MODE_CLEAR, MODE_COPY] else "inactive"
-            ],
-        )
-        self.w_buttons[1][2].configure(
-            bg=self.colors["active" if self.control else "inactive"],
-        )
-        self.w_buttons[1][3].configure(
-            bg=self.colors[
-                "active" if self.mode in [MODE_BANKS, MODE_SELECT] else "inactive"
-            ],
-        )
-        self.w_buttons[1][4].configure(
-            bg=self.colors[
-                "active" if self.mode in [MODE_PATTERNS, MODE_SAVE] else "inactive"
-            ],
-        )
-        self.w_buttons[1][4].configure(
-            bg=self.colors[
-                "active" if self.mode in [MODE_TEMP, MODE_MULTI] else "inactive"
-            ],
-        )
-        self.w_buttons[1][6].configure(
-            bg=self.colors["active" if self.mode in [MODE_MUTE] else "inactive"],
-        )
+        self.configure_control_button(0, "active" if not self.torso._paused else "inactive")
+        self.configure_control_button(1, "active" if self.mode in [MODE_CLEAR, MODE_COPY] else "inactive")
+        self.configure_control_button(2, "active" if self.control else "inactive")
+        self.configure_control_button(3, "active" if self.mode in [MODE_BANKS, MODE_SELECT] else "inactive")
+        self.configure_control_button(4, "active" if self.mode in [MODE_PATTERNS, MODE_SAVE]  else "inactive")
+        self.configure_control_button(5, "active" if self.mode in [MODE_TEMP, MODE_MULTI]  else "inactive")
+        self.configure_control_button(6, "active" if self.mode in [MODE_MUTE]  else "inactive")
 
         if self.mode in [MODE_TRACKS, MODE_MUTE]:
             for row in range(int(self.max_steps/8)):
