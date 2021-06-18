@@ -560,7 +560,7 @@ class App(Tk):
         midiout = self.open_midiout(config.pop("midi_output"))
         self.max_steps = config.pop('max_steps', 16)
 
-        self.launchpad = instruments.Launchpad(index=0)
+        self.launchpad = instruments.StatefulLaunchpad(index=0)
 
         targs = {"midiout": midiout}
         targs.update(config)
@@ -983,7 +983,7 @@ class App(Tk):
         self.w_buttons[0][index].configure(**kw)
 
         if self.launchpad is not None:
-            self.launchpad.send_note_on(col, row, self.launchpad_colors[color])
+            self.launchpad.set_state(col, row, self.launchpad_colors[color])
 
     def configure_control_button(self, index, color, text=None):
         self.w_buttons[1][index].configure(
@@ -1003,7 +1003,7 @@ class App(Tk):
                     index = r * self.cols + c
                     self.w_buttons[0][index].configure(text=col[2])
 
-        self.configure_control_button(0, "active" if not self.torso._paused else "inactive")
+        self.configure_control_button(0, "active" if not self.torso._paused.is_set() else "inactive")
         self.configure_control_button(1, "active" if self.mode in [MODE_CLEAR, MODE_COPY] else "inactive")
         self.configure_control_button(2, "active" if self.control else "inactive")
         self.configure_control_button(3, "active" if self.mode in [MODE_BANKS, MODE_SELECT] else "inactive")
@@ -1197,6 +1197,9 @@ class App(Tk):
         else:
             print(f"unknown mode {self.mode}")
 
+        if self.launchpad:
+            self.launchpad.update()
+            
         self.update()
         self.update_idletasks()
 

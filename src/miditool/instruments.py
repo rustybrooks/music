@@ -92,14 +92,26 @@ class StatefulLaunchpad(Launchpad):
     def __init__(self, index=0, callback=None):
         super().__init__(index=index, callback=callback)
         self.state = []
-        for x in range(8):
+        for y in range(8):
             this = []
-            for y in range(8):
-                this.append({})
+            for x in range(8):
+                this.append(0)
 
             self.state.append(this)
 
+        self.display_state = copy.deepcopy(self.state)
 
+    def set_state(self, x, y, value):
+        self.state[x][y] = value
+
+    def update(self):
+        for x in range(8):
+            for y in range(8):
+                val = self.state[x][y]
+                if val != self.display_state[x][y]:
+                    self.send_note_on(x, y, val)
+
+        self.display_state = copy.deepcopy(self.state)
 
 
 class MultiLaunchpadModes:
