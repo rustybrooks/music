@@ -26,7 +26,7 @@ try:
 except Exception:
     pass
 
-from app.dial import Dial
+# from app.dial import Dial
 
 from miditool import torso_sequencer, notes, instruments
 from rtmidi.midiutil import open_midiport
@@ -334,7 +334,7 @@ class App(Tk):
             "pos": 1,
             "label": "midi ch",
             "alt_label": "",
-            "keybind": ",",
+            "keybind": "comma",
             "mode": MODE_CHANNEL,
             "property": "channel",
             "min": 0,
@@ -347,7 +347,7 @@ class App(Tk):
             "pos": 1,
             "label": "random",
             "alt_label": "rate",
-            "keybind": ".",
+            "keybind": "period",
             # 'mode': MODE_RANDOM, 'property': 'random', 'min': 0, 'max': 1, 'type': float,  # this is gonna be special
             "alt_mode": MODE_RANDOM_RATE,
             "alt_list": torso_sequencer.divisions,
@@ -444,18 +444,18 @@ class App(Tk):
             [
                 ["play", "stop", "9", ["play_pause", None]],
                 [None, None, None],
-                ["clear", "copy", "-", ["set_clear", "release_mode"]],
-                ["ctrl", "", "=", ["set_control", "release_control"]],
+                ["clear", "copy", "minus", ["set_clear", "release_mode"]],
+                ["ctrl", "", "equal", ["set_control", "release_control"]],
             ],
             [
                 ["bank", "save", "p", ["set_bank", "release_mode"]],
-                ["pattern", "select", "[", ["set_pattern", "release_mode"]],
+                ["pattern", "select", "bracketleft", ["set_pattern", "release_mode"]],
                 [
                     "temp",
                     "multi",
-                    "]",
+                    "bracketright",
                 ],
-                ["mute", "", "\\", ["set_mute", "release_mode"]],
+                ["mute", "", "backslash", ["set_mute", "release_mode"]],
             ],
         ],
     ]
@@ -558,6 +558,7 @@ class App(Tk):
             config = json.load(f)
 
         midiout = self.open_midiout(config.pop("midi_output"))
+        config.pop("midi_inputs")
         self.max_steps = config.pop('max_steps', 16)
 
         self.launchpad = instruments.StatefulLaunchpad(index=0)
