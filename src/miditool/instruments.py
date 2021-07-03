@@ -1,31 +1,40 @@
 import copy
+import logging
+import time
+from itertools import accumulate
+
 import rtmidi
 from rtmidi.midiconstants import NOTE_OFF, NOTE_ON, CONTROL_CHANGE
-from itertools import accumulate
-import time
 
 from .notes import note_to_number, number_to_note
 from .scales import scales
 
+logger = logging.getLogger(__name__)
+
 
 class Instrument:
     def __init__(self, in_rule=None, out_rule=None, callback=None):
+        self.midi_out = None
+        logger.error("in_rule=%r, out_rule=%r", in_rule, out_rule)
         if in_rule:
             callback = callback or [self.input_callback, {}]
 
             midiin = rtmidi.MidiIn()
             label, index = in_rule
             matches = [x for x in enumerate(midiin.get_ports()) if label in x[1]]
-            device = matches[index]
-            self.midi_in = midiin.open_port(device[0], name=device[1])
-            self.midi_in.set_callback(*callback)
+            if matches:
+                device = matches[index]
+                self.midi_in = midiin.open_port(device[0], name=device[1])
+                self.midi_in.set_callback(*callback)
 
         if out_rule:
             midiout = rtmidi.MidiOut()
             label, index = out_rule
             matches = [x for x in enumerate(midiout.get_ports()) if label in x[1]]
-            device = matches[index]
-            self.midi_out = midiout.open_port(device[0], name=device[1])
+            if matches:
+                logger.warning("out matches = %r", matches)
+                device = matches[index]
+                self.midi_out = midiout.open_port(device[0], name=device[1])
 
     @classmethod
     def input_callback(cls, msg, data):
@@ -34,13 +43,15 @@ class Instrument:
         print(f"{status:x} {b1} {b2} - {data}")
 
     def send_message(self, status, b1, b2):
+        if not self.midi_out:
+            return
         self.midi_out.send_message([status, b1, b2])
 
 
 class Launchpad(Instrument):
     def __init__(self, index=0, callback=None):
         super().__init__(
-            in_rule=['Launchpad', index],
+            in_rule=["Launchpad", index],
             out_rule=["Launchpad", index],
             callback=callback,
         )
