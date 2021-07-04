@@ -30,7 +30,9 @@ class Instrument:
         if out_rule:
             midiout = rtmidi.MidiOut()
             label, index = out_rule
-            matches = [x for x in enumerate(midiout.get_ports()) if label in x[1]]
+            midi_ports = [x for x in enumerate(midiout.get_ports())]
+            logger.warning("midi ports = %r", midi_ports)
+            matches = [x for x in midi_ports if label in x[1]]
             if matches:
                 logger.warning("out matches = %r", matches)
                 device = matches[index]
@@ -44,6 +46,7 @@ class Instrument:
 
     def send_message(self, status, b1, b2):
         if not self.midi_out:
+            # logger.error("Not sending message, no midi_out: %r - %r - %r", status, b1, b2)
             return
         self.midi_out.send_message([status, b1, b2])
 

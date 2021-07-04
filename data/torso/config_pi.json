@@ -4,7 +4,7 @@
   "bpm": 60,
   "max_steps": 32,
   "midi_output": {
-    "device_match": "MIDI4x4:MIDI4x4 MIDI",
+    "device_match": "MIDI4x4:MIDI4x4",
     "virtual": false
   },
   "midi_inputs": [
