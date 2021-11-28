@@ -9,6 +9,7 @@ services:
     container_name: music-ui
     volumes:
       - ./src/ui/src:/srv/src/ui/src
+      - ./src/ui/public:/srv/src/ui/public
     ports:
       - 3000:3000
 
