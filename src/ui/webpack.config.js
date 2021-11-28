@@ -5,8 +5,8 @@ module.exports = {
   mode: "development",
   devtool: 'inline-source-map',
   // devtool: "source-map",
-  entry: ['react-hot-loader/patch', './src/index.tsx'],
-  // entry: './src/index.tsx',
+  // entry: ['react-hot-loader/patch', './src/index.tsx'],
+  entry: './src/index.tsx',
 
   module: {
     rules: [
