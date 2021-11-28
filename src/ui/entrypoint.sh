@@ -1,10 +1,4 @@
-#!/usr/bin/env bash
-
-cd /srv/src/ui/app
+#!/bin/env bash
 
 npm install
-while true; do
-    npm start
-    sleep 10
-done
-
+npm run serve

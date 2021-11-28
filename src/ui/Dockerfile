@@ -1,17 +1,20 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+USER root
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /srv/src/ui
+ENV NODE_ENV=development
 
 RUN apt-get -y update \
- && DEBIAN_FRONTEND=noninteractive apt-get -yq install curl apt-utils sudo nano build-essential \
- && curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - \
- && apt-get install -y nodejs \
- && apt-get clean \
- && rm -rf /var/cache/apt/archives/*
+ && DEBIAN_FRONTEND=noninteractive apt-get -yq install curl apt-utils \
+ && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+ && apt-get install -y nodejs
 
-RUN mkdir -p /srv/src
+COPY package*.json /srv/src/ui
+RUN npm install
+
+COPY . /srv/src/ui
+
 
 ENTRYPOINT /srv/src/ui/entrypoint.sh
-WORKDIR /srv/src/ui/app
-
-## stuff that changes after here
-COPY . /srv/src/
-RUN npm install && npm run build && rm -rf /srv/src/ui/app/node_modules

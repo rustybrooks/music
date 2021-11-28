@@ -3,21 +3,21 @@ version: '2'
 services:
   music-ui:
     build:
-      context: ./src/
-      dockerfile: ui/Dockerfile
+      context: ./src/ui
+      dockerfile: Dockerfile
     image: music-ui:latest
     container_name: music-ui
     volumes:
-      - ./src/:/srv/src
+      - ./src/ui/src:/srv/src/ui/src
     ports:
-        - 3000:3000
+      - 3000:3000
 
-  music-midi:
-    build:
-      context: ./src/
-      dockerfile: audio_to_midi/Dockerfile
-    image: music-midi:latest
-    container_name: music-midi
-    volumes:
-      - ./src/:/srv/src
+#  music-midi:
+#    build:
+#      context: ./src/
+#      dockerfile: audio_to_midi/Dockerfile
+#    image: music-midi:latest
+#    container_name: music-midi
+#    volumes:
+#      - ./src/:/srv/src
 
