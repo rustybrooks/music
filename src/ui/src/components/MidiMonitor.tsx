@@ -1,9 +1,8 @@
-/*
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import MidiInputs from "./MidiInputs"
 
 const MidiMonitor = () => {
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = React.useState([])
 
   const our_callback = (m : any) => {
     messages.push(m)
@@ -37,4 +36,3 @@ const MidiMonitor = () => {
 }
 
 export default MidiMonitor
-*/

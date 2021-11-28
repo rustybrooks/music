@@ -3,8 +3,6 @@ const note_list = {
   flat: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 }
 
-let x = 2;
-
 interface NoteType {
     note: string,
     octave: number,
@@ -28,23 +26,27 @@ function number_to_note(n : number, is_sharp : boolean) {
 }
 
 
-const Note = (n : NoteType | number, is_sharp=true) => {
-  function add(i : number) {
-    return Note(number + i, is_sharp)
+class Note {
+  number = 0;
+  note : NoteType = null
+  is_sharp = true
+
+  add(i : number) {
+    return new Note(this.number + i, this.is_sharp)
   }
 
-  let number : number = null
-  let note : NoteType = null
-
-  if (typeof n == "number") {
-    number = n
-    note = number_to_note(n, is_sharp)
-  } else {
-    number = note_to_number(n)
-    note = n
+  constructor(note: NoteType);
+  constructor(num: number, is_sharp : boolean);
+  constructor(n : any, is_sharp : any = true) {
+    this.is_sharp = is_sharp
+    if (typeof n == "number") {
+      this.number = n
+      this.note = number_to_note(n, is_sharp)
+    } else {
+      this.number = note_to_number(n)
+      this.note = n
+    }
   }
-
-  return Object.freeze({note, number, add})
 }
 
-export default Note
+export { Note, NoteType }

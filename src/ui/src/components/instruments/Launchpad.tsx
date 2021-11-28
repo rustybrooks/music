@@ -1,12 +1,12 @@
-/*
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles'
 
 import MidiMonitor from "../MidiMonitor"
 import MidiInputs from "../MidiInputs"
-import Note from '../../Note'
+import { Note, NoteType } from '../../Note'
+import MidiMessage from "../../MidiMessage"
 
-import * as exercises from '../../exercises/launchpad'
+// import * as exercises from '../../exercises/launchpad'
 
 // function sendMiddleC( midiAccess, portID ) {
 //   var noteOnMessage = [0x90, 60, 0x7f];    // note on, middle C, full velocity
@@ -18,7 +18,7 @@ import * as exercises from '../../exercises/launchpad'
 
 
 const style = () => {
-  let x = {
+  let x : any = {
     outterButton: {
       padding: 10,
       'align-items': 'center',
@@ -38,8 +38,12 @@ const style = () => {
   return x
 }
 
-const Launchpad = ({classes}) => {
-  const exercise = exercises.FindNotes([], [Note(["A", 0])])
+interface LaunchpadProps {
+  classes : any
+}
+
+const Launchpad = ({classes} : LaunchpadProps) => {
+  // const exercise = exercises.FindNotes([], [Note(["A", 0])])
 
   const init_grid = () => {
     let igrid = []
@@ -53,33 +57,33 @@ const Launchpad = ({classes}) => {
     return igrid
   }
 
-  const midi_callback = (m) => {
-    const [x, y] = note_to_grid(m.note)
-    const grid_events = exercise.callback(x, y, m.note, m.command === m.NOTEON)
+  const midi_callback = (m : MidiMessage) => {
+    // const [x, y] = note_to_grid(m.note)
+    // const grid_events = exercise.callback(x, y, m.note, m.command === m.NOTEON)
 
-    let ng = grid.splice(0)
-
-    grid_events.forEach((e) => {
-      if (e[0] === 'set_press') {
-        ng[y][x].pressed = ['press', 'error'].includes(e[1])
-        ng[y][x].error = e[1] === 'error'
-        console.log("pressed", ng[y][x].pressed, 'error', ng[y][x].error)
-      } else {
-        console.log("what", e)
-      }
-    })
-
-    setGrid(ng)
+    // let ng = grid.splice(0)
+    //
+    // grid_events.forEach((e) => {
+    //   if (e[0] === 'set_press') {
+    //     ng[y][x].pressed = ['press', 'error'].includes(e[1])
+    //     ng[y][x].error = e[1] === 'error'
+    //     console.log("pressed", ng[y][x].pressed, 'error', ng[y][x].error)
+    //   } else {
+    //     console.log("what", e)
+    //   }
+    // })
+    //
+    // setGrid(ng)
   }
 
-  const note_to_grid = (note) => {
-    console.log(note)
-    const row = 1 + Math.trunc(note / 16)
-    const col = note % 16
-    return [col, row]
-  }
+  // const note_to_grid = (note : Note) => {
+  //   console.log(note)
+  //   const row = 1 + Math.trunc(note.number / 16)
+  //   const col = note.number % 16
+  //   return [col, row]
+  // }
 
-  let [grid, setGrid] = useState(() => init_grid())
+  let [grid, setGrid] = React.useState(() => init_grid())
 
   return <div>
     <table>
@@ -115,4 +119,3 @@ const Launchpad = ({classes}) => {
 }
 
 export default withStyles(style)(Launchpad)
-*/

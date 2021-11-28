@@ -3,7 +3,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: "development",
-  devtool: "source-map",
+  devtool: 'inline-source-map',
+  // devtool: "source-map",
   entry: ['react-hot-loader/patch', './src/index.tsx'],
   // entry: './src/index.tsx',
 

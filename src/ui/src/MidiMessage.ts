@@ -2,62 +2,62 @@ interface MidiMessageType {
   data: number[],
 };
 
-const MidiMessage = (m : MidiMessageType) => {
-  const NOTEON = 'NoteOn'
-  const NOTEOFF = 'NoteOff'
+const NOTEON = 'NoteOn'
+const NOTEOFF = 'NoteOff'
 
-  let note : any = null;
-  let command : any = null;
-  let channel : any = null;
-  let velocity : any = null;
+class MidiMessage {
 
-  const [b1, b2, b3] = m.data
+  note : any = null;
+  command : any = null;
+  channel : any = null;
+  velocity : any = null;
 
-  const mevent = b1 >> 4
+  constructor(m : MidiMessageType) {
+    const [b1, b2, b3] = m.data
 
-  console.log("mevent", mevent)
-  switch (mevent) {
-    case 0x9:
-      channel = b1 & 0xF
-      note = b2
-      velocity = b3
-      if (velocity > 0) {
-        command = NOTEON
-        note = b2
-      } else {
-        command = NOTEOFF
-      }
-      break
-    case 0x8:
-      channel = b1 & 0xF
-      note = b2
-      velocity = b3
-      command = NOTEOFF
-      break
-    case 0xA:
-      // Polyphonic Key Pressure (Aftertouch)
-      break
-    case 0xB:
-      // Control Change
-      break
-    case 0xC:
-      // Program Change
-      break
-    case 0xD:
-      // Channel Pressure (Aftertouch)
-      break
-    case 0xE:
-      // Pitch Wheel
-      break
-    default:
-      command = mevent  // Should probably just throw exception
+    const mevent = b1 >> 4
+
+    console.log("mevent", mevent)
+    switch (mevent) {
+      case 0x9:
+        this.channel = b1 & 0xF
+        this.note = b2
+        this.velocity = b3
+        if (this.velocity > 0) {
+          this.command = NOTEON
+          this.note = b2
+        } else {
+          this.command = NOTEOFF
+        }
+        break
+      case 0x8:
+        this.channel = b1 & 0xF
+        this.note = b2
+        this.velocity = b3
+        this.command = NOTEOFF
+        break
+      case 0xA:
+        // Polyphonic Key Pressure (Aftertouch)
+        break
+      case 0xB:
+        // Control Change
+        break
+      case 0xC:
+        // Program Change
+        break
+      case 0xD:
+        // Channel Pressure (Aftertouch)
+        break
+      case 0xE:
+        // Pitch Wheel
+        break
+      default:
+        this.command = mevent  // Should probably just throw exception
+    }
+
+    console.log(mevent, b1, this.channel, this.note, this.velocity, this.command)
   }
-
-  console.log({mevent, b1, channel, note, velocity, command})
-
-  return Object.freeze(
-    {channel, command, note, velocity, NOTEON, NOTEOFF}
-  )
 }
+
 export default MidiMessage
 
