@@ -2,9 +2,20 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: './src/index.tsx',
+  mode: "development",
+  devtool: "source-map",
+  entry: ['react-hot-loader/patch', './src/index.tsx'],
+  // entry: './src/index.tsx',
+
   module: {
     rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader"
+        }
+      },
       {
         test: /\.tsx?$/,
         use: 'ts-loader',
@@ -13,7 +24,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.json', '.js'],
   },
   output: {
     filename: 'bundle.js',
@@ -22,10 +33,13 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Hot Module Replacement',
+      filename: "index.html",
+      hash: true,
+      template: "src/index.html",
     }),
   ],
   devServer: {
-    static: './public',
+    // static: './public',
    hot: true,
   },
 };

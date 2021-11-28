@@ -17,4 +17,5 @@ class FirstComponent extends React.Component <{}> {
   }
 }
 
+
 export default hot(module)(FirstComponent);

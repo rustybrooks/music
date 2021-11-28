@@ -3,10 +3,12 @@ const note_list = {
   flat: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 }
 
+let x = 2;
+
 interface NoteType {
     note: string,
     octave: number,
-};
+}
 
 function note_to_number(n : NoteType) {
   const {note, octave} = n
@@ -44,6 +46,5 @@ const Note = (n : NoteType | number, is_sharp=true) => {
 
   return Object.freeze({note, number, add})
 }
-
 
 export default Note
