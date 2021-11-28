@@ -1,4 +1,4 @@
 #!/bin/env bash
 
-npm install
+# npm install
 npm run serve
