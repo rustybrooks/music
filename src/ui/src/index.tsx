@@ -11,7 +11,7 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 // import { withRouter } from 'react-router'
 
-import MidiMessage from "./MidiMessage";
+import MidiMessage from "./lib/MidiMessage";
 
 interface MidiCallback {
   (message: MidiMessage): null

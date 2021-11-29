@@ -3,8 +3,8 @@ import { withStyles, makeStyles } from '@material-ui/core/styles'
 
 import MidiMonitor from "../MidiMonitor"
 import MidiInputs from "../MidiInputs"
-import { Note, NoteType } from '../../Note'
-import MidiMessage from "../../MidiMessage"
+import { Note, NoteType } from '../../lib/Note'
+import MidiMessage from "../../lib/MidiMessage"
 
 // import * as exercises from '../../exercises/launchpad'
 
