@@ -1,14 +1,13 @@
-/*
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles'
 
 import MidiMonitor from "../MidiMonitor"
 import MidiInputs from "../MidiInputs"
-import Note from '../../Note'
+import { Note, NoteType } from '../../lib/Note'
 
-import * as exercises from '../../exercises/guitar'
+// import * as exercises from '../../exercises/guitar'
 
-const tunings = {
+const tunings : {[id: string]: NoteType[]} = {
   guitar: [['E', 0], ['A', 0], ['D', 1], ['G', 1], ['B', 1], ['E', 2]]
 }
 
@@ -19,7 +18,7 @@ const magic = 0.9438
 
 // const style = theme => {
 const style = () => {
-  let x = {
+  let x : any = {
     'fretboard': {
       'display': 'flex',
       'width': '100%',
@@ -89,14 +88,20 @@ const style = () => {
   return x
 }
 
+interface MidiGuitarProps {
+    classes: any,
+    tuning: string,
+    frets: any,
+    handed: any,
+}
 
-const MidiGuitar = ({classes, tuning, frets, handed}) => {
+const MidiGuitar = ({classes, tuning, frets, handed} : MidiGuitarProps) => {
   tuning = (tuning === undefined) ? 'guitar' : tuning
   frets = (frets === undefined) ? 17 : frets
   handed = (handed === undefined) ? 'right' : handed
-  const notes = (tuning in tunings ? tunings[tuning] : tuning).map(n => Note(n)).reverse()
+  const notes = tunings[tuning].map(n => new Note(n)).reverse()
 
-  const exercise = exercises.FindNotes(notes, [Note(["A", 0])])
+  // const exercise = exercises.FindNotes(notes, [Note(["A", 0])])
 
   const midi_callback = (m : any) => {
     if (!fretboard) {
@@ -121,7 +126,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
       }
     } else {
       string = channels.findIndex(m.channel)
-      fret = m.note - tuning[string]
+      fret = m.note - notes[string].number
     }
 
     // console.log(string, fret)
@@ -144,7 +149,7 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
     setFretboard(nf)
   }
 
-  let [fretboard, setFretboard] = useState(() => init_fretboard())
+  let [fretboard, setFretboard] = React.useState(() => init_fretboard())
 
   function init_fretboard() {
     console.log('before init fret')
@@ -195,13 +200,12 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
   }
 
   function rest(left=false) {
-    // commenting to get compiling in tsx
     let w = 89.25
     let x = left ? 100-10.75-w : 10.75
     return <svg key='rest' width={w + "%"} height="100%" x={x+'%'} y="0">
       <foreignObject width="100%" height="100%">
         <div className={classes.fretboard2}>
-          {[...Array(frets).keys()].map(f => fret(left ? frets-f : f+1))}
+          {/*[...Array(frets).keys()].map(f => fret(left ? frets-f : f+1))*/}
         </div>
       </foreignObject>
     </svg>
@@ -233,5 +237,3 @@ const MidiGuitar = ({classes, tuning, frets, handed}) => {
 }
 
 export default withStyles(style)(MidiGuitar)
-
-*/

@@ -3,13 +3,10 @@ const note_list = {
   flat: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 }
 
-interface NoteType {
-    note: string,
-    octave: number,
-}
+type NoteType = [string, number];
 
 function note_to_number(n : NoteType) {
-  const {note, octave} = n
+  const [note, octave] = n
   let i = note_list.sharp.indexOf(note.toUpperCase())
   if (i === -1) {
     i = note_list.flat.indexOf(note.toUpperCase())
@@ -18,11 +15,11 @@ function note_to_number(n : NoteType) {
   return 36 + octave*12 + i
 }
 
-function number_to_note(n : number, is_sharp : boolean) {
-  return {
-    note: note_list[is_sharp ? 'sharp' : 'flat'][n % 12],
-    octave: Math.trunc((n-36) / 12)
-  };
+function number_to_note(n : number, is_sharp : boolean) : NoteType {
+  return [
+    note_list[is_sharp ? 'sharp' : 'flat'][n % 12],
+    Math.trunc((n-36) / 12)
+  ]
 }
 
 
