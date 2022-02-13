@@ -4,39 +4,31 @@
   "description": "",
   "main": "index.tsx",
   "scripts": {
-    "serve": "webpack serve --mode development --port 3000 --host 0.0.0.0",
-    "build": "webpack --mode production"
+    "serve": "webpack serve --mode development --port 3000 --host 0.0.0.0 --config webpack.config.dev.js",
+    "build": "webpack --mode production --config webpack.config.prod.js"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "react": "^17.0.2",
-    "@types/react": "^17.0.2",
-
     "react-dom": "^17.0.2",
-    "@types/react-dom": "^17.0.2",
-
     "react-router": "^6.0.2",
     "react-router-dom": "^6.0.2",
-    "@types/react-router-dom": "^5.3.2",
-
-    "@types/webmidi": "latest",
-
     "react-hot-loader": "latest",
+    "react-context-hook": "latest",
     "sprintf-js": "latest",
     "url-loader": "latest",
-    "react-context-hook": "latest",
     "history": "latest",
     "classnames": "latest",
     "moment": "latest",
-
-    "@material-ui/core": "latest",
-    "@material-ui/icons": "latest",
-    "@types/material-ui": "latest",
     "@tonejs/midi": "latest"
   },
   "devDependencies": {
+    "@types/webmidi": "latest",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
+    "@types/react-router-dom": "^5.3.2",
     "@babel/core": "^7.13.10",
     "@babel/preset-env": "^7.13.10",
     "@babel/preset-react": "^7.12.13",
@@ -48,7 +40,9 @@
     "webpack": "^5.27.0",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "latest",
+    "webpack-merge": "^5.8.0",
     "ts-loader": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "@rustybrooks/eslint-config-prettier": "^1.0.16"
   }
 }

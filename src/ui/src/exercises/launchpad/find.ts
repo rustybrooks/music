@@ -1,12 +1,13 @@
+import { Note } from '../../lib/Note';
 
-export const FindNotes = (tuning, notes, order_matters=false, octave_matters=false) => {
-  let score = 0
-  let hits = []
+export const FindNotes = (tuning: any, notes: any, order_matters = false, octave_matters = false) => {
+  // const score = 0;
+  // const hits = [];
 
-  function callback(x, y, note, is_press) {
+  function callback(x: number, y: number, note: Note, is_press: boolean) {
     // console.log(string, fret, is_press)
     if (!is_press) {
-      return [['set_press', 'blank']]
+      return [['set_press', 'blank']];
     }
 
     // const note = tuning[string].add(fret)
@@ -30,16 +31,12 @@ export const FindNotes = (tuning, notes, order_matters=false, octave_matters=fal
     //   return [['set_press', 'error']]
     // }
 
-    return [['set_press', 'press']]
+    return [['set_press', 'press']];
   }
 
-  function display() {
-  }
+  // function display() {}
 
-  return Object.freeze(
-    {
-      callback,
-    }
-  )
-}
-
+  return Object.freeze({
+    callback,
+  });
+};
