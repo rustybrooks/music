@@ -53,28 +53,8 @@ export function AppBar() {
         <div style={{ display: 'flex' }}>
           <div style={{ display: 'flex', flexGrow: 2 }}>
             <div className="appbar-menu">
-              <a className="appbar-button" tabIndex={0} href="/wwm">
-                Play
-              </a>
-            </div>
-            <div className="appbar-menu">
-              <a className="appbar-button" tabIndex={0} href="/wwm/active">
-                Active
-              </a>
-            </div>
-            <div className="appbar-menu">
-              <a className="appbar-button" tabIndex={0} href="/wwm/archived">
-                Archive
-              </a>
-            </div>
-            <div className="appbar-menu">
-              <a className="appbar-button" tabIndex={0} href="/wwm/leagues">
-                Leagues
-              </a>
-            </div>
-            <div className="appbar-menu">
-              <a className="appbar-button" tabIndex={0} href="/wwm/bots">
-                Bots
+              <a className="appbar-button" tabIndex={0} href="/">
+                Home
               </a>
             </div>
           </div>
