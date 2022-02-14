@@ -57,6 +57,11 @@ export function AppBar() {
                 Home
               </a>
             </div>
+            <div className="appbar-menu">
+              <a className="appbar-button" tabIndex={0} href="/torso">
+                Torso
+              </a>
+            </div>
           </div>
           {/* <div className="appbar-login"> */}
           {/*  {user ? ( */}

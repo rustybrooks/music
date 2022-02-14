@@ -9,6 +9,7 @@ import { AppBar } from './components/AppBar';
 import { Home } from './components/instruments/Home';
 
 import './index.css';
+import { Torso } from './components/sequencers/Torso';
 
 interface MidiCallback {
   (message: MidiMessage): null;
@@ -75,9 +76,12 @@ function AppX() {
   return (
     <BrowserRouter>
       <AppBar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
+      <div style={{ width: '100%', padding: '1rem' }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/torso" element={<Torso />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   );
 }
