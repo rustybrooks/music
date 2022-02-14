@@ -8,7 +8,10 @@ import './Torso.css';
 function Knob({ k }: { k: any }) {
   return (
     <div style={{ textAlign: 'center', padding: '.5rem' }}>
-      <img src="/widgets/Knob.svg" alt="knob" style={{ transform: 'rotate(90deg)' }} />
+      <svg width="20mm" height="20mm" viewBox="0 0 20 20" version="1.1" transform="rotate(45)">
+        <circle fill="#ff0000" fillRule="evenodd" stroke="#a10000" strokeWidth=".5" strokeOpacity="1" cx="10" cy="10" r="9" />
+        <circle fill="#000000" cx="10" cy="4" r="2" />
+      </svg>{' '}
       <div>{k.label}</div>
       <div>{k.alt_label}&nbsp;</div>
     </div>
