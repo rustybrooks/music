@@ -1,9 +1,7 @@
-import { useCallback, useEffect } from 'react';
-import { useGetAndSet } from 'react-context-hook';
-
 import * as constants from './TorsoConstants';
 
 import './Torso.css';
+import { MidiConfig } from '../MidiConfig';
 
 function Knob({ k }: { k: any }) {
   return (
@@ -25,7 +23,7 @@ function Button({ b }: { b: any }) {
   return (
     <div style={{ textAlign: 'center', verticalAlign: 'top', fontSize: '1rem' }}>
       <div style={{ display: 'flex', textAlign: 'left' }}>
-        <div style={{ width: '5rem', height: '5rem', backgroundColor: '#66a' }} />
+        <div style={{ width: '5rem', height: '5rem', backgroundColor: '#999' }} />
         <div
           style={{
             transform: 'rotate(-90deg) translate(0, 1.8rem)',
@@ -48,7 +46,8 @@ function Button({ b }: { b: any }) {
 
 export function Torso() {
   return (
-    <div style={{ display: 'inline-block' }}>
+    <div style={{ display: 'inline-block', background: '#ddd', position: 'relative' }}>
+      <MidiConfig />
       <table style={{ width: '100%' }}>
         <tbody>
           <tr>
@@ -68,7 +67,7 @@ export function Torso() {
         </tbody>
       </table>
 
-      <table style={{ width: '100%' }}>
+      <table style={{ width: '100%', paddingLeft: '1rem' }}>
         <tbody>
           <tr>
             {constants.buttons[0].map((b, i) => (
