@@ -1,7 +1,6 @@
 import './MidiConfig.css';
 import { useState } from 'react';
-import { useGetAndSet, useStoreValue } from 'react-context-hook';
-import { CallbackMap, MidiCallback, MidiInputs } from '../types';
+import { useStoreValue } from 'react-context-hook';
 
 export interface Settings {
   midiInputs: number[];
@@ -20,12 +19,10 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
   const midiOutputs = useStoreValue('midiOutputs');
 
   const onToggle = (val: boolean) => {
-    console.log('click');
     setOpen(val);
   };
 
   const toggleInput = (port_id: number) => {
-    console.log('in togs', selectedIns);
     if (selectedIns.includes(port_id)) {
       setSelectedIns(selectedIns.filter(i => i.id !== port_id));
     } else {
@@ -37,7 +34,17 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
     });
   };
 
-  const toggleOutput = () => {};
+  const toggleOutput = (port_id: number) => {
+    if (selectedOuts.includes(port_id)) {
+      setSelectedOuts(selectedOuts.filter(i => i.id !== port_id));
+    } else {
+      setSelectedOuts([...selectedOuts, port_id]);
+    }
+    settingsCallback({
+      midiInputs: selectedIns,
+      midiOutputs: selectedOuts,
+    });
+  };
 
   return (
     <div className="midi-config">
@@ -87,7 +94,7 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
               // console.log('out', i);
 
               return (
-                <tr key={i.id} onClick={() => toggleOutput()} className="midi-config-select">
+                <tr key={i.id} onClick={() => toggleOutput(i.id)} className="midi-config-select">
                   <td>{i.name}</td>
                   <td>{i.manufacturer}</td>
                   <td>{i.connection}</td>

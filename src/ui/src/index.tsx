@@ -45,8 +45,6 @@ function AppX() {
     }
   };
 
-  console.log('ins', midiInputs);
-
   const onChangeCallback = useCallback(
     (access, e: any) => {
       // console.log('onstatechange', e);
@@ -91,9 +89,7 @@ function AppX() {
   };
 
   const init = () => {
-    console.log('init pre');
     navigator.requestMIDIAccess().then(accessCallback);
-    console.log('init post');
   };
 
   // const listen = (midi_id: number, listen_id: number, cb: MidiCallback) => {

@@ -3,5 +3,6 @@
   "rules": {
     "no-bitwise": "off",
     "no-console": "off",
+    "max-classes-per-file": "off",
   }
 }
