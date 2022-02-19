@@ -26,6 +26,10 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
 
   const toggleInput = () => {
     console.log('in togs');
+    settingsCallback({
+      midiInputs: [],
+      midiOutputs: [],
+    });
   };
 
   const toggleOutput = () => {};

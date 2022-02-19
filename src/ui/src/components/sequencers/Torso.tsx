@@ -2,7 +2,7 @@ import * as constants from './TorsoConstants';
 
 import './Torso.css';
 import { MidiConfig, Settings } from '../MidiConfig';
-import { CallbackMap, MidiCallback, MidiMessage } from '../../types';
+import { CallbackMap, MidiCallback, MidiInputs, MidiMessage, MidiOutputs } from '../../types';
 import { useGetAndSet } from 'react-context-hook';
 
 function Knob({ k }: { k: any }) {
@@ -48,12 +48,23 @@ function Button({ b }: { b: any }) {
 
 export function Torso() {
   const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
+  const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
+  const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
+  const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   // const midiCallback: MidiCallback = (message: MidiMessage): void => {
   //   console.log(message);
   // };
 
+  function sendMiddleC() {
+    const noteOnMessage = [0x90, 60, 0x7f]; // note on middle C, full velocity
+    const output = midiAccess.outputs.get(Object.keys(midiOutputs)[0]);
+    output.send(noteOnMessage); // omitting the timestamp means send immediately.
+    output.send([0x80, 60, 0x40], window.performance.now() + 1000.0); // timestamp = now + 1000ms.
+  }
+
   const settingsCallback = (settings: Settings) => {
     console.log(settings);
+    sendMiddleC();
   };
 
   return (

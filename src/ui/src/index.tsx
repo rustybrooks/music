@@ -11,15 +11,26 @@ import './index.css';
 import { Torso } from './components/sequencers/Torso';
 import { CallbackMap, MidiInputs, MidiMessage, MidiOutputs } from './types';
 
-const initialValue = {
+interface InitialValue {
+  midiCallbackMap: CallbackMap;
+  midiInputs: MidiInputs;
+  midiOutputs: MidiOutputs;
+  midiAccess: WebMidi.MIDIAccess;
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const initialValue: InitialValue = {
   midiCallbackMap: {},
   midiInputs: {},
   midiOutputs: {},
+  midiAccess: null,
 };
 
 function AppX() {
   const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
   const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
+  const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [callbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
 
   const callback = (m: any) => {
@@ -69,6 +80,7 @@ function AppX() {
       thesemidiOutputs[output.id] = output;
     }
 
+    setMidiAccess(access);
     setMidiInputs(thesemidiInputs);
     setMidiOutputs(thesemidiOutputs);
     access.onstatechange = onChangeCallback;
