@@ -2,10 +2,10 @@ const NOTEON = 'NoteOn';
 const NOTEOFF = 'NoteOff';
 
 export class MidiMessage {
-  note: any = null;
-  command: any = null;
-  channel: any = null;
-  velocity: any = null;
+  note: number = null;
+  command: string = null;
+  channel: number = null;
+  velocity: number = null;
 
   constructor(m: MidiMessageType) {
     const [b1, b2, b3] = m.data;
@@ -48,10 +48,9 @@ export class MidiMessage {
         // Pitch Wheel
         break;
       default:
-        this.command = mevent; // Should probably just throw exception
+        throw Error(`Unknown midi event: message=${m} event=${mevent}`);
+      // this.command = mevent; // Should probably just throw exception
     }
-
-    console.log(mevent, b1, this.channel, this.note, this.velocity, this.command);
   }
 }
 
@@ -60,17 +59,47 @@ export interface MidiCallback {
 }
 
 export interface MidiInputs {
-  [id: number]: any;
+  [id: string]: {
+    connection: string;
+    id: string;
+    manufacturer: string;
+    name: string;
+    onmidimessage: any;
+    onstatechange: any;
+    state: string;
+    type: string;
+    version: string;
+  };
 }
 
 export interface MidiOutputs {
-  [id: number]: any;
+  [id: string]: {
+    connection: string;
+    id: string;
+    manufacturer: string;
+    name: string;
+    onmidimessage: any;
+    onstatechange: any;
+    state: string;
+    type: string;
+    version: string;
+  };
 }
 
 export interface CallbackMap {
-  [id: number]: { [id: number]: MidiCallback };
+  [id: string]: { [id: number]: MidiCallback };
 }
 
 export interface MidiMessageType {
   data: number[];
 }
+
+// connection: "open"
+// id: "349671162"
+// manufacturer: ""
+// name: "echo server"
+// onmidimessage: (m) => {…}
+// onstatechange: null
+// state: "connected"
+// type: "input"
+// version: ""

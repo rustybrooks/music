@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { withStore, useGetAndSet } from 'react-context-hook';
 
 import { render } from 'react-dom';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { AppBar } from './components/AppBar';
 import { Home } from './components/instruments/Home';
 
@@ -18,8 +18,8 @@ const initialValue = {
 };
 
 function AppX() {
-  const [, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
-  const [, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
+  const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
+  const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
   const [callbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
 
   const callback = (m: any) => {
@@ -32,7 +32,28 @@ function AppX() {
     });
   };
 
-  const access_callback = (access: any) => {
+  console.log('ins', midiInputs);
+
+  const onChangeCallback = useCallback(
+    (e: any) => {
+      // console.log('onstatechange', e);
+      console.log(e.port.id, e.port.name, e.port.state, e.port.type, e.port.connection);
+      if (e.port.type === 'input') {
+        if (e.port.state === 'connected') {
+          setMidiInputs({ ...midiInputs, [e.port.id]: e.port });
+        } else {
+          setMidiInputs(Object.fromEntries(Object.entries(midiInputs).filter(entry => entry[0] !== e.port.id)));
+        }
+      } else if (e.port.state === 'connected') {
+        setMidiOutputs({ ...midiOutputs, [e.port.id]: e.port });
+      } else {
+        setMidiOutputs(Object.fromEntries(Object.entries(midiOutputs).filter(entry => entry[0] !== e.port.id)));
+      }
+    },
+    [midiInputs, midiOutputs],
+  );
+
+  const accessCallback = (access: any) => {
     const thesemidiInputs: MidiInputs = {};
     const thesemidiOutputs: MidiOutputs = {};
 
@@ -48,18 +69,14 @@ function AppX() {
       thesemidiOutputs[output.id] = output;
     }
 
-    access.onstatechange = (e: any) => {
-      console.log('onstatechange', e);
-      setMidiInputs({ ...thesemidiInputs, [e.port.id]: e.port });
-      setMidiOutputs({ ...thesemidiOutputs, [e.port.id]: e.port });
-    };
-
     setMidiInputs(thesemidiInputs);
+    setMidiOutputs(thesemidiOutputs);
+    access.onstatechange = onChangeCallback;
   };
 
   const init = () => {
     console.log('init pre');
-    navigator.requestMIDIAccess().then(access_callback);
+    navigator.requestMIDIAccess().then(accessCallback);
     console.log('init post');
   };
 

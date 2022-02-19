@@ -1,8 +1,9 @@
 import * as constants from './TorsoConstants';
 
 import './Torso.css';
-import { MidiConfig } from '../MidiConfig';
-import { MidiCallback, MidiMessage } from '../../types';
+import { MidiConfig, Settings } from '../MidiConfig';
+import { CallbackMap, MidiCallback, MidiMessage } from '../../types';
+import { useGetAndSet } from 'react-context-hook';
 
 function Knob({ k }: { k: any }) {
   return (
@@ -46,13 +47,18 @@ function Button({ b }: { b: any }) {
 }
 
 export function Torso() {
+  const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
   // const midiCallback: MidiCallback = (message: MidiMessage): void => {
   //   console.log(message);
   // };
 
+  const settingsCallback = (settings: Settings) => {
+    console.log(settings);
+  };
+
   return (
     <div style={{ display: 'inline-block', background: '#ddd', position: 'relative' }}>
-      <MidiConfig inputCallback={null} />
+      <MidiConfig settingsCallback={settingsCallback} />
       <table style={{ width: '100%' }}>
         <tbody>
           <tr>

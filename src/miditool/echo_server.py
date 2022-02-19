@@ -60,8 +60,8 @@ if __name__ == "__main__":
         midiout, port = open_midioutput(
             port=None,
             use_virtual=True,
-            client_name="echo server",
-            port_name="echo server",
+            client_name="echo_server",
+            port_name="echo_server",
         )
 
     midiin = rtmidi.MidiIn()

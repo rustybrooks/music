@@ -1,6 +1,7 @@
 {
   "extends": ["@rustybrooks/eslint-config-prettier"],
   "rules": {
-    "no-bitwise": "off"
+    "no-bitwise": "off",
+    "no-console": "off",
   }
 }

@@ -1,13 +1,23 @@
 import './MidiConfig.css';
 import { useState } from 'react';
 import { useGetAndSet, useStoreValue } from 'react-context-hook';
-import { CallbackMap, MidiCallback } from '../types';
+import { CallbackMap, MidiCallback, MidiInputs } from '../types';
 
-export function MidiConfig({ inputCallback }: { inputCallback: MidiCallback }) {
+export interface Settings {
+  midiInputs: number[];
+  midiOutputs: number[];
+}
+
+type SettingsCallback = {
+  (settings: Settings): void;
+};
+
+export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCallback }) {
   const [open, setOpen] = useState(false);
+  const [selectedIns, setSelectedIns] = useState([]);
+  const [selectedOuts, setSelectedOuts] = useState([]);
   const midiInputs = useStoreValue('midiInputs');
-  const midiOutputs = useStoreValue('midiInputs');
-  const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
+  const midiOutputs = useStoreValue('midiOutputs');
 
   const onToggle = (val: boolean) => {
     console.log('click');
@@ -42,6 +52,7 @@ export function MidiConfig({ inputCallback }: { inputCallback: MidiCallback }) {
               //   const tmp2 = { ...tmp, [i.id]: inputCallback };
               //   setMidiCallbackMap({ ...midiCallbackMap, [i.id]: tmp2 });
               // }
+              // console.log('in', i);
 
               return (
                 <tr key={i.id} onClick={() => toggleInput()} className="midi-config-select">
@@ -64,6 +75,7 @@ export function MidiConfig({ inputCallback }: { inputCallback: MidiCallback }) {
             </tr>
             {Object.values(midiOutputs).map((i: any) => {
               // midiCallbacks.listen(i.id, callback, callback);
+              // console.log('out', i);
 
               return (
                 <tr key={i.id} onClick={() => toggleOutput()} className="midi-config-select">
