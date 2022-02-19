@@ -2,6 +2,7 @@ import * as constants from './TorsoConstants';
 
 import './Torso.css';
 import { MidiConfig } from '../MidiConfig';
+import { MidiCallback, MidiMessage } from '../../types';
 
 function Knob({ k }: { k: any }) {
   return (
@@ -45,9 +46,13 @@ function Button({ b }: { b: any }) {
 }
 
 export function Torso() {
+  // const midiCallback: MidiCallback = (message: MidiMessage): void => {
+  //   console.log(message);
+  // };
+
   return (
     <div style={{ display: 'inline-block', background: '#ddd', position: 'relative' }}>
-      <MidiConfig />
+      <MidiConfig inputCallback={null} />
       <table style={{ width: '100%' }}>
         <tbody>
           <tr>

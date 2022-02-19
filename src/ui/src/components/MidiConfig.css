@@ -8,17 +8,25 @@ div.midi-config {
     cursor: pointer
 }
 
-.midi-config-dropdown {
+img.midi-config-dropdown {
     position: relative;
     display: inline-block;
 }
 
-.midi-config-dropdown-content {
+div.midi-config-dropdown-content {
     position: absolute;
     background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
     padding: 12px 16px;
     z-index: 1;
+    width: 500px;
+    cursor: default;
 }
 
+tr.midi-config-select {
+    cursor: pointer;
+}
+
+th.midi-config-header {
+    background: #aaa;
+}

@@ -1,3 +1,6 @@
 {
-  "extends": ["@rustybrooks/eslint-config-prettier"]
+  "extends": ["@rustybrooks/eslint-config-prettier"],
+  "rules": {
+    "no-bitwise": "off"
+  }
 }
