@@ -35,18 +35,20 @@ function AppX() {
 
   const callback = (m: any) => {
     const message = new MidiMessage(m);
-    console.log(m);
     const midi_id = m.target.id;
-    console.log('midi cb', midi_id, callbackMap[midi_id]);
-    Object.values(callbackMap[midi_id]).forEach(cb => {
-      cb(message);
-    });
+    if (Object.keys(callbackMap[midi_id]).length) {
+      console.log(m);
+      console.log('midi cb', midi_id, callbackMap[midi_id]);
+      Object.values(callbackMap[midi_id]).forEach(cb => {
+        cb(message);
+      });
+    }
   };
 
   console.log('ins', midiInputs);
 
   const onChangeCallback = useCallback(
-    (e: any) => {
+    (access, e: any) => {
       // console.log('onstatechange', e);
       console.log(e.port.id, e.port.name, e.port.state, e.port.type, e.port.connection);
       if (e.port.type === 'input') {
@@ -56,6 +58,7 @@ function AppX() {
           setMidiInputs(Object.fromEntries(Object.entries(midiInputs).filter(entry => entry[0] !== e.port.id)));
         }
       } else if (e.port.state === 'connected') {
+        e.port.object = access.outputs.get(e.port.id);
         setMidiOutputs({ ...midiOutputs, [e.port.id]: e.port });
       } else {
         setMidiOutputs(Object.fromEntries(Object.entries(midiOutputs).filter(entry => entry[0] !== e.port.id)));
@@ -76,6 +79,7 @@ function AppX() {
 
     for (const output of access.outputs.values()) {
       output.onmidimessage = callback;
+      output.object = access.outputs.get(output.id);
       callbackMap[output.id] = {};
       thesemidiOutputs[output.id] = output;
     }
@@ -83,7 +87,7 @@ function AppX() {
     setMidiAccess(access);
     setMidiInputs(thesemidiInputs);
     setMidiOutputs(thesemidiOutputs);
-    access.onstatechange = onChangeCallback;
+    access.onstatechange = (e: any) => onChangeCallback(access, e);
   };
 
   const init = () => {

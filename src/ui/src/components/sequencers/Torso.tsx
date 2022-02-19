@@ -1,14 +1,15 @@
-import * as constants from './TorsoConstants';
-
-import './Torso.css';
-import { MidiConfig, Settings } from '../MidiConfig';
-import { CallbackMap, MidiCallback, MidiInputs, MidiMessage, MidiOutputs } from '../../types';
 import { useGetAndSet } from 'react-context-hook';
+
+import * as constants from './TorsoConstants';
+import { MidiConfig, Settings } from '../MidiConfig';
+import { CallbackMap, MidiInputs, MidiOutputs } from '../../types';
+import './Torso.css';
+import { useState } from 'react';
 
 function Knob({ k }: { k: any }) {
   return (
     <div style={{ textAlign: 'center', padding: '.4rem' }}>
-      <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" transform="rotate(45)">
+      <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" transform="rotate(0)">
         <circle fill="#aa6666" fillRule="evenodd" stroke="#a10000" strokeWidth=".5" strokeOpacity="1" cx="10" cy="10" r="9" />
         <circle fill="#000000" cx="10" cy="4" r="2" />
       </svg>{' '}
@@ -52,20 +53,22 @@ export function Torso() {
   const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
   const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
   const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
+  const [outputs, setOutputs] = useState([]);
   // const midiCallback: MidiCallback = (message: MidiMessage): void => {
   //   console.log(message);
   // };
 
-  function sendMiddleC() {
-    const noteOnMessage = [0x90, 60, 0x7f]; // note on middle C, full velocity
-    const output = midiAccess.outputs.get(Object.keys(midiOutputs)[0]);
-    output.send(noteOnMessage); // omitting the timestamp means send immediately.
-    output.send([0x80, 60, 0x40], window.performance.now() + 1000.0); // timestamp = now + 1000ms.
-  }
+  // function sendMiddleC() {
+  //   console.log('!!!', midiOutputs);
+  //   const noteOnMessage = [0x90, 60, 0x7f]; // note on middle C, full velocity
+  //   const output = Object.values(midiOutputs)[0].object;
+  //   output.send(noteOnMessage); // omitting the timestamp means send immediately.
+  //   output.send([0x80, 60, 0x40], window.performance.now() + 1000.0); // timestamp = now + 1000ms.
+  // }
 
   const settingsCallback = (settings: Settings) => {
-    console.log(settings);
-    sendMiddleC();
+    console.log(settings, midiOutputs);
+    setOutputs(settings.midiOutputs);
   };
 
   return (

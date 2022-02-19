@@ -24,11 +24,16 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
     setOpen(val);
   };
 
-  const toggleInput = () => {
-    console.log('in togs');
+  const toggleInput = (port_id: number) => {
+    console.log('in togs', selectedIns);
+    if (selectedIns.includes(port_id)) {
+      setSelectedIns(selectedIns.filter(i => i.id !== port_id));
+    } else {
+      setSelectedIns([...selectedIns, port_id]);
+    }
     settingsCallback({
-      midiInputs: [],
-      midiOutputs: [],
+      midiInputs: selectedIns,
+      midiOutputs: selectedOuts,
     });
   };
 
@@ -59,7 +64,7 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
               // console.log('in', i);
 
               return (
-                <tr key={i.id} onClick={() => toggleInput()} className="midi-config-select">
+                <tr key={i.id} onClick={() => toggleInput(i.id)} className="midi-config-select">
                   <td>{i.name}</td>
                   <td>{i.manufacturer}</td>
                   <td>{i.connection}</td>

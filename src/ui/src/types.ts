@@ -83,11 +83,12 @@ export interface MidiOutputs {
     state: string;
     type: string;
     version: string;
+    object: WebMidi.MIDIOutput;
   };
 }
 
 export interface CallbackMap {
-  [id: string]: { [id: number]: MidiCallback };
+  [id: string]: { [id: string]: MidiCallback };
 }
 
 export interface MidiMessageType {
