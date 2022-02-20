@@ -4,7 +4,9 @@ import * as constants from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
 import { CallbackMap, MidiInputs, MidiOutputs } from '../../types';
 import './Torso.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
+import { note_to_number, NoteType, number_to_note } from '../../lib/Note';
 
 function Knob({ k }: { k: any }) {
   return (
@@ -49,11 +51,37 @@ function Button({ b }: { b: any }) {
 }
 
 export function Torso() {
+  let sequencer: TorsoSequencer = null;
   const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
   const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
   const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
   const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [outputs, setOutputs] = useState([]);
+
+  useEffect(() => {
+    sequencer = new TorsoSequencer();
+    const slice = new TorsoTrackSlice({
+      notes: [
+        ['C', 4],
+        ['E', 4],
+        ['G', 4],
+        ['B', 4],
+      ].map((n: NoteType) => note_to_number(n)),
+      pulses: 16,
+      steps: 16,
+    });
+    const track = new TorsoTrack({
+      output: null,
+      slices: [slice],
+      repeats: 2,
+      sustain: 1,
+      style: 1,
+      voicing: 3,
+    });
+    sequencer.addTrack('1', track);
+    sequencer.run();
+  }, []);
+
   // const midiCallback: MidiCallback = (message: MidiMessage): void => {
   //   console.log(message);
   // };
@@ -69,6 +97,7 @@ export function Torso() {
   const settingsCallback = (settings: Settings) => {
     console.log(settings, midiOutputs);
     setOutputs(settings.midiOutputs);
+    sequencer.output = settings.midiOutputs.length ? midiOutputs[settings.midiOutputs[0]] : null;
   };
 
   return (

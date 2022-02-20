@@ -3,9 +3,9 @@ const note_list = {
   flat: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
 };
 
-type NoteType = [string, number];
+export type NoteType = [string, number];
 
-function note_to_number(n: NoteType) {
+export function note_to_number(n: NoteType) {
   const [note, octave] = n;
   let i = note_list.sharp.indexOf(note.toUpperCase());
   if (i === -1) {
@@ -15,11 +15,11 @@ function note_to_number(n: NoteType) {
   return 36 + octave * 12 + i;
 }
 
-function number_to_note(n: number, is_sharp: boolean): NoteType {
+export function number_to_note(n: number, is_sharp = false): NoteType {
   return [note_list[is_sharp ? 'sharp' : 'flat'][n % 12], Math.trunc((n - 36) / 12)];
 }
 
-class Note {
+export class Note {
   number = 0;
   note: NoteType = null;
   is_sharp = true;
@@ -41,5 +41,3 @@ class Note {
     }
   }
 }
-
-export { Note, NoteType };

@@ -18,7 +18,7 @@ class SequencerEvent {
   }
 }
 
-class TrackSlice {
+export class TorsoTrackSlice {
   steps: number;
   pulses: number;
   notes: number[];
@@ -26,11 +26,20 @@ class TrackSlice {
   manual_steps: number[];
   sequence: number[] = [];
 
-  constructor(steps = 16, pulses = 1, notes: number[] = [], rotate = 0, manual_steps: number[] = []) {
-    this.steps = steps;
-    this.pulses = pulses;
-    this.notes = notes;
-    this.rotate = rotate;
+  constructor({
+    steps = 16,
+    pulses = 1,
+    notes = [],
+    rotate = 0,
+    manual_steps = [],
+  }: {
+    steps?: number;
+    pulses?: number;
+    notes?: number[];
+    rotate?: number;
+    manual_steps?: number[];
+  }) {
+    Object.assign(this, { steps, pulses, notes, rotate });
     this.manual_steps = [...manual_steps, ...[...Array(MAX_STEPS - manual_steps.length)].map(() => 0)];
 
     this.generate();
@@ -84,10 +93,10 @@ class TrackSlice {
   }
 }
 
-class Track {
+export class TorsoTrack {
   output: MidiOutput;
   channel: number;
-  slices: TrackSlice[];
+  slices: TorsoTrackSlice[];
   pitch: number;
   harmony: number;
   accent: number;
@@ -117,7 +126,7 @@ class Track {
   sequenceStart: number = null;
   beat: number = null;
   step = 1;
-  slice: TrackSlice = null;
+  slice: TorsoTrackSlice = null;
   voiced_notes: number[];
 
   constructor({
@@ -147,7 +156,7 @@ class Track {
   }: {
     output: MidiOutput;
     channel?: number;
-    slices?: TrackSlice[];
+    slices?: TorsoTrackSlice[];
     pitch?: number;
     harmony?: number;
     accent?: number;
@@ -192,13 +201,16 @@ class Track {
     });
 
     this.scale_type = scale;
-    this.slices = slices || [new TrackSlice()];
+    this.slices = slices || [new TorsoTrackSlice({})];
     this.accent_curve = accentCurves[accent_curve];
     this.style = styles[style];
     this.phrase = phrases[phrase];
+
+    this.setSlice(0);
+    this.setScale(this.scale_type);
   }
 
-  addSlice(slice: TrackSlice) {
+  addSlice(slice: TorsoTrackSlice) {
     this.slices.push(slice);
     if (this.slice === null) {
       this.setSlice(0);
@@ -447,7 +459,7 @@ class Track {
   }
 }
 
-export class Torso {
+export class TorsoSequencer {
   output: MidiOutput;
   interval: number;
   lookahead: number;
@@ -455,22 +467,18 @@ export class Torso {
   step = 0;
 
   start_time: number = null;
-  tracks: { [id: string]: Track } = {};
+  tracks: { [id: string]: TorsoTrack } = {};
   pending: SequencerEvent[] = [];
   last_lookahead: number = null;
   stopped = false;
   finished = false;
   paused = false;
 
-  constructor(output: MidiOutput, interval = 3, lookahead = 10, bpm = 200) {
+  constructor(output: MidiOutput = null, interval = 3, lookahead = 10, bpm = 200) {
     this.output = output;
     this.interval = interval;
     this.lookahead = lookahead;
     this.bpm = bpm;
-
-    // this.stopped = threading.Event();
-    // this.finished = threading.Event();
-    // this.paused = threading.Event();
   }
 
   setBPM(value: number) {
@@ -480,14 +488,14 @@ export class Torso {
     this.bpm = value;
   }
 
-  addTrack(track_name: string, track: Track) {
+  addTrack(track_name: string, track: TorsoTrack) {
     this.tracks[track_name] = track;
     track.setBPM(this.bpm);
   }
 
   getTrack(track_name: string, create = true) {
     if (create && !(track_name in this.tracks)) {
-      this.addTrack(track_name, new Track({ output: this.output }));
+      this.addTrack(track_name, new TorsoTrack({ output: this.output }));
     }
 
     return this.tracks[track_name];
@@ -574,7 +582,10 @@ export class Torso {
       if (due.length) {
         for (let i = 0; i < due.length; i += 1) {
           const evt = Heap.heappop(due);
-          this.output.object.send(evt.message, evt.tick);
+          console.log('send', evt);
+          if (this.output) {
+            this.output.object.send(evt.message, evt.tick);
+          }
         }
       }
 
