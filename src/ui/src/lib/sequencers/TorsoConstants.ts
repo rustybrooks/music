@@ -1,3 +1,6 @@
+export const NOTE_ON = 0x90;
+export const NOTE_OFF = 0x80;
+
 export const divisions = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
 export const accentCurves = [
   [70, 20, 70, 20, 80, 90, 20, 60, 20, 60, 20, 60, 20, 90, 80, 20],
@@ -12,7 +15,7 @@ export const accentCurves = [
   [100, 86, 74, 62, 50, 36, 24, 12, 100, 86, 74, 62, 50, 36, 24, 12],
   [0, 25, 50, 75, 100, 75, 50, 25, 0, 25, 50, 75, 100, 75, 50, 25],
   [100, 75, 50, 25, 0, 25, 50, 75, 100, 75, 50, 25, 0, 25, 50, 75],
-].map(c => c.map(x => [(128 * x) / 100]));
+].map(c => c.map(x => (128 * x) / 100));
 export const scales = ['chromatic', 'major', 'harmonic_minor', 'melodic_minor', 'hexatonic', 'augmented', 'pentatonic_minor'];
 export const styles = [
   'chord',

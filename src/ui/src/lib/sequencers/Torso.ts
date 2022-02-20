@@ -1,11 +1,18 @@
 import { Heap } from 'heap-js';
+import { accentCurves, NOTE_OFF, NOTE_ON, phrases, scales, styles } from './TorsoConstants';
+import { getScaleNumbers } from '../Scales';
 // import { MidiMessage } from '../../types';
 
 const MAX_STEPS = 64;
 
 class SequencerEvent {
   tick = 0;
-  message: any;
+  message: number[];
+
+  constructor(tick: number, message: number[]) {
+    this.tick = tick;
+    this.message = message;
+  }
 }
 
 class TrackSlice {
@@ -75,16 +82,360 @@ class TrackSlice {
 }
 
 class Track {
+  channel: number;
+  slices: TrackSlice[];
+  pitch: number;
+  harmony: number;
+  accent: number;
+  accent_curve: number[];
+  sustain: number;
+  division: number;
+  velocity: number;
+  timing: number;
+  delay: number;
+  repeats: number;
+  repeat_offset: number;
+  repeat_time: number;
+  repeat_pace: number;
+  voicing: number;
+  style: string;
+  melody: number;
+  phrase: number[];
+  root: number;
+  muted: boolean;
+
+  slice_index = 0;
+  slice_step = 0;
   bpm: number;
-  muted = false;
-  sequenceStart: Date = null;
+  scale_type: string | number;
+  scale_notes: number[];
+  track_name: string;
+  sequenceStart: number = null;
+  beat: number = null;
+  step = 1;
+  slice: TrackSlice = null;
+  voiced_notes: number[];
+
+  constructor({
+    channel = 0,
+    slices = null,
+    pitch = 0, // pitch shift to apply to all notes, integer
+    harmony = 0, // transpose notes defined in pitch up one at a time?
+    accent = 0.5, // 0-1 the percent of accent curve to apply
+    accent_curve = 0, // select from predefined accent curves
+    sustain = 0.15, // Note length, in increments of step, i.e. 0.5 = half step
+    division = 4, // how many pieces to divide a beat into
+    velocity = 64, // base velocity - accent gets added to this
+    timing = 0.5, // swing timing, 0.5=even, less means every other beat is early, more means late
+    delay = 0, // delay pattern in relation to other patterns, +ve means later, in units of beat
+    repeats = 0, // number of repeats to add, integer, will be is divisions of this.time
+    repeat_offset = 0, // this delays the repeats, in units of 1 beat
+    repeat_time = 1, // this is the same as divsion, but for repeats, minimum is 1
+    repeat_pace = null, // supposed to accelerate or decelerate repeats - not implemented
+    voicing = 0, // adds notes an octave above
+    style = 0, // integer, picks
+    melody = 0, // "depth" LFO for phrase (speed?)
+    phrase = 0, // integer, picks phrase from a list
+    scale = 0, // integer, picks scale from a list for phrase to operate on (default = chromatic)
+    root = 0, // which note of the scale to set as the root
+    muted = false,
+  }: {
+    channel?: number;
+    slices?: TrackSlice[];
+    pitch?: number;
+    harmony?: number;
+    accent?: number;
+    accent_curve?: number;
+    sustain?: number;
+    division?: number;
+    velocity?: number;
+    timing?: number;
+    delay?: number;
+    repeats?: number;
+    repeat_offset?: number;
+    repeat_time?: number;
+    repeat_pace?: number;
+    voicing?: number;
+    style?: number;
+    melody?: number;
+    phrase?: number;
+    scale?: string | number;
+    root?: number;
+    muted?: boolean;
+  } = {}) {
+    Object.assign(this, {
+      channel,
+      pitch,
+      harmony,
+      accent,
+      sustain,
+      division,
+      velocity,
+      timing,
+      delay,
+      repeats,
+      repeat_time,
+      repeat_offset,
+      repeat_pace,
+      voicing,
+      melody,
+      phrase,
+      root,
+      muted,
+    });
+
+    this.scale_type = scale;
+    this.slices = slices || [new TrackSlice()];
+    this.accent_curve = accentCurves[accent_curve];
+    this.style = styles[style];
+    this.phrase = phrases[phrase];
+  }
+
+  addSlice(slice: TrackSlice) {
+    this.slices.push(slice);
+    if (this.slice === null) {
+      this.setSlice(0);
+    }
+  }
+
+  getScale() {
+    return this.scale_type;
+  }
+
+  setScale(scale: string | number) {
+    let scaleStr: string;
+    if (typeof scale === 'number') {
+      scaleStr = scales[scale];
+    } else {
+      scaleStr = scale;
+    }
+    this.scale_notes = getScaleNumbers(0, scaleStr, 10);
+  }
+
+  getSlice() {
+    return this.slice;
+  }
+
+  setSlice(slice: number) {
+    this.slice_index = slice;
+    this.slice = this.slices[this.slice_index];
+    this.setVoicing(this.voicing);
+  }
+
+  getNotes() {
+    return this.slice.notes;
+  }
+
+  setNotes(value: number[]) {
+    this.slice.notes = value;
+  }
+
+  getSteps() {
+    return this.slice.steps;
+  }
+
+  setSteps(value: number) {
+    this.slice.steps = value;
+  }
+
+  getPulses() {
+    return this.slice.pulses;
+  }
+
+  setPulses(value: number) {
+    this.slice.pulses = value;
+  }
+
+  getManualSteps() {
+    return this.slice.manual_steps;
+  }
+
+  setManualSteps(value: number[]) {
+    this.slice.manual_steps = value;
+  }
+
+  getRotate() {
+    return this.slice.rotate;
+  }
+
+  setRotate(value: number) {
+    this.slice.rotate = value;
+  }
+
+  getBPM() {
+    return this.bpm;
+  }
 
   setBPM(value: number) {
     this.bpm = value;
+    this.beat = 60.0 / value;
   }
 
-  fillLookahead(last: Date, next: Date): any[] {
+  getSequence() {
+    return this.slice.sequence;
+  }
+
+  getVoicing() {
+    return this.voicing;
+  }
+
+  setVoicing(value: number) {
+    this.voicing = value;
+    this.voiced_notes = [...this.slice.notes].sort();
+    const ln = this.slice.notes.length;
+    if (ln) {
+      for (let v = 0; v < value; v += 1) {
+        const n = this.slice.notes[v % ln];
+        this.voiced_notes.push(n + 12 * (1 + Math.round(v / ln)));
+      }
+    }
+  }
+
+  getVoicedNotes() {
+    return this.voiced_notes;
+  }
+
+  addNoteQuantized(note: number, offset: number) {
+    const qnote = this.quantize(note);
+    const notei = this.scale_notes.indexOf(qnote);
+    return this.scale_notes[Math.round(notei + offset)];
+  }
+
+  quantize(note: number) {
+    const overi = this.scale_notes.findIndex(n => n > note);
+    const underi = overi - 1;
+
+    let val: number;
+    if (note - this.scale_notes[underi] < this.scale_notes[overi] - note) {
+      val = this.scale_notes[underi + this.root];
+    } else {
+      val = this.scale_notes[overi + this.root];
+    }
+    return val;
+  }
+
+  styleNotes(index: number): number[] {
+    const lv = this.voiced_notes.length;
+    if (!lv) return [];
+
+    if (this.style === 'chord') {
+      return this.voiced_notes;
+    }
+    if (this.style === 'upward') {
+      return [this.voiced_notes[index % lv]];
+    }
+    if (this.style === 'downward') {
+      return [this.voiced_notes[lv - (index % lv) - 1]];
+    }
+    if (this.style === 'converge') {
+      const i = index % lv;
+      if (i % 2 === 0) {
+        return [this.voiced_notes[Math.round(i / 2)]];
+      }
+      return [this.voiced_notes[lv - (Math.round(i / 2) + 1)]];
+    }
+    if (this.style === 'diverge') {
+      const i = lv - (index % lv) - 1;
+      if (i % 2 === 0) {
+        return [this.voiced_notes[Math.round(i / 2)]];
+      }
+      return [this.voiced_notes[lv - (Math.round(i / 2) + 1)]];
+    }
+    if (this.style === 'alternate_bass') {
+      const rest = this.voiced_notes.slice(1);
+      const notes = [];
+      for (const r of rest) {
+        notes.push(this.voiced_notes[0]);
+        notes.push(r);
+      }
+      return [notes[index]];
+    }
+    if (this.style === 'alternate_bass_2') {
+      const rest = this.voiced_notes.slice(2);
+      let i = 0;
+      const notes = [];
+      for (const r of rest) {
+        notes.push(this.voiced_notes[i % 2]);
+        notes.push(r);
+        i += 1;
+      }
+      return [notes[index]];
+    }
+    if (this.style === 'alternate_melody') {
+      const rest = this.voiced_notes.slice(0, lv - 1);
+      const last = this.voiced_notes[lv - 1];
+      const notes = [];
+      for (const r of rest) {
+        notes.push(r);
+        notes.push(last);
+      }
+      return [notes[index]];
+    }
+    if (this.style === 'alternate_melody_2') {
+      const rest = this.voiced_notes.slice(0, lv - 1);
+      const last = this.voiced_notes.slice(lv - 2);
+      const notes = [];
+      let i = 0;
+      for (const r of rest) {
+        notes.push(r);
+        notes.push(last[i % 2]);
+        i += 1;
+      }
+      return [notes[index]];
+    }
+    if (this.style === 'random') {
+      const num = Math.floor(Math.random() * lv) + 1;
+      return [...Array(num)].map(() => this.voiced_notes[Math.floor(Math.random() * lv)]);
+    }
+
     return [];
+  }
+
+  fillLookahead(start: number, end: number): any[] {
+    const first_step = Math.ceil((this.division * (start - this.sequenceStart + this.delay * this.beat)) / this.beat);
+    const last_step = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
+
+    if (last_step < first_step) return [];
+    const events = [];
+
+    for (let step = first_step; step < last_step + 1; step += 1) {
+      if (step === 0) {
+        // this.random.update()
+      }
+
+      if (step - this.slice_step >= this.slice.steps) {
+        this.setSlice((this.slice_index + 1) % this.slices.length);
+      }
+
+      if (!this.slice.sequence[(step - this.slice.rotate) % this.slice.steps]) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
+      const melody_offset = this.phrase[(step - this.slice.rotate) % this.phrase.length] * this.melody;
+      const accent = this.accent_curve[(step - this.slice.rotate) % this.accent_curve.length] * this.accent;
+      const velocity = Math.min(Math.round(this.velocity + accent), 127);
+      const swing = step % 2 ? 0 : this.timing - 0.5;
+
+      for (let r = 0; r < this.repeats; r += 1) {
+        const notes: number[] = this.styleNotes(r);
+        const melody_notes = notes.map(note => this.addNoteQuantized(note, melody_offset));
+        for (const note of melody_notes) {
+          events.push(
+            new SequencerEvent(((step + swing + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division, [
+              NOTE_ON + this.channel,
+              note + this.pitch,
+              velocity,
+            ]),
+            new SequencerEvent(
+              ((step + this.sustain + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division,
+              [NOTE_OFF + this.channel, note + this.pitch, 0],
+            ),
+          );
+        }
+      }
+    }
+    return events;
   }
 }
 
@@ -94,15 +445,15 @@ export class Torso {
   bpm: number;
   step = 0;
 
-  start_time: Date = null;
+  start_time: number = null;
   tracks: { [id: string]: Track } = {};
   pending: SequencerEvent[] = [];
-  last_lookahead: Date = null;
+  last_lookahead: number = null;
   stopped = false;
   finished = false;
   paused = false;
 
-  constructor(interval = 0.003, lookahead = 0.01, bpm = 200) {
+  constructor(interval = 3, lookahead = 10, bpm = 200) {
     this.interval = interval;
     this.lookahead = lookahead;
     this.bpm = bpm;
@@ -134,31 +485,30 @@ export class Torso {
 
   stop() {
     /*
-        self._stopped.set()
+        this._stopped.set()
 
-        if self.is_alive():
-            self._finished.wait(timeout)
+        if this.is_alive():
+            this._finished.wait(timeout)
 
-        self.join()
+        this.join()
      */
   }
 
   playPause() {
     /*
-      if self._paused.is_set():
-          self._paused.clear()
+      if this._paused.is_set():
+          this._paused.clear()
       else:
-          self._paused.set()
+          this._paused.set()
     */
   }
 
   pause() {
-    // self._paused.set()
+    // this._paused.set()
   }
 
   fillLookahead() {
-    const next_lookahead = new Date(this.last_lookahead);
-    next_lookahead.setSeconds(next_lookahead.getSeconds() + this.lookahead);
+    const next_lookahead = new Date(this.last_lookahead).getTime() + this.lookahead;
     Object.values(this.tracks).forEach(track => {
       if (track.muted) {
         return;
@@ -176,7 +526,7 @@ export class Torso {
   reset() {
     this.step = 0;
     this.pending = [];
-    this.start_time = new Date();
+    this.start_time = new Date().getTime();
     this.last_lookahead = this.start_time;
     Object.values(this.tracks).forEach(track => {
       track.sequenceStart = this.start_time;
@@ -197,8 +547,8 @@ export class Torso {
       }
       if (reset) this.reset();
 
-      const t1 = new Date();
-      const t1o = t1.getTime() / 1000.0 - this.start_time.getTime() / 1000.0;
+      const t1 = new Date().getTime();
+      const t1o = t1 - this.start_time;
       const due: SequencerEvent[] = [];
       while (true) {
         if (!this.pending.length || this.pending[0].tick > t1o) {
@@ -222,7 +572,7 @@ export class Torso {
       }
 
       this.step += 1;
-      const left = this.interval * this.step - (new Date().getTime() / 1000.0 - this.start_time.getTime() / 1000.0);
+      const left = this.interval * this.step - (new Date().getTime() - this.start_time);
       if (left <= 0) {
         console.log('overflow time');
       } else {
