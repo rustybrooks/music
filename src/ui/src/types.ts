@@ -58,33 +58,37 @@ export interface MidiCallback {
   (message: MidiMessage): void;
 }
 
+export type MidiInput = {
+  connection: string;
+  id: string;
+  manufacturer: string;
+  name: string;
+  onmidimessage: any;
+  onstatechange: any;
+  state: string;
+  type: string;
+  version: string;
+};
+
 export interface MidiInputs {
-  [id: string]: {
-    connection: string;
-    id: string;
-    manufacturer: string;
-    name: string;
-    onmidimessage: any;
-    onstatechange: any;
-    state: string;
-    type: string;
-    version: string;
-  };
+  [id: string]: MidiInput;
 }
 
+export type MidiOutput = {
+  connection: string;
+  id: string;
+  manufacturer: string;
+  name: string;
+  onmidimessage: any;
+  onstatechange: any;
+  state: string;
+  type: string;
+  version: string;
+  object: WebMidi.MIDIOutput;
+};
+
 export interface MidiOutputs {
-  [id: string]: {
-    connection: string;
-    id: string;
-    manufacturer: string;
-    name: string;
-    onmidimessage: any;
-    onstatechange: any;
-    state: string;
-    type: string;
-    version: string;
-    object: WebMidi.MIDIOutput;
-  };
+  [id: string]: MidiOutput;
 }
 
 export interface CallbackMap {

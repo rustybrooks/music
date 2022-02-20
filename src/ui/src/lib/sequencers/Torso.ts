@@ -1,6 +1,7 @@
 import { Heap } from 'heap-js';
 import { accentCurves, NOTE_OFF, NOTE_ON, phrases, scales, styles } from './TorsoConstants';
 import { getScaleNumbers } from '../Scales';
+import { MidiOutput } from '../../types';
 // import { MidiMessage } from '../../types';
 
 const MAX_STEPS = 64;
@@ -8,8 +9,10 @@ const MAX_STEPS = 64;
 class SequencerEvent {
   tick = 0;
   message: number[];
+  output: MidiOutput;
 
-  constructor(tick: number, message: number[]) {
+  constructor(output: MidiOutput, tick: number, message: number[]) {
+    this.output = output;
     this.tick = tick;
     this.message = message;
   }
@@ -82,6 +85,7 @@ class TrackSlice {
 }
 
 class Track {
+  output: MidiOutput;
   channel: number;
   slices: TrackSlice[];
   pitch: number;
@@ -117,6 +121,7 @@ class Track {
   voiced_notes: number[];
 
   constructor({
+    output,
     channel = 0,
     slices = null,
     pitch = 0, // pitch shift to apply to all notes, integer
@@ -140,6 +145,7 @@ class Track {
     root = 0, // which note of the scale to set as the root
     muted = false,
   }: {
+    output: MidiOutput;
     channel?: number;
     slices?: TrackSlice[];
     pitch?: number;
@@ -162,8 +168,9 @@ class Track {
     scale?: string | number;
     root?: number;
     muted?: boolean;
-  } = {}) {
+  }) {
     Object.assign(this, {
+      output,
       channel,
       pitch,
       harmony,
@@ -422,12 +429,13 @@ class Track {
         const melody_notes = notes.map(note => this.addNoteQuantized(note, melody_offset));
         for (const note of melody_notes) {
           events.push(
-            new SequencerEvent(((step + swing + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division, [
-              NOTE_ON + this.channel,
-              note + this.pitch,
-              velocity,
-            ]),
             new SequencerEvent(
+              this.output,
+              ((step + swing + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division,
+              [NOTE_ON + this.channel, note + this.pitch, velocity],
+            ),
+            new SequencerEvent(
+              this.output,
               ((step + this.sustain + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division,
               [NOTE_OFF + this.channel, note + this.pitch, 0],
             ),
@@ -440,6 +448,7 @@ class Track {
 }
 
 export class Torso {
+  output: MidiOutput;
   interval: number;
   lookahead: number;
   bpm: number;
@@ -453,7 +462,8 @@ export class Torso {
   finished = false;
   paused = false;
 
-  constructor(interval = 3, lookahead = 10, bpm = 200) {
+  constructor(output: MidiOutput, interval = 3, lookahead = 10, bpm = 200) {
+    this.output = output;
     this.interval = interval;
     this.lookahead = lookahead;
     this.bpm = bpm;
@@ -477,7 +487,7 @@ export class Torso {
 
   getTrack(track_name: string, create = true) {
     if (create && !(track_name in this.tracks)) {
-      this.addTrack(track_name, new Track());
+      this.addTrack(track_name, new Track({ output: this.output }));
     }
 
     return this.tracks[track_name];
@@ -508,7 +518,10 @@ export class Torso {
   }
 
   fillLookahead() {
-    const next_lookahead = new Date(this.last_lookahead).getTime() + this.lookahead;
+    if (this.last_lookahead === null) {
+      this.last_lookahead = window.performance.now();
+    }
+    const next_lookahead = this.last_lookahead + this.lookahead;
     Object.values(this.tracks).forEach(track => {
       if (track.muted) {
         return;
@@ -526,7 +539,7 @@ export class Torso {
   reset() {
     this.step = 0;
     this.pending = [];
-    this.start_time = new Date().getTime();
+    this.start_time = window.performance.now();
     this.last_lookahead = this.start_time;
     Object.values(this.tracks).forEach(track => {
       track.sequenceStart = this.start_time;
@@ -547,7 +560,7 @@ export class Torso {
       }
       if (reset) this.reset();
 
-      const t1 = new Date().getTime();
+      const t1 = window.performance.now();
       const t1o = t1 - this.start_time;
       const due: SequencerEvent[] = [];
       while (true) {
@@ -561,7 +574,7 @@ export class Torso {
       if (due.length) {
         for (let i = 0; i < due.length; i += 1) {
           const evt = Heap.heappop(due);
-          // sendmessage evt
+          this.output.object.send(evt.message, evt.tick);
         }
       }
 
@@ -572,11 +585,11 @@ export class Torso {
       }
 
       this.step += 1;
-      const left = this.interval * this.step - (new Date().getTime() - this.start_time);
+      const left = this.interval * this.step - (window.performance.now() - this.start_time);
       if (left <= 0) {
         console.log('overflow time');
       } else {
-        // sleep(left)
+        setTimeout(this.run, left);
       }
     }
 
