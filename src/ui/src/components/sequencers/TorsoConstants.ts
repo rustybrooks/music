@@ -281,17 +281,17 @@ export const buttons = [
 
 // extract keyMap out for use in UI
 export const keyMap: {
-  [id: string]: [string, [number, number]];
+  [id: string]: [string, number, number];
 } = {};
 for (const row of [0, 1]) {
   for (const [i, knob] of knobs[row].entries()) {
-    keyMap[knob.keybind] = ['knob', [row, i]];
+    keyMap[knob.keybind] = ['knob', row, i];
   }
   for (const [i, button] of buttons[row].entries()) {
     const kv: string | string[] = button[2];
     if (kv) {
       if (typeof kv === 'string') {
-        keyMap[kv] = ['button', [row, i]];
+        keyMap[kv] = ['button', row, i];
       } else {
         console.log("what's this", button, kv);
       }

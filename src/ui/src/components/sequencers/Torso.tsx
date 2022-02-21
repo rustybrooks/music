@@ -7,7 +7,13 @@ import './Torso.css';
 import { useEffect, useRef, useState } from 'react';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
-import { keyMap, Mode } from './TorsoConstants';
+import { keyMap, knobs, Mode } from './TorsoConstants';
+
+enum ButtonState {
+  inactive,
+  active,
+  secondary,
+}
 
 function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: boolean }) {
   const colors = {
@@ -35,11 +41,23 @@ function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: bool
   );
 }
 
-function Button({ b, onClick, row, col }: { b: any; row: number; col: number; onClick?: (r: number, c: number) => void }) {
+function Button({
+  b,
+  onClick,
+  row,
+  col,
+  state,
+}: {
+  b: any;
+  row: number;
+  col: number;
+  onClick?: (r: number, c: number) => void;
+  state: ButtonState;
+}) {
   return (
     <div className="torso-button" onClick={() => onClick(row, col)}>
       <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" style={{ margin: 0, padding: 0 }}>
-        <rect fill="#999" width="16" height="16" x="0" y="0" />
+        <rect fill="#999" width="15.5" height="15.5" x="0.25" y="0.25" stroke="#666" strokeWidth=".5" strokeOpacity="1" />
         <text alignmentBaseline="middle" textAnchor="middle" x="8" y="8" className="button-label">
           {b[2]}
         </text>
@@ -52,61 +70,12 @@ function Button({ b, onClick, row, col }: { b: any; row: number; col: number; on
       </svg>
     </div>
   );
-
-  // console.log(row, col);
-  // if (!b.length) {
-  //   return <div style={{ width: '4rem', height: '4rem' }} />;
-  // }
-  //
-  //
-  // return (
-  //   <div
-  //     style={{ background: 'blue', textAlign: 'center', verticalAlign: 'top', fontSize: '1rem', cursor: 'pointer' }}
-  //     onClick={() => {
-  //       console.log(row, col);
-  //       onClick(row, col);
-  //     }}
-  //   >
-  //     <div style={{ display: 'flex', textAlign: 'left', background: 'red' }}>
-  //       <div
-  //         style={{
-  //           background: 'purple',
-  //           width: '3rem',
-  //           height: '3rem',
-  //           backgroundColor: '#999',
-  //           display: 'flex',
-  //           justifyContent: 'center',
-  //           alignItems: 'center',
-  //         }}
-  //       >
-  //         {b[2]}
-  //       </div>
-  //       <div
-  //         style={{
-  //           background: 'cyan',
-  //           transform: 'rotate(-90deg) translate(0, 1.1rem)',
-  //           position: 'relative',
-  //           float: 'right',
-  //           height: '3rem',
-  //           width: '.8rem',
-  //           textAlign: 'left',
-  //           verticalAlign: 'top',
-  //           padding: 'auto',
-  //           fontSize: '.6rem',
-  //         }}
-  //       >
-  //         {b[1]}&nbsp;
-  //       </div>
-  //     </div>
-  //     <div style={{ fontSize: '.8rem', background: 'green' }}>{b[0]}&nbsp;</div>
-  //   </div>
-  // );
 }
 
 export function Torso() {
   let sequencer: TorsoSequencer;
   const hasPrevKeyPress = useRef<{ [id: string]: number }>({});
-  const [mode, setMode] = useState(Mode.TRACKS);
+  const [modes, setModes] = useState([Mode.TRACKS]);
   const [control, setControl] = useState(false);
 
   const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
@@ -114,6 +83,8 @@ export function Torso() {
   const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
   const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [outputs, setOutputs] = useState([]);
+
+  console.log('render', modes);
 
   useEffect(() => {
     sequencer = new TorsoSequencer();
@@ -143,21 +114,45 @@ export function Torso() {
     console.log('button press', row, col);
   };
 
-  const keyPress = (key: string) => {
-    console.log('keyPress', key);
+  const keyAction = (key: string, release: boolean) => {
     if (key in keyMap) {
       console.log(keyMap[key]);
+      const x = keyMap[key];
+      if (x[0] === 'knob') {
+        const knob = constants.knobs[x[1]][x[2]];
+        console.log('knob', knob);
+        if (control) {
+          if (knob.alt_mode) {
+            if (release) {
+              console.log('releasemode');
+              setModes(modes.slice(0, modes.length - 1));
+            } else {
+              console.log('setmode', knob.alt_mode);
+              setModes([...modes, knob.alt_mode]);
+            }
+          }
+        } else if (release) {
+          console.log('releasemode');
+          setModes(modes.slice(0, modes.length - 1));
+        } else {
+          console.log('setmode', knob.mode);
+          setModes([...modes, knob.mode]);
+        }
+      }
     } else if (key === 'Control') {
-      setControl(true);
+      setControl(!release);
     }
   };
+
+  const keyPress = (key: string) => {
+    console.log('keyPress', key);
+    keyAction(key, false);
+  };
+
   const keyRelease = (key: string) => {
     console.log('keyRelease', key);
     hasPrevKeyPress.current[key] = null;
-
-    if (key === 'Control') {
-      setControl(false);
-    }
+    keyAction(key, true);
   };
 
   const keyPressRepeat = (key: string) => {
@@ -200,14 +195,28 @@ export function Torso() {
           <tr>
             {constants.knobs[0].map((k, i) => (
               <td key={i}>
-                <Knob k={k} pressed={[k.mode, k.alt_mode].includes(mode)} control={control} />
+                <Knob
+                  k={k}
+                  pressed={
+                    (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
+                    (!control && k.mode && k.mode === modes[modes.length - 1])
+                  }
+                  control={control}
+                />
               </td>
             ))}
           </tr>
           <tr>
             {constants.knobs[1].map((k, i) => (
               <td key={i}>
-                <Knob k={k} pressed={[k.mode, k.alt_mode].includes(mode)} control={control} />
+                <Knob
+                  k={k}
+                  pressed={
+                    (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
+                    (!control && k.mode && k.mode === modes[modes.length - 1])
+                  }
+                  control={control}
+                />
               </td>
             ))}
           </tr>
@@ -219,14 +228,14 @@ export function Torso() {
           <tr>
             {constants.buttons[0].map((b, i) => (
               <td key={i}>
-                <Button b={b} row={0} col={i} onClick={buttonPress} />
+                <Button b={b} row={0} col={i} onClick={buttonPress} state={ButtonState.inactive} />
               </td>
             ))}
           </tr>
           <tr>
             {constants.buttons[1].map((b, i) => (
               <td key={i}>
-                <Button b={b} row={1} col={i} onClick={buttonPress} />
+                <Button b={b} row={1} col={i} onClick={buttonPress} state={ButtonState.inactive} />
               </td>
             ))}
           </tr>
