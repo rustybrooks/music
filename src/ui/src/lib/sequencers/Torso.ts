@@ -470,7 +470,7 @@ export class TorsoSequencer {
   tracks: { [id: string]: TorsoTrack } = {};
   pending: SequencerEvent[] = [];
   last_lookahead: number = null;
-  stopped = false;
+  stopped = true;
   finished = false;
   paused = false;
 
