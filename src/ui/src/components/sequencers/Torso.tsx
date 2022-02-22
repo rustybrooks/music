@@ -4,10 +4,10 @@ import * as constants from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
 import { CallbackMap, MidiInputs, MidiOutputs } from '../../types';
 import './Torso.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, MouseEvent } from 'react';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
-import { keyMap, knobs, Mode } from './TorsoConstants';
+import { keyMap, Mode } from './TorsoConstants';
 
 enum ButtonState {
   inactive,
@@ -21,12 +21,31 @@ function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: bool
     pressed: '#aaaa66',
     control: '#aa66aa',
   };
+
+  const [mousePressed, setMousePressed] = useState(false);
+
+  const onMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    console.log(event);
+    setMousePressed(true);
+  };
+
+  const onMouseUp = (event: MouseEvent<HTMLDivElement>) => {
+    console.log(event);
+    setMousePressed(false);
+  };
+
+  const onMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+    if (mousePressed) {
+      console.log(event);
+    }
+  };
+
   let color = colors.normal;
   if (pressed) {
     color = control ? colors.control : colors.pressed;
   }
   return (
-    <div style={{ textAlign: 'center', padding: '.4rem' }}>
+    <div style={{ textAlign: 'center', padding: '.4rem' }} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
       <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" transform="rotate(0)">
         <circle fill={colors.normal} fillRule="evenodd" stroke="#a10000" strokeWidth=".5" strokeOpacity="1" cx="10" cy="10" r="9" />
         <circle fill={color} fillRule="evenodd" cx="10" cy="10" r="4" />
