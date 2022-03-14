@@ -8,8 +8,6 @@ import { MidiOutputs } from '../../types';
 import './Torso.css';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
-import { Simulate } from 'react-dom/test-utils';
-import pause = Simulate.pause;
 
 enum ButtonState {
   inactive,
@@ -20,12 +18,22 @@ enum ButtonState {
 function pauseEvent<T>(e: MouseEvent<T>) {
   if (e.stopPropagation) e.stopPropagation();
   if (e.preventDefault) e.preventDefault();
-  // e.cancelBubble = true;
-  // e.returnValue = false;
   return false;
 }
 
-function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: boolean }) {
+function Knob({
+  k,
+  pressed,
+  control,
+  pressCallback,
+  releaseCallback,
+}: {
+  k: any;
+  pressed: boolean;
+  control: boolean;
+  pressCallback: any;
+  releaseCallback: any;
+}) {
   const colors = {
     normal: '#aa6666',
     pressed: '#aaaa66',
@@ -40,10 +48,12 @@ function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: bool
     setMousePressed(true);
     setOrigin([event.clientX, event.clientY]);
     pauseEvent(event);
+    pressCallback();
   };
 
   const onMouseUp = (event: MouseEvent<HTMLDivElement>) => {
     setMousePressed(false);
+    releaseCallback();
   };
 
   const onMouseMove = (event: MouseEvent<HTMLDivElement>) => {
@@ -118,6 +128,8 @@ export function Torso() {
   // const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [, setOutputs] = useState([]);
 
+  console.log('render', modes);
+
   useEffect(() => {
     sequencer = new TorsoSequencer();
     const slice = new TorsoTrackSlice({
@@ -144,23 +156,37 @@ export function Torso() {
 
   const buttonPress = (row: number, col: number) => {};
 
+  const pushMode = (mode: Mode) => {
+    setModes([...modes, mode]);
+  };
+
+  const popMode = () => {
+    setModes(modes.slice(0, modes.length - 1));
+  };
+
+  const pressKnob = (knob: any) => {
+    if (control) {
+      if (knob.alt_mode) {
+        pushMode(knob.alt_mode);
+      }
+    } else {
+      pushMode(knob.mode);
+    }
+  };
+
+  const releaseKnob = (knob: any) => {
+    popMode();
+  };
+
   const keyAction = (key: string, release: boolean) => {
     if (key in keyMap) {
       const x = keyMap[key];
       if (x[0] === 'knob') {
         const knob = constants.knobs[x[1]][x[2]];
-        if (control) {
-          if (knob.alt_mode) {
-            if (release) {
-              setModes(modes.slice(0, modes.length - 1));
-            } else {
-              setModes([...modes, knob.alt_mode]);
-            }
-          }
-        } else if (release) {
-          setModes(modes.slice(0, modes.length - 1));
+        if (release) {
+          releaseKnob(knob);
         } else {
-          setModes([...modes, knob.mode]);
+          pressKnob(knob);
         }
       }
     } else if (key === 'Control') {
@@ -224,6 +250,8 @@ export function Torso() {
                     (!control && k.mode && k.mode === modes[modes.length - 1])
                   }
                   control={control}
+                  pressCallback={() => pressKnob(k)}
+                  releaseCallback={() => releaseKnob(k)}
                 />
               </td>
             ))}
@@ -238,6 +266,8 @@ export function Torso() {
                     (!control && k.mode && k.mode === modes[modes.length - 1])
                   }
                   control={control}
+                  pressCallback={() => pressKnob(k)}
+                  releaseCallback={() => releaseKnob(k)}
                 />
               </td>
             ))}
