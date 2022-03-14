@@ -1,18 +1,28 @@
 import { useGetAndSet } from 'react-context-hook';
+import { MouseEvent, useEffect, useRef, useState } from 'react';
 
 import * as constants from './TorsoConstants';
+import { keyMap, Mode } from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
-import { CallbackMap, MidiInputs, MidiOutputs } from '../../types';
+import { MidiOutputs } from '../../types';
 import './Torso.css';
-import { useEffect, useRef, useState, MouseEvent } from 'react';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
-import { keyMap, Mode } from './TorsoConstants';
+import { Simulate } from 'react-dom/test-utils';
+import pause = Simulate.pause;
 
 enum ButtonState {
   inactive,
   active,
   secondary,
+}
+
+function pauseEvent<T>(e: MouseEvent<T>) {
+  if (e.stopPropagation) e.stopPropagation();
+  if (e.preventDefault) e.preventDefault();
+  // e.cancelBubble = true;
+  // e.returnValue = false;
+  return false;
 }
 
 function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: boolean }) {
@@ -23,20 +33,23 @@ function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: bool
   };
 
   const [mousePressed, setMousePressed] = useState(false);
+  const [origin, setOrigin] = useState(null);
+  const [percent, setPercent] = useState(0);
 
   const onMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    console.log(event);
     setMousePressed(true);
+    setOrigin([event.clientX, event.clientY]);
+    pauseEvent(event);
   };
 
   const onMouseUp = (event: MouseEvent<HTMLDivElement>) => {
-    console.log(event);
     setMousePressed(false);
   };
 
   const onMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     if (mousePressed) {
-      console.log(event);
+      const deltaY = event.clientY - origin[1];
+      setPercent(Math.round(deltaY * 1.5) % 100);
     }
   };
 
@@ -46,14 +59,16 @@ function Knob({ k, pressed, control }: { k: any; pressed: boolean; control: bool
   }
   return (
     <div style={{ textAlign: 'center', padding: '.4rem' }} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
-      <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" transform="rotate(0)">
-        <circle fill={colors.normal} fillRule="evenodd" stroke="#a10000" strokeWidth=".5" strokeOpacity="1" cx="10" cy="10" r="9" />
-        <circle fill={color} fillRule="evenodd" cx="10" cy="10" r="4" />
-        <circle fill="#000000" cx="10" cy="4" r="2" />
+      <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1">
+        <g transform={`rotate(${(percent * 360) / 100})`} style={{ transformOrigin: 'center' }}>
+          <circle fill={colors.normal} fillRule="evenodd" stroke="#a10000" strokeWidth=".5" strokeOpacity="1" cx="10" cy="10" r="9" />
+          <circle fill={color} fillRule="evenodd" cx="10" cy="10" r="4" />
+          <circle fill="#000000" cx="10" cy="4" r="2" />
+        </g>
         <text alignmentBaseline="middle" textAnchor="middle" x="10" y="10" className="knob">
           {k.keybind}
         </text>
-      </svg>{' '}
+      </svg>
       <div style={{ fontSize: '.8rem' }}>{k.label}</div>
       <div style={{ fontSize: '.8rem' }}>{k.alt_label}&nbsp;</div>
     </div>
@@ -97,13 +112,11 @@ export function Torso() {
   const [modes, setModes] = useState([Mode.TRACKS]);
   const [control, setControl] = useState(false);
 
-  const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
-  const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
-  const [midiOutputs, setMidiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
-  const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
-  const [outputs, setOutputs] = useState([]);
-
-  console.log('render', modes);
+  // const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
+  // const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
+  const [midiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
+  // const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
+  const [, setOutputs] = useState([]);
 
   useEffect(() => {
     sequencer = new TorsoSequencer();
@@ -129,32 +142,24 @@ export function Torso() {
     sequencer.run();
   }, []);
 
-  const buttonPress = (row: number, col: number) => {
-    console.log('button press', row, col);
-  };
+  const buttonPress = (row: number, col: number) => {};
 
   const keyAction = (key: string, release: boolean) => {
     if (key in keyMap) {
-      console.log(keyMap[key]);
       const x = keyMap[key];
       if (x[0] === 'knob') {
         const knob = constants.knobs[x[1]][x[2]];
-        console.log('knob', knob);
         if (control) {
           if (knob.alt_mode) {
             if (release) {
-              console.log('releasemode');
               setModes(modes.slice(0, modes.length - 1));
             } else {
-              console.log('setmode', knob.alt_mode);
               setModes([...modes, knob.alt_mode]);
             }
           }
         } else if (release) {
-          console.log('releasemode');
           setModes(modes.slice(0, modes.length - 1));
         } else {
-          console.log('setmode', knob.mode);
           setModes([...modes, knob.mode]);
         }
       }
@@ -164,12 +169,10 @@ export function Torso() {
   };
 
   const keyPress = (key: string) => {
-    console.log('keyPress', key);
     keyAction(key, false);
   };
 
   const keyRelease = (key: string) => {
-    console.log('keyRelease', key);
     hasPrevKeyPress.current[key] = null;
     keyAction(key, true);
   };
