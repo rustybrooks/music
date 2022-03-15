@@ -12,12 +12,14 @@ export function Knob({
   control,
   pressCallback,
   releaseCallback,
+  rotateCallback,
 }: {
   k: any;
   pressed: boolean;
   control: boolean;
   pressCallback: any;
   releaseCallback: any;
+  rotateCallback: any;
 }) {
   const colors = {
     normal: '#aa6666',
@@ -44,7 +46,9 @@ export function Knob({
   const onMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     if (mousePressed) {
       const deltaY = event.clientY - origin[1];
-      setPercent(Math.round(deltaY * 1.5) % 100);
+      const p = Math.max(Math.min(Math.round(deltaY * 1.5), 100), 0);
+      setPercent(p);
+      rotateCallback(p);
     }
   };
 

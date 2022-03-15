@@ -29,6 +29,7 @@ export function Torso() {
   const [track, setTrack] = useState(0);
   const [bank, setBank] = useState(0);
   const [pattern, setPattern] = useState(0);
+  const [foo, setFoo] = useState(0);
 
   // const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
   // const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
@@ -73,7 +74,7 @@ export function Torso() {
     setModes(modes.slice(0, modes.length - 1));
   };
 
-  const pressKnob = (knob: any) => {
+  const pressKnob = (knob: constants.Knob) => {
     if (control) {
       if (knob.alt_mode) {
         pushMode(knob.alt_mode);
@@ -83,8 +84,14 @@ export function Torso() {
     }
   };
 
-  const releaseKnob = (knob: any) => {
+  const releaseKnob = (knob: constants.Knob) => {
     popMode();
+  };
+
+  const rotateKnob = (knob: constants.Knob, percent: number) => {
+    console.log('rotateknob', percent, knob);
+    setValue(percent, 100);
+    setFoo(foo + 1);
   };
 
   const keyAction = (key: string, release: boolean) => {
@@ -138,6 +145,77 @@ export function Torso() {
     };
   }, [handleKeyDown]);
 
+  const interpolateSetValue = (value: any, interpolate: number = null): [keyof TorsoTrack, any] => {
+    const knob = getKnob(mode);
+    if (!knob) {
+      console.log(`no map for mode=${mode}`);
+      return null;
+    }
+
+    if (!knob.alt_property) {
+      console.log(`No alt property for mode=${mode}`);
+      return [null, null];
+    }
+
+    const propKey = knob[control ? 'alt_property' : 'property'];
+    if (!propKey) {
+      console.log(`setValue - mode=${mode} no property`);
+      return [null, null];
+    }
+
+    let lval;
+    let fmin;
+    let fmax;
+    let ftype;
+    if (!control && knob.list) {
+      fmin = 0;
+      fmax = knob.list.length - 1;
+      ftype = 'int';
+      lval = knob.list;
+    } else if (control && knob.alt_list) {
+      fmin = 0;
+      fmax = knob.alt_list.length - 1;
+      ftype = 'int';
+      lval = knob.alt_list;
+    } else if (control) {
+      fmin = knob.alt_min || knob.min;
+      fmax = knob.alt_max || knob.max;
+      ftype = knob.alt_type || knob.type;
+    } else {
+      fmin = knob.min;
+      fmax = knob.max;
+      ftype = knob.type;
+    }
+
+    if (interpolate) {
+      value = fmin + ((fmax - fmin) * value) / interpolate;
+      if (ftype === 'int') {
+        value = Math.round(value);
+      }
+    }
+
+    if (lval) {
+      return [propKey, lval[value]];
+    }
+    return [propKey, value];
+  };
+
+  const setValue = (value: any, interpolate: number = null) => {
+    const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
+    const [propKey, newValue] = interpolateSetValue(value, interpolate);
+    if (propKey === 'bpm') {
+      sequencer.setBPM(value);
+    } else if (isFunction(propKey)) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ttrack[propKey](newValue);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ttrack[propKey] = newValue;
+    }
+  };
+
   const getValue = ({
     knob,
     interpolate = null,
@@ -160,7 +238,7 @@ export function Torso() {
       return null;
     }
 
-    if (!thisKnob.alt_property) {
+    if (thisControl && !thisKnob.alt_property) {
       console.log(`No alt property for mode=${mode}`);
       return null;
     }
@@ -280,6 +358,7 @@ export function Torso() {
                   control={control}
                   pressCallback={() => pressKnob(k)}
                   releaseCallback={() => releaseKnob(k)}
+                  rotateCallback={(p: number) => rotateKnob(k, p)}
                 />
               </td>
             ))}
@@ -296,6 +375,7 @@ export function Torso() {
                   control={control}
                   pressCallback={() => pressKnob(k)}
                   releaseCallback={() => releaseKnob(k)}
+                  rotateCallback={(p: number) => rotateKnob(k, p)}
                 />
               </td>
             ))}
