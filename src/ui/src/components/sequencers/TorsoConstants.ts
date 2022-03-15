@@ -1,4 +1,7 @@
 import { accentCurves, divisions, phrases, scales, styles } from '../../lib/sequencers/TorsoConstants';
+import { TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
+
+export const maxSteps = 16;
 
 export enum Mode {
   'TRACKS',
@@ -43,19 +46,38 @@ export enum Mode {
   CHANNEL,
 }
 
-export const knobs = [
+export interface Knob {
+  label: string;
+  alt_label: string;
+  keybind: string;
+  mode?: Mode;
+  property?: keyof TorsoTrack;
+  min?: number;
+  max?: number;
+  type?: string;
+  alt_mode?: Mode;
+  alt_min?: number;
+  alt_max?: number;
+  alt_property?: keyof TorsoTrack;
+  alt_suppress_dial?: boolean;
+  alt_type?: string;
+  list?: any[];
+  alt_list?: any[];
+}
+
+export const knobs: Array<Array<Knob>> = [
   [
     {
       label: 'steps',
       alt_label: '',
       keybind: 'a',
       mode: Mode.STEPS,
-      property: 'steps',
+      property: 'getSteps',
       min: 1,
-      max: 'MAX_STEPS',
+      max: maxSteps,
       type: 'int',
       alt_mode: Mode.MANUAL_STEPS,
-      alt_property: 'manual_steps',
+      alt_property: 'getManualSteps',
       alt_suppress_dial: true,
     },
     {
@@ -63,12 +85,12 @@ export const knobs = [
       alt_label: 'rotate',
       keybind: 's',
       mode: Mode.PULSES,
-      property: 'pulses',
+      property: 'getPulses',
       min: 1,
-      max: 'MAX_STEPS',
+      max: maxSteps,
       type: 'int',
       alt_mode: Mode.ROTATE,
-      alt_property: 'rotate',
+      alt_property: 'getRotate',
       alt_min: 0,
       alt_max: 15,
     },
@@ -217,7 +239,7 @@ export const knobs = [
       alt_label: 'root',
       keybind: 'm',
       mode: Mode.SCALE,
-      property: 'scale',
+      property: 'getScale',
       list: scales,
       alt_mode: Mode.ROOT,
       alt_property: 'root',

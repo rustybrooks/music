@@ -1,6 +1,7 @@
 import { useGetAndSet } from 'react-context-hook';
-import { MouseEvent, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { isFunction } from 'webpack-merge/dist/utils';
 import * as constants from './TorsoConstants';
 import { keyMap, Mode } from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
@@ -8,119 +9,26 @@ import { MidiOutputs } from '../../types';
 import './Torso.css';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
+import { Button, ButtonState } from './TorsoButton';
+import { Knob } from './TorsoKnob';
 
-enum ButtonState {
-  inactive,
-  active,
-  secondary,
+function trackKey(bank: number, pattern: number, track: number) {
+  return `${bank}:${pattern}:${track}`;
 }
 
-function pauseEvent<T>(e: MouseEvent<T>) {
-  if (e.stopPropagation) e.stopPropagation();
-  if (e.preventDefault) e.preventDefault();
-  return false;
-}
-
-function Knob({
-  k,
-  pressed,
-  control,
-  pressCallback,
-  releaseCallback,
-}: {
-  k: any;
-  pressed: boolean;
-  control: boolean;
-  pressCallback: any;
-  releaseCallback: any;
-}) {
-  const colors = {
-    normal: '#aa6666',
-    pressed: '#aaaa66',
-    control: '#aa66aa',
-  };
-
-  const [mousePressed, setMousePressed] = useState(false);
-  const [origin, setOrigin] = useState(null);
-  const [percent, setPercent] = useState(0);
-
-  const onMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    setMousePressed(true);
-    setOrigin([event.clientX, event.clientY]);
-    pauseEvent(event);
-    pressCallback();
-  };
-
-  const onMouseUp = (event: MouseEvent<HTMLDivElement>) => {
-    setMousePressed(false);
-    releaseCallback();
-  };
-
-  const onMouseMove = (event: MouseEvent<HTMLDivElement>) => {
-    if (mousePressed) {
-      const deltaY = event.clientY - origin[1];
-      setPercent(Math.round(deltaY * 1.5) % 100);
-    }
-  };
-
-  let color = colors.normal;
-  if (pressed) {
-    color = control ? colors.control : colors.pressed;
-  }
-  return (
-    <div style={{ textAlign: 'center', padding: '.4rem' }} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
-      <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1">
-        <g transform={`rotate(${(percent * 360) / 100})`} style={{ transformOrigin: 'center' }}>
-          <circle fill={colors.normal} fillRule="evenodd" stroke="#a10000" strokeWidth=".5" strokeOpacity="1" cx="10" cy="10" r="9" />
-          <circle fill={color} fillRule="evenodd" cx="10" cy="10" r="4" />
-          <circle fill="#000000" cx="10" cy="4" r="2" />
-        </g>
-        <text alignmentBaseline="middle" textAnchor="middle" x="10" y="10" className="knob">
-          {k.keybind}
-        </text>
-      </svg>
-      <div style={{ fontSize: '.8rem' }}>{k.label}</div>
-      <div style={{ fontSize: '.8rem' }}>{k.alt_label}&nbsp;</div>
-    </div>
-  );
-}
-
-function Button({
-  b,
-  onClick,
-  row,
-  col,
-  state,
-}: {
-  b: any;
-  row: number;
-  col: number;
-  onClick?: (r: number, c: number) => void;
-  state: ButtonState;
-}) {
-  return (
-    <div className="torso-button" onClick={() => onClick(row, col)}>
-      <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" style={{ margin: 0, padding: 0 }}>
-        <rect fill="#999" width="15.5" height="15.5" x="0.25" y="0.25" stroke="#666" strokeWidth=".5" strokeOpacity="1" />
-        <text alignmentBaseline="middle" textAnchor="middle" x="8" y="8" className="button-label">
-          {b[2]}
-        </text>
-        <text x="2" y="19.25" className="button-bot">
-          {b[0]}
-        </text>
-        <text alignmentBaseline="middle" transform="rotate(-90) translate(-11, 17.5)" className="button-side">
-          {b[1]}
-        </text>
-      </svg>
-    </div>
-  );
+function getKnob(mode: Mode) {
+  const r1 = constants.knobs[0].find(el => el.mode === mode || el.alt_mode === mode);
+  const r2 = constants.knobs[1].find(el => el.mode === mode || el.alt_mode === mode);
+  return r1 || r2;
 }
 
 export function Torso() {
-  let sequencer: TorsoSequencer;
   const hasPrevKeyPress = useRef<{ [id: string]: number }>({});
   const [modes, setModes] = useState([Mode.TRACKS]);
   const [control, setControl] = useState(false);
+  const [track, setTrack] = useState(0);
+  const [bank, setBank] = useState(0);
+  const [pattern, setPattern] = useState(0);
 
   // const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
   // const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
@@ -128,10 +36,10 @@ export function Torso() {
   // const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [, setOutputs] = useState([]);
 
-  console.log('render', modes);
+  const mode = modes.slice(-1)[0];
 
-  useEffect(() => {
-    sequencer = new TorsoSequencer();
+  const sequencer = useMemo(() => {
+    const s = new TorsoSequencer();
     const slice = new TorsoTrackSlice({
       notes: [
         ['C', 4],
@@ -142,7 +50,7 @@ export function Torso() {
       pulses: 16,
       steps: 16,
     });
-    const track = new TorsoTrack({
+    const ttrack = new TorsoTrack({
       output: null,
       slices: [slice],
       repeats: 2,
@@ -150,14 +58,15 @@ export function Torso() {
       style: 1,
       voicing: 3,
     });
-    sequencer.addTrack('1', track);
-    sequencer.run();
+    s.addTrack('1', ttrack);
+    s.run();
+    return s;
   }, []);
 
   const buttonPress = (row: number, col: number) => {};
 
-  const pushMode = (mode: Mode) => {
-    setModes([...modes, mode]);
+  const pushMode = (m: Mode) => {
+    setModes([...modes, m]);
   };
 
   const popMode = () => {
@@ -229,11 +138,130 @@ export function Torso() {
     };
   }, [handleKeyDown]);
 
+  const getValue = ({
+    knob,
+    interpolate = null,
+    asInt = false,
+    asIndex = true,
+    useControl = null,
+  }: {
+    knob?: constants.Knob;
+    interpolate?: number;
+    asInt?: boolean;
+    asIndex?: boolean;
+    useControl?: boolean;
+  }) => {
+    const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
+    const thisKnob = knob || getKnob(mode);
+    const thisControl = useControl != null ? useControl : control;
+
+    if (!thisKnob) {
+      console.log(`no map for mode=${mode}`);
+      return null;
+    }
+
+    if (!thisKnob.alt_property) {
+      console.log(`No alt property for mode=${mode}`);
+      return null;
+    }
+
+    const propKey = thisKnob[thisControl ? 'alt_property' : 'property'];
+    // if (propKey === 'bpm') {
+    //   return sequencer.bpm;
+    // }
+
+    let value;
+    if (isFunction(ttrack[propKey])) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      value = ttrack[propKey]();
+    } else {
+      value = ttrack[propKey];
+    }
+
+    const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
+    if (asIndex && lval) {
+      value = lval.indexOf(value);
+    }
+
+    if (interpolate) {
+      value = (interpolate * (value - thisKnob.min)) / (thisKnob.max - thisKnob.min);
+    }
+
+    if (asInt) {
+      value = Math.round(value);
+    }
+
+    return value;
+  };
+
   const settingsCallback = (settings: Settings) => {
-    console.log(settings, midiOutputs);
     setOutputs(settings.midiOutputs);
     sequencer.output = settings.midiOutputs.length ? midiOutputs[settings.midiOutputs[0]] : null;
   };
+
+  if (!sequencer) {
+    return <div />;
+  }
+
+  const buttonStates = [[...Array(13)].map(() => ButtonState.inactive), [...Array(13)].map(() => ButtonState.inactive)];
+  if (!sequencer.paused) {
+    buttonStates[0][9] = ButtonState.active;
+  }
+  if ([Mode.CLEAR, Mode.COPY].includes(mode)) {
+    buttonStates[0][11] = ButtonState.active;
+  }
+  if (control) {
+    buttonStates[0][12] = ButtonState.active;
+  }
+  if ([Mode.BANKS, Mode.SELECT].includes(mode)) {
+    buttonStates[1][9] = ButtonState.active;
+  }
+  if ([Mode.PATTERNS, Mode.SAVE].includes(mode)) {
+    buttonStates[1][10] = ButtonState.active;
+  }
+  if ([Mode.TEMP, Mode.MULTI].includes(mode)) {
+    buttonStates[1][11] = ButtonState.active;
+  }
+  if ([Mode.MUTE].includes(mode)) {
+    buttonStates[1][12] = ButtonState.active;
+  }
+
+  if ([Mode.TRACKS, Mode.MUTE].includes(mode)) {
+  } else if ([Mode.BANKS].includes(mode)) {
+  } else if (
+    [
+      Mode.STEPS,
+      Mode.VELOCITY,
+      Mode.SUSTAIN,
+      Mode.REPEATS,
+      Mode.REPEAT_OFFSET,
+      Mode.ACCENT,
+      Mode.LENGTH,
+      Mode.TIMING,
+      Mode.DELAY,
+      Mode.RANDOM,
+      Mode.RANDOM_RATE,
+      Mode.TEMPO,
+    ].includes(mode)
+  ) {
+    const valueIndex = getValue({ interpolate: constants.maxSteps, asInt: true });
+    for (const rowStr of Object.keys(constants.buttons)) {
+      const row = parseInt(rowStr, 10);
+      for (const colStr of Object.keys(constants.buttons[row])) {
+        const col = parseInt(colStr, 10);
+        const index = row * 8 + col;
+        if (index <= valueIndex && col < 8) {
+          buttonStates[row][col] = ButtonState.active;
+        }
+      }
+    }
+  } else if ([Mode.CHANNEL, Mode.ACCENT_CURVE, Mode.MELODY, Mode.PHRASE, Mode.STYLE, Mode.ROOT, Mode.VOICING, Mode.MELODY].includes(mode)) {
+  } else if ([Mode.SCALE].includes(mode)) {
+  } else if ([Mode.DIVISION, Mode.REPEAT_TIME].includes(mode)) {
+  } else if ([Mode.PULSES, Mode.ROTATE, Mode.MANUAL_STEPS].includes(mode)) {
+  } else if ([Mode.PITCH].includes(mode)) {
+  }
 
   return (
     <div style={{ display: 'inline-block', background: '#ddd', position: 'relative' }}>
@@ -280,14 +308,14 @@ export function Torso() {
           <tr>
             {constants.buttons[0].map((b, i) => (
               <td key={i}>
-                <Button b={b} row={0} col={i} onClick={buttonPress} state={ButtonState.inactive} />
+                <Button b={b} row={0} col={i} onClick={buttonPress} state={buttonStates[0][i]} />
               </td>
             ))}
           </tr>
           <tr>
             {constants.buttons[1].map((b, i) => (
               <td key={i}>
-                <Button b={b} row={1} col={i} onClick={buttonPress} state={ButtonState.inactive} />
+                <Button b={b} row={1} col={i} onClick={buttonPress} state={buttonStates[1][i]} />
               </td>
             ))}
           </tr>

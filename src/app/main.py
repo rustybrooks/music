@@ -1008,9 +1008,9 @@ class App(Tk):
         self.configure_control_button(1, "active" if self.mode in [MODE_CLEAR, MODE_COPY] else "inactive")
         self.configure_control_button(2, "active" if self.control else "inactive")
         self.configure_control_button(3, "active" if self.mode in [MODE_BANKS, MODE_SELECT] else "inactive")
-        self.configure_control_button(4, "active" if self.mode in [MODE_PATTERNS, MODE_SAVE]  else "inactive")
-        self.configure_control_button(5, "active" if self.mode in [MODE_TEMP, MODE_MULTI]  else "inactive")
-        self.configure_control_button(6, "active" if self.mode in [MODE_MUTE]  else "inactive")
+        self.configure_control_button(4, "active" if self.mode in [MODE_PATTERNS, MODE_SAVE] else "inactive")
+        self.configure_control_button(5, "active" if self.mode in [MODE_TEMP, MODE_MULTI] else "inactive")
+        self.configure_control_button(6, "active" if self.mode in [MODE_MUTE] else "inactive")
 
         if self.mode in [MODE_TRACKS, MODE_MUTE]:
             for row in range(int(self.max_steps/8)):
