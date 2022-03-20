@@ -118,7 +118,7 @@ export function Torso() {
       return [propKey, lval[value]];
     }
 
-    const xxx = fmin + ((fmax - fmin) * valuePre) / interpolate;
+    // const xxx = fmin + ((fmax - fmin) * valuePre) / interpolate;
     // console.log('interpset', propKey, valuePre, value, interpolate, fmin, fmax, xxx, Math.round(xxx));
     // if (lval) {
     //   return [propKey, lval[value]];
@@ -183,13 +183,19 @@ export function Torso() {
     } else {
       value = ttrack[propKey];
     }
-    const origValue = value;
+    const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
+    let fmin = thisKnob.min;
+    let fmax = thisKnob.max;
 
-    if (interpolate) {
-      value = (interpolate * (value - thisKnob.min)) / (thisKnob.max - thisKnob.min);
+    if (lval) {
+      fmin = 0;
+      fmax = lval.length - 1;
     }
 
-    const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
+    if (interpolate) {
+      value = (interpolate * (value - fmin)) / (fmax - fmin);
+    }
+
     if (asInt || lval) {
       value = Math.round(value);
     }
@@ -409,7 +415,6 @@ export function Torso() {
       48: [1, 6],
     };
     const valueIndex = getValue({ asIndex: false });
-    // console.log('vindex', valueIndex);
     const [r, c] = dmap[valueIndex];
     for (const rowStr of Object.keys(constants.buttons)) {
       const row = parseInt(rowStr, 10);

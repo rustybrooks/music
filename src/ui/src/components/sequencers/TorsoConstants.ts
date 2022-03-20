@@ -107,7 +107,6 @@ export const knobs: Array<Array<Knob>> = [
       property: 'division',
       list: divisions,
       min: 0,
-      max: divisions.length - 1,
     },
     {
       label: 'velocity',
@@ -245,8 +244,6 @@ export const knobs: Array<Array<Knob>> = [
       list: scales,
       alt_mode: Mode.ROOT,
       alt_property: 'root',
-      min: 0,
-      max: scales.length - 1,
       alt_max: 12,
       type: 'int',
     },
