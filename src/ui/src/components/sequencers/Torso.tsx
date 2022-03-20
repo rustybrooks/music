@@ -90,12 +90,12 @@ export function Torso() {
       fmin = 0;
       fmax = knob.list.length - 1;
       ftype = 'int';
-      lval = knob.list;
+      // lval = knob.list;
     } else if (control && knob.alt_list) {
       fmin = 0;
       fmax = knob.alt_list.length - 1;
       ftype = 'int';
-      lval = knob.alt_list;
+      // lval = knob.alt_list;
     } else if (control) {
       fmin = knob.alt_min || knob.min;
       fmax = knob.alt_max || knob.max;
@@ -106,6 +106,7 @@ export function Torso() {
       ftype = knob.type;
     }
 
+    const valuePre = value;
     if (interpolate) {
       value = fmin + ((fmax - fmin) * value) / interpolate;
       if (ftype === 'int') {
@@ -116,12 +117,19 @@ export function Torso() {
     if (lval) {
       return [propKey, lval[value]];
     }
+
+    const xxx = fmin + ((fmax - fmin) * valuePre) / interpolate;
+    // console.log('interpset', propKey, valuePre, value, interpolate, fmin, fmax, xxx, Math.round(xxx));
+    // if (lval) {
+    //   return [propKey, lval[value]];
+    // }
     return [propKey, value];
   };
 
   const setValue = (value: any, interpolate: number = null) => {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
     const [propKey, newValue] = interpolateSetValue(value, interpolate);
+    // console.log('setValue', propKey, newValue);
     if (propKey === 'bpm') {
       sequencer.setBPM(value);
     } else if (isFunction(propKey)) {
@@ -170,23 +178,24 @@ export function Torso() {
     let value;
     if (isFunction(ttrack[propKey])) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-ignores
       value = ttrack[propKey]();
     } else {
       value = ttrack[propKey];
     }
-
-    const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
+    const origValue = value;
 
     if (interpolate) {
       value = (interpolate * (value - thisKnob.min)) / (thisKnob.max - thisKnob.min);
     }
 
-    if (asInt) {
+    const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
+    if (asInt || lval) {
       value = Math.round(value);
     }
 
     if (!asIndex && lval) {
+      // console.log('!asindex', propKey, value, origValue, interpolate, thisKnob.min, thisKnob.max);
       value = lval[value];
     }
 
@@ -374,8 +383,8 @@ export function Torso() {
       augmented: [1, 5],
       pentatonic_minor: [1, 6],
     };
-    const valueIndex = getValue({ interpolate: constants.maxSteps, asIndex: false });
-    console.log('vindex', valueIndex);
+    const valueIndex = getValue({ asIndex: false });
+    // console.log('vindex', valueIndex);
     const [r, c] = dmap[valueIndex];
     for (const rowStr of Object.keys(constants.buttons)) {
       const row = parseInt(rowStr, 10);
@@ -399,8 +408,8 @@ export function Torso() {
       24: [1, 5],
       48: [1, 6],
     };
-    const valueIndex = getValue({ interpolate: constants.maxSteps, asIndex: false });
-    console.log('vindex', valueIndex);
+    const valueIndex = getValue({ asIndex: false });
+    // console.log('vindex', valueIndex);
     const [r, c] = dmap[valueIndex];
     for (const rowStr of Object.keys(constants.buttons)) {
       const row = parseInt(rowStr, 10);
