@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 
 function pauseEvent<T>(e: MouseEvent<T>) {
   if (e.stopPropagation) e.stopPropagation();
@@ -10,6 +10,7 @@ export function Knob({
   k,
   pressed,
   control,
+  percent,
   pressCallback,
   releaseCallback,
   rotateCallback,
@@ -17,6 +18,7 @@ export function Knob({
   k: any;
   pressed: boolean;
   control: boolean;
+  percent: number;
   pressCallback: any;
   releaseCallback: any;
   rotateCallback: any;
@@ -28,12 +30,12 @@ export function Knob({
   };
 
   const [mousePressed, setMousePressed] = useState(false);
-  const [origin, setOrigin] = useState(null);
-  const [percent, setPercent] = useState(0);
+  const [delta, setDelta] = useState(0);
+  const [startPercent, setStartPercent] = useState(0);
 
   const onMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    setStartPercent(percent);
     setMousePressed(true);
-    setOrigin([event.clientX, event.clientY]);
     pauseEvent(event);
     pressCallback();
   };
@@ -45,12 +47,17 @@ export function Knob({
 
   const onMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     if (mousePressed) {
-      const deltaY = event.clientY - origin[1];
-      const p = Math.max(Math.min(Math.round(deltaY * 1.5), 100), 0);
-      setPercent(p);
-      rotateCallback(p);
+      const p = event.movementY * -1.5;
+      setDelta(delta + p);
     }
   };
+
+  useEffect(() => {
+    const newValue = Math.max(Math.min(startPercent + delta, 100), 0);
+    if (delta !== 0 && newValue !== startPercent) {
+      rotateCallback(newValue);
+    }
+  }, [delta]);
 
   let color = colors.normal;
   if (pressed) {

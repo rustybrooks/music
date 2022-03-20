@@ -64,87 +64,6 @@ export function Torso() {
     return s;
   }, []);
 
-  const buttonPress = (row: number, col: number) => {};
-
-  const pushMode = (m: Mode) => {
-    setModes([...modes, m]);
-  };
-
-  const popMode = () => {
-    setModes(modes.slice(0, modes.length - 1));
-  };
-
-  const pressKnob = (knob: constants.Knob) => {
-    if (control) {
-      if (knob.alt_mode) {
-        pushMode(knob.alt_mode);
-      }
-    } else {
-      pushMode(knob.mode);
-    }
-  };
-
-  const releaseKnob = (knob: constants.Knob) => {
-    popMode();
-  };
-
-  const rotateKnob = (knob: constants.Knob, percent: number) => {
-    console.log('rotateknob', percent, knob);
-    setValue(percent, 100);
-    setFoo(foo + 1);
-  };
-
-  const keyAction = (key: string, release: boolean) => {
-    if (key in keyMap) {
-      const x = keyMap[key];
-      if (x[0] === 'knob') {
-        const knob = constants.knobs[x[1]][x[2]];
-        if (release) {
-          releaseKnob(knob);
-        } else {
-          pressKnob(knob);
-        }
-      }
-    } else if (key === 'Control') {
-      setControl(!release);
-    }
-  };
-
-  const keyPress = (key: string) => {
-    keyAction(key, false);
-  };
-
-  const keyRelease = (key: string) => {
-    hasPrevKeyPress.current[key] = null;
-    keyAction(key, true);
-  };
-
-  const keyPressRepeat = (key: string) => {
-    if (!hasPrevKeyPress.current[key]) {
-      keyPress(key);
-      hasPrevKeyPress.current[key] = 1;
-    }
-  };
-
-  const handleKeyDown = (event: KeyboardEvent): any => {
-    keyPressRepeat(event.key);
-  };
-
-  const handleKeyUp = (event: KeyboardEvent): any => {
-    keyRelease(event.key);
-  };
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown, false);
-    window.addEventListener('keyup', handleKeyUp, false);
-
-    // cleanup this component
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [handleKeyDown]);
-
   const interpolateSetValue = (value: any, interpolate: number = null): [keyof TorsoTrack, any] => {
     const knob = getKnob(mode);
     if (!knob) {
@@ -273,6 +192,86 @@ export function Torso() {
     return value;
   };
 
+  const buttonPress = (row: number, col: number) => {};
+
+  const pushMode = (m: Mode) => {
+    setModes([...modes, m]);
+  };
+
+  const popMode = () => {
+    setModes(modes.slice(0, modes.length - 1));
+  };
+
+  const pressKnob = (knob: constants.Knob) => {
+    if (control) {
+      if (knob.alt_mode) {
+        pushMode(knob.alt_mode);
+      }
+    } else {
+      pushMode(knob.mode);
+    }
+  };
+
+  const releaseKnob = (knob: constants.Knob) => {
+    popMode();
+  };
+
+  const rotateKnob = (knob: constants.Knob, percent: number) => {
+    setValue(percent, 100);
+    setFoo(foo + 1);
+  };
+
+  const keyAction = (key: string, release: boolean) => {
+    if (key in keyMap) {
+      const x = keyMap[key];
+      if (x[0] === 'knob') {
+        const knob = constants.knobs[x[1]][x[2]];
+        if (release) {
+          releaseKnob(knob);
+        } else {
+          pressKnob(knob);
+        }
+      }
+    } else if (key === 'Control') {
+      setControl(!release);
+    }
+  };
+
+  const keyPress = (key: string) => {
+    keyAction(key, false);
+  };
+
+  const keyRelease = (key: string) => {
+    hasPrevKeyPress.current[key] = null;
+    keyAction(key, true);
+  };
+
+  const keyPressRepeat = (key: string) => {
+    if (!hasPrevKeyPress.current[key]) {
+      keyPress(key);
+      hasPrevKeyPress.current[key] = 1;
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent): any => {
+    keyPressRepeat(event.key);
+  };
+
+  const handleKeyUp = (event: KeyboardEvent): any => {
+    keyRelease(event.key);
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown, false);
+    window.addEventListener('keyup', handleKeyUp, false);
+
+    // cleanup this component
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [handleKeyDown]);
+
   const settingsCallback = (settings: Settings) => {
     setOutputs(settings.midiOutputs);
     sequencer.output = settings.midiOutputs.length ? midiOutputs[settings.midiOutputs[0]] : null;
@@ -355,6 +354,7 @@ export function Torso() {
                     (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
                     (!control && k.mode && k.mode === modes[modes.length - 1])
                   }
+                  percent={getValue({ knob: k, interpolate: 100 })}
                   control={control}
                   pressCallback={() => pressKnob(k)}
                   releaseCallback={() => releaseKnob(k)}
@@ -373,6 +373,7 @@ export function Torso() {
                     (!control && k.mode && k.mode === modes[modes.length - 1])
                   }
                   control={control}
+                  percent={getValue({ knob: k, interpolate: 100 })}
                   pressCallback={() => pressKnob(k)}
                   releaseCallback={() => releaseKnob(k)}
                   rotateCallback={(p: number) => rotateKnob(k, p)}
