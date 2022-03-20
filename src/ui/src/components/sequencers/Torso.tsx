@@ -68,10 +68,10 @@ export function Torso() {
     const knob = getKnob(mode);
     if (!knob) {
       console.log(`no map for mode=${mode}`);
-      return null;
+      return [null, null];
     }
 
-    if (!knob.alt_property) {
+    if (control && !knob.alt_property) {
       console.log(`No alt property for mode=${mode}`);
       return [null, null];
     }
@@ -177,9 +177,6 @@ export function Torso() {
     }
 
     const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
-    if (asIndex && lval) {
-      value = lval.indexOf(value);
-    }
 
     if (interpolate) {
       value = (interpolate * (value - thisKnob.min)) / (thisKnob.max - thisKnob.min);
@@ -187,6 +184,10 @@ export function Torso() {
 
     if (asInt) {
       value = Math.round(value);
+    }
+
+    if (!asIndex && lval) {
+      value = lval[value];
     }
 
     return value;
@@ -305,7 +306,25 @@ export function Torso() {
   }
 
   if ([Mode.TRACKS, Mode.MUTE].includes(mode)) {
+    for (const rowStr of Object.keys(constants.buttons)) {
+      const row = parseInt(rowStr, 10);
+      for (const colStr of Object.keys(constants.buttons[row])) {
+        const col = parseInt(colStr, 10);
+        const index = row * 8 + col;
+        const ttrack = sequencer.getTrack(trackKey(bank, pattern, index), false);
+        if (index === track && col < 8) {
+          buttonStates[row][col] = ButtonState.active;
+        } else if (ttrack && !ttrack.muted) {
+          buttonStates[row][col] = ButtonState.secondary;
+        } else if (ttrack && ttrack.muted) {
+          buttonStates[row][col] = ButtonState.passive;
+        }
+      }
+    }
+  } else if ([Mode.PATTERNS].includes(mode)) {
+    // ?
   } else if ([Mode.BANKS].includes(mode)) {
+    // ?
   } else if (
     [
       Mode.STEPS,
@@ -334,9 +353,79 @@ export function Torso() {
       }
     }
   } else if ([Mode.CHANNEL, Mode.ACCENT_CURVE, Mode.MELODY, Mode.PHRASE, Mode.STYLE, Mode.ROOT, Mode.VOICING, Mode.MELODY].includes(mode)) {
+    const valueIndex = getValue({ interpolate: constants.maxSteps, asInt: true });
+    for (const rowStr of Object.keys(constants.buttons)) {
+      const row = parseInt(rowStr, 10);
+      for (const colStr of Object.keys(constants.buttons[row])) {
+        const col = parseInt(colStr, 10);
+        const index = row * 8 + col;
+        if (index === valueIndex && col < 8) {
+          buttonStates[row][col] = ButtonState.active;
+        }
+      }
+    }
   } else if ([Mode.SCALE].includes(mode)) {
+    const dmap: { [id: string]: number[] } = {
+      chromatic: [1, 0],
+      major: [1, 1],
+      harmonic_minor: [1, 2],
+      melodic_minor: [1, 3],
+      hexatonic: [1, 4],
+      augmented: [1, 5],
+      pentatonic_minor: [1, 6],
+    };
+    const valueIndex = getValue({ interpolate: constants.maxSteps, asIndex: false });
+    console.log('vindex', valueIndex);
+    const [r, c] = dmap[valueIndex];
+    for (const rowStr of Object.keys(constants.buttons)) {
+      const row = parseInt(rowStr, 10);
+      for (const colStr of Object.keys(constants.buttons[row])) {
+        const col = parseInt(colStr, 10);
+        if (row === r && col === c) buttonStates[row][col] = ButtonState.active;
+      }
+    }
   } else if ([Mode.DIVISION, Mode.REPEAT_TIME].includes(mode)) {
+    const dmap: { [id: number]: number[] } = {
+      1: [0, 0],
+      2: [0, 1],
+      4: [0, 2],
+      8: [0, 3],
+      16: [0, 4],
+      32: [0, 5],
+      64: [0, 6],
+      3: [1, 2],
+      6: [1, 3],
+      12: [1, 4],
+      24: [1, 5],
+      48: [1, 6],
+    };
+    const valueIndex = getValue({ interpolate: constants.maxSteps, asIndex: false });
+    console.log('vindex', valueIndex);
+    const [r, c] = dmap[valueIndex];
+    for (const rowStr of Object.keys(constants.buttons)) {
+      const row = parseInt(rowStr, 10);
+      for (const colStr of Object.keys(constants.buttons[row])) {
+        const col = parseInt(colStr, 10);
+        if (row === r && col === c) buttonStates[row][col] = ButtonState.active;
+      }
+    }
   } else if ([Mode.PULSES, Mode.ROTATE, Mode.MANUAL_STEPS].includes(mode)) {
+    const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
+    const seq = ttrack.getSequence();
+    const man_knob = getKnob(Mode.MANUAL_STEPS);
+    const man_steps = getValue({ knob: man_knob, useControl: true });
+    for (const rowStr of Object.keys(constants.buttons)) {
+      const row = parseInt(rowStr, 10);
+      for (const colStr of Object.keys(constants.buttons[row])) {
+        const col = parseInt(colStr, 10);
+        const index = row * 8 + col;
+        if (man_steps[(index - ttrack.getRotate()) % seq.length]) {
+          buttonStates[row][col] = ButtonState.active;
+        } else if (seq[(index - ttrack.getRotate()) % seq.length]) {
+          buttonStates[row][col] = ButtonState.secondary;
+        }
+      }
+    }
   } else if ([Mode.PITCH].includes(mode)) {
   }
 

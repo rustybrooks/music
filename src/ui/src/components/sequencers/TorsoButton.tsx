@@ -1,12 +1,14 @@
 export enum ButtonState {
   inactive,
   active,
+  passive,
   secondary,
 }
 
 const colors = {
   [ButtonState.inactive]: '#999',
   [ButtonState.active]: '#FF9',
+  [ButtonState.passive]: '#bd9',
   [ButtonState.secondary]: '#F99',
 };
 
