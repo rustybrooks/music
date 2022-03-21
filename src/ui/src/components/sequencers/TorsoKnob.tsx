@@ -6,7 +6,7 @@ function pauseEvent<T>(e: MouseEvent<T>) {
   return false;
 }
 
-export function Knob({
+export function TorsoKnob({
   k,
   pressed,
   control,

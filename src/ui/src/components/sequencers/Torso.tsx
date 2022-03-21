@@ -9,8 +9,8 @@ import { MidiOutputs } from '../../types';
 import './Torso.css';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
-import { Button, ButtonState } from './TorsoButton';
-import { Knob } from './TorsoKnob';
+import { TorsoButton, ButtonState } from './TorsoButton';
+import { TorsoKnob } from './TorsoKnob';
 
 function trackKey(bank: number, pattern: number, track: number) {
   return `${bank}:${pattern}:${track}`;
@@ -208,7 +208,9 @@ export function Torso() {
     return value;
   };
 
-  const buttonPress = (row: number, col: number) => {};
+  const buttonPress = (row: number, col: number) => {
+    console.log(row, col);
+  };
 
   const pushMode = (m: Mode) => {
     setModes([...modes, m]);
@@ -247,6 +249,8 @@ export function Torso() {
         } else {
           pressKnob(knob);
         }
+      } else if (x[0] === 'button') {
+        buttonPress(x[1], x[2]);
       }
     } else if (key === 'Control') {
       setControl(!release);
@@ -254,6 +258,7 @@ export function Torso() {
   };
 
   const keyPress = (key: string) => {
+    console.log('keypress', key);
     keyAction(key, false);
   };
 
@@ -451,7 +456,7 @@ export function Torso() {
           <tr>
             {constants.knobs[0].map((k, i) => (
               <td key={i}>
-                <Knob
+                <TorsoKnob
                   k={k}
                   pressed={
                     (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
@@ -469,7 +474,7 @@ export function Torso() {
           <tr>
             {constants.knobs[1].map((k, i) => (
               <td key={i}>
-                <Knob
+                <TorsoKnob
                   k={k}
                   pressed={
                     (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
@@ -492,14 +497,14 @@ export function Torso() {
           <tr>
             {constants.buttons[0].map((b, i) => (
               <td key={i}>
-                <Button b={b} row={0} col={i} onClick={buttonPress} state={buttonStates[0][i]} />
+                <TorsoButton b={b} row={0} col={i} onClick={buttonPress} state={buttonStates[0][i]} />
               </td>
             ))}
           </tr>
           <tr>
             {constants.buttons[1].map((b, i) => (
               <td key={i}>
-                <Button b={b} row={1} col={i} onClick={buttonPress} state={buttonStates[1][i]} />
+                <TorsoButton b={b} row={1} col={i} onClick={buttonPress} state={buttonStates[1][i]} />
               </td>
             ))}
           </tr>

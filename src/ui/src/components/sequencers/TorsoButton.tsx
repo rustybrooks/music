@@ -12,7 +12,7 @@ const colors = {
   [ButtonState.secondary]: '#F99',
 };
 
-export function Button({
+export function TorsoButton({
   b,
   onClick,
   row,
