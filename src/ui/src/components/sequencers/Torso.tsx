@@ -11,6 +11,7 @@ import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencer
 import { note_to_number, NoteType } from '../../lib/Note';
 import { TorsoButton, ButtonState } from './TorsoButton';
 import { TorsoKnob } from './TorsoKnob';
+import { accentCurves, divisions, phrases, scales, styles } from '../../lib/sequencers/TorsoConstants';
 
 function trackKey(bank: number, pattern: number, track: number) {
   return `${bank}:${pattern}:${track}`;
@@ -155,7 +156,7 @@ export function Torso() {
     asInt?: boolean;
     asIndex?: boolean;
     useControl?: boolean;
-  }) => {
+  } = {}) => {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
     const thisKnob = knob || getKnob(mode);
     const thisControl = useControl != null ? useControl : control;
@@ -208,8 +209,117 @@ export function Torso() {
     return value;
   };
 
+  const buttonCommand = (row: number, col: number, press = false) => {
+    const button = constants.buttons[row][col];
+    let cmd = null;
+    if (button.length > 3) {
+      cmd = button[3][press ? 0 : 1];
+    }
+
+    // return cmd && cmd();
+  };
+  /*
+      def button_command(self, row, col, bank, press=False):
+        button = self.buttons[bank][row][col]
+        if len(button) > 3:
+            cmd = button[3][0 if press else 1]
+        else:
+            cmd = None
+
+        return cmd if not cmd else getattr(self, cmd)
+   */
+
   const buttonPress = (row: number, col: number) => {
-    console.log(row, col);
+    const index = row * 8 + col;
+    if (col < 8) {
+      if ([Mode.TRACKS].includes(mode)) {
+        setTrack(index);
+      } else if ([Mode.PATTERNS].includes(mode)) {
+        setPattern(index);
+      } else if ([Mode.BANKS].includes(mode)) {
+        setBank(index);
+      } else if ([Mode.MUTE].includes(mode)) {
+        const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
+        ttrack.muted = !ttrack.muted;
+      } else if ([Mode.PITCH].includes(mode)) {
+        /*
+        button_text = self.w_buttons[0][index].cget("text")
+        print(button_text)
+        if button_text == "UP":
+            self.pitch_octave = min(self.pitch_octave + 1, 6)
+        elif button_text == "DN":
+            self.pitch_octave = max(self.pitch_octave - 1, 0)
+        else:
+            track = self.torso.get_track((self.bank, self.pattern, self.track))
+            note_vals = track.notes
+            note = notes.notestr_to_number(button_text)
+            print(f"before note={note} note_vals={note_vals}")
+            try:
+                i = note_vals.index(note)
+                note_vals.pop(i)
+            except ValueError:
+                note_vals.append(note)
+
+            print(f"after note={note} note_vals={note_vals}")
+            track.notes = note_vals
+         */
+      } else if ([Mode.CHANNEL, Mode.ACCENT_CURVE, Mode.MELODY, Mode.PHRASE, Mode.STYLE].includes(mode)) {
+        // if (!pattern || !bank || !track) {
+        //   console.log(`need pattern or bank - bank=${bank} pattern=${pattern} track=${track}`);
+        //   return;
+        // }
+        setValue(index);
+      } else if (
+        [
+          Mode.STEPS,
+          Mode.PULSES,
+          Mode.ROTATE,
+          Mode.REPEATS,
+          Mode.REPEAT_OFFSET,
+          Mode.VOICING,
+          Mode.VELOCITY,
+          Mode.SUSTAIN,
+          Mode.PITCH,
+          Mode.REPEAT_PACE,
+          Mode.MELODY,
+          Mode.PHRASE,
+          Mode.ACCENT,
+          Mode.ACCENT_CURVE,
+          Mode.ROOT,
+          Mode.TIMING,
+          Mode.DELAY,
+          Mode.TEMPO,
+        ].includes(mode)
+      ) {
+        // if (!pattern || !bank || !track) {
+        //   console.log(`need pattern or bank - bank=${bank} pattern=${pattern} track=${track}`);
+        //   return;
+        // }
+        console.log('setvalue', index, constants.maxSteps);
+        setValue(index, constants.maxSteps);
+      } else if ([Mode.SCALE].includes(mode)) {
+        const imap: { [id: number]: string } = {
+          8: 'chromatic',
+          9: 'major',
+          10: 'harmonic_minor',
+          11: 'melodic_minor',
+          12: 'hexatonic',
+          13: 'augmented',
+          14: 'pentatonic_minor',
+        };
+        if (index in imap) {
+          setValue(scales.indexOf(imap[index]));
+        }
+      } else if ([Mode.DIVISION].includes(mode)) {
+        // pass
+      } else if ([Mode.MANUAL_STEPS].includes(mode)) {
+        const steps = getValue();
+        steps[index] = !steps[index];
+      }
+    } else {
+      // command buttons
+    }
+    setFoo(foo + 1);
   };
 
   const pushMode = (m: Mode) => {
