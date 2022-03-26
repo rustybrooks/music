@@ -14,7 +14,8 @@ const colors = {
 
 export function TorsoButton({
   b,
-  onClick,
+  onMouseDown,
+  onMouseUp,
   row,
   col,
   state,
@@ -22,7 +23,8 @@ export function TorsoButton({
   b: any;
   row: number;
   col: number;
-  onClick?: (r: number, c: number) => void;
+  onMouseDown?: (r: number, c: number) => void;
+  onMouseUp?: (r: number, c: number) => void;
   state: ButtonState;
 }) {
   if (!b.length) {
@@ -30,7 +32,7 @@ export function TorsoButton({
   }
 
   return (
-    <div className="torso-button" onClick={() => onClick(row, col)}>
+    <div className="torso-button" onMouseDown={() => onMouseDown(row, col)} onMouseUp={() => onMouseUp(row, col)}>
       <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" style={{ margin: 0, padding: 0 }}>
         <rect fill={colors[state]} width="15.5" height="15.5" x="0.25" y="0.25" stroke="#666" strokeWidth=".5" strokeOpacity="1" />
         <text alignmentBaseline="middle" textAnchor="middle" x="8" y="8" className="button-label">

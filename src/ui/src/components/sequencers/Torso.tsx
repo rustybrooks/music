@@ -9,9 +9,9 @@ import { MidiOutputs } from '../../types';
 import './Torso.css';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType } from '../../lib/Note';
-import { TorsoButton, ButtonState } from './TorsoButton';
+import { ButtonState, TorsoButton } from './TorsoButton';
 import { TorsoKnob } from './TorsoKnob';
-import { accentCurves, divisions, phrases, scales, styles } from '../../lib/sequencers/TorsoConstants';
+import { scales } from '../../lib/sequencers/TorsoConstants';
 
 function trackKey(bank: number, pattern: number, track: number) {
   return `${bank}:${pattern}:${track}`;
@@ -209,6 +209,20 @@ export function Torso() {
     return value;
   };
 
+  const pushMode = (m: Mode, ma: Mode) => {
+    if (control) {
+      if (ma) {
+        setModes([...modes, ma]);
+      }
+    } else {
+      setModes([...modes, m]);
+    }
+  };
+
+  const popMode = () => {
+    setModes(modes.slice(0, modes.length - 1));
+  };
+
   const buttonCommand = (row: number, col: number, press = false) => {
     const button = constants.buttons[row][col];
     let cmd = null;
@@ -216,18 +230,26 @@ export function Torso() {
       cmd = button[3][press ? 0 : 1];
     }
 
-    // return cmd && cmd();
+    if (cmd === 'play_pause') {
+      sequencer.playPause();
+    } else if (cmd === 'set_clear') {
+      pushMode(Mode.CLEAR, Mode.COPY);
+    } else if (cmd === 'set_control') {
+      setControl(true);
+    } else if (cmd === 'release_control') {
+      setControl(false);
+    } else if (cmd === 'set_bank') {
+      pushMode(Mode.BANKS, Mode.SAVE);
+    } else if (cmd === 'set_pattern') {
+      pushMode(Mode.PATTERNS, Mode.SELECT);
+    } else if (cmd === 'set_mute') {
+      pushMode(Mode.MUTE, null);
+    } else if (cmd === 'set_temp') {
+      pushMode(Mode.TEMP, Mode.MULTI);
+    } else if (cmd === 'release_mode') {
+      popMode();
+    }
   };
-  /*
-      def button_command(self, row, col, bank, press=False):
-        button = self.buttons[bank][row][col]
-        if len(button) > 3:
-            cmd = button[3][0 if press else 1]
-        else:
-            cmd = None
-
-        return cmd if not cmd else getattr(self, cmd)
-   */
 
   const buttonPress = (row: number, col: number) => {
     const index = row * 8 + col;
@@ -317,27 +339,18 @@ export function Torso() {
         steps[index] = !steps[index];
       }
     } else {
-      // command buttons
+      buttonCommand(row, col, true);
     }
-    setFoo(foo + 1);
   };
 
-  const pushMode = (m: Mode) => {
-    setModes([...modes, m]);
-  };
-
-  const popMode = () => {
-    setModes(modes.slice(0, modes.length - 1));
+  const buttonRelease = (row: number, col: number) => {
+    if (col >= 8) {
+      buttonCommand(row, col, false);
+    }
   };
 
   const pressKnob = (knob: constants.Knob) => {
-    if (control) {
-      if (knob.alt_mode) {
-        pushMode(knob.alt_mode);
-      }
-    } else {
-      pushMode(knob.mode);
-    }
+    pushMode(knob.mode, knob.alt_mode);
   };
 
   const releaseKnob = (knob: constants.Knob) => {
@@ -360,7 +373,11 @@ export function Torso() {
           pressKnob(knob);
         }
       } else if (x[0] === 'button') {
-        buttonPress(x[1], x[2]);
+        if (release) {
+          buttonRelease(x[1], x[2]);
+        } else {
+          buttonPress(x[1], x[2]);
+        }
       }
     } else if (key === 'Control') {
       setControl(!release);
@@ -607,14 +624,14 @@ export function Torso() {
           <tr>
             {constants.buttons[0].map((b, i) => (
               <td key={i}>
-                <TorsoButton b={b} row={0} col={i} onClick={buttonPress} state={buttonStates[0][i]} />
+                <TorsoButton b={b} row={0} col={i} onMouseDown={buttonPress} onMouseUp={buttonRelease} state={buttonStates[0][i]} />
               </td>
             ))}
           </tr>
           <tr>
             {constants.buttons[1].map((b, i) => (
               <td key={i}>
-                <TorsoButton b={b} row={1} col={i} onClick={buttonPress} state={buttonStates[1][i]} />
+                <TorsoButton b={b} row={1} col={i} onMouseDown={buttonPress} onMouseUp={buttonRelease} state={buttonStates[1][i]} />
               </td>
             ))}
           </tr>
