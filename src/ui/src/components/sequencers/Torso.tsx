@@ -39,6 +39,9 @@ export function Torso() {
   // const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [, setOutputs] = useState([]);
 
+  const buttonStates = [[...Array(13)].map(() => ButtonState.inactive), [...Array(13)].map(() => ButtonState.inactive)];
+  const buttonText = [[...Array(13)].map(() => ''), [...Array(13)].map(() => '')];
+
   const mode = modes.slice(-1)[0];
 
   const sequencer = useMemo(() => {
@@ -260,32 +263,32 @@ export function Torso() {
         const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
         ttrack.muted = !ttrack.muted;
       } else if ([Mode.PITCH].includes(mode)) {
-        /*
-        button_text = self.w_buttons[0][index].cget("text")
-        print(button_text)
-        if button_text == "UP":
-            self.pitch_octave = min(self.pitch_octave + 1, 6)
-        elif button_text == "DN":
-            self.pitch_octave = max(self.pitch_octave - 1, 0)
-        else:
-            track = self.torso.get_track((self.bank, self.pattern, self.track))
-            note_vals = track.notes
-            note = notes.notestr_to_number(button_text)
-            print(f"before note={note} note_vals={note_vals}")
-            try:
-                i = note_vals.index(note)
-                note_vals.pop(i)
-            except ValueError:
-                note_vals.append(note)
-
-            print(f"after note={note} note_vals={note_vals}")
-            track.notes = note_vals
-         */
+        if (col === 7) {
+          if (row === 0) {
+            setPitchOctave(Math.min(pitchOctave + 1, 6));
+          } else {
+            setPitchOctave(Math.max(pitchOctave - 1, 0));
+          }
+        } else {
+          const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
+          const noteVals = ttrack.getNotes();
+          const btext = buttonText[row][col];
+          if (btext.length) {
+            const n1 = btext.slice(0, -1);
+            const n2 = parseInt(btext.slice(-1), 10);
+            const note = note_to_number([n1, n2]);
+            console.log('!!!', [n1, n2], note, noteVals.includes(note));
+            if (noteVals.includes(note)) {
+              const ind = noteVals.indexOf(note);
+              noteVals.splice(ind, 1);
+            } else {
+              noteVals.push(note);
+            }
+            ttrack.setNotes(noteVals);
+            setFoo(foo + 1);
+          }
+        }
       } else if ([Mode.CHANNEL, Mode.ACCENT_CURVE, Mode.MELODY, Mode.PHRASE, Mode.STYLE].includes(mode)) {
-        // if (!pattern || !bank || !track) {
-        //   console.log(`need pattern or bank - bank=${bank} pattern=${pattern} track=${track}`);
-        //   return;
-        // }
         setValue(index);
       } else if (
         [
@@ -297,7 +300,6 @@ export function Torso() {
           Mode.VOICING,
           Mode.VELOCITY,
           Mode.SUSTAIN,
-          Mode.PITCH,
           Mode.REPEAT_PACE,
           Mode.MELODY,
           Mode.PHRASE,
@@ -309,11 +311,6 @@ export function Torso() {
           Mode.TEMPO,
         ].includes(mode)
       ) {
-        // if (!pattern || !bank || !track) {
-        //   console.log(`need pattern or bank - bank=${bank} pattern=${pattern} track=${track}`);
-        //   return;
-        // }
-        console.log('setvalue', index, constants.maxSteps);
         setValue(index, constants.maxSteps);
       } else if ([Mode.SCALE].includes(mode)) {
         const imap: { [id: number]: string } = {
@@ -425,7 +422,6 @@ export function Torso() {
     return <div />;
   }
 
-  const buttonStates = [[...Array(13)].map(() => ButtonState.inactive), [...Array(13)].map(() => ButtonState.inactive)];
   if (!sequencer.paused) {
     buttonStates[0][9] = ButtonState.active;
   }
@@ -570,90 +566,124 @@ export function Torso() {
     }
   } else if ([Mode.PITCH].includes(mode)) {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
-    const ourNotes = ttrack.getNotes().map(n => number_to_note(n));
+    const ourNotes = ttrack.getNotes();
 
     // white keys
     ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach((n, i) => {
       const row = 1;
       const col = i;
-      const this_n: NoteType = [n, n ? pitchOctave : 0];
+      const this_n = note_to_number([n, n ? pitchOctave : 0]);
       buttonStates[row][col] = ourNotes.includes(this_n) ? ButtonState.whiteActive : ButtonState.whiteInactive;
+      buttonText[row][col] = number_to_note(this_n).join('');
     });
 
     // black keys
     ['', 'C#', 'D#', '', 'F#', 'G#', 'A#'].forEach((n, i) => {
       const row = 0;
       const col = i;
-      const this_n: NoteType = [n, n ? pitchOctave : 0];
-      buttonStates[row][col] = ourNotes.includes(this_n) ? ButtonState.blackActive : ButtonState.blackInactive;
+      const this_n = note_to_number([n, n ? pitchOctave : 0]);
+      if (n.length) {
+        buttonStates[row][col] = ourNotes.includes(this_n) ? ButtonState.blackActive : ButtonState.blackInactive;
+        buttonText[row][col] = number_to_note(this_n).join('');
+      }
     });
 
-    buttonStates[0][7] = ButtonState.whiteInactive;
-    buttonStates[0][15] = ButtonState.whiteInactive;
+    buttonStates[0][7] = ButtonState.secondary;
+    buttonStates[1][7] = ButtonState.secondary;
   }
 
   return (
-    <div style={{ display: 'inline-block', background: '#ddd', position: 'relative' }}>
-      <MidiConfig settingsCallback={settingsCallback} />
-      <table style={{ width: '100%' }}>
-        <tbody>
-          <tr>
-            {constants.knobs[0].map((k, i) => (
-              <td key={i}>
-                <TorsoKnob
-                  k={k}
-                  pressed={
-                    (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
-                    (!control && k.mode && k.mode === modes[modes.length - 1])
-                  }
-                  percent={getValue({ knob: k, interpolate: 100 })}
-                  control={control}
-                  pressCallback={() => pressKnob(k)}
-                  releaseCallback={() => releaseKnob(k)}
-                  rotateCallback={(p: number) => rotateKnob(k, p)}
-                />
-              </td>
-            ))}
-          </tr>
-          <tr>
-            {constants.knobs[1].map((k, i) => (
-              <td key={i}>
-                <TorsoKnob
-                  k={k}
-                  pressed={
-                    (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
-                    (!control && k.mode && k.mode === modes[modes.length - 1])
-                  }
-                  control={control}
-                  percent={getValue({ knob: k, interpolate: 100 })}
-                  pressCallback={() => pressKnob(k)}
-                  releaseCallback={() => releaseKnob(k)}
-                  rotateCallback={(p: number) => rotateKnob(k, p)}
-                />
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+    <div style={{ display: 'flex' }}>
+      <div style={{ display: 'inline-block', background: '#ddd', position: 'relative' }}>
+        <MidiConfig settingsCallback={settingsCallback} />
+        <table style={{ width: '100%' }}>
+          <tbody>
+            <tr>
+              {constants.knobs[0].map((k, i) => (
+                <td key={i}>
+                  <TorsoKnob
+                    k={k}
+                    pressed={
+                      (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
+                      (!control && k.mode && k.mode === modes[modes.length - 1])
+                    }
+                    percent={getValue({ knob: k, interpolate: 100 })}
+                    control={control}
+                    pressCallback={() => pressKnob(k)}
+                    releaseCallback={() => releaseKnob(k)}
+                    rotateCallback={(p: number) => rotateKnob(k, p)}
+                  />
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {constants.knobs[1].map((k, i) => (
+                <td key={i}>
+                  <TorsoKnob
+                    k={k}
+                    pressed={
+                      (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
+                      (!control && k.mode && k.mode === modes[modes.length - 1])
+                    }
+                    control={control}
+                    percent={getValue({ knob: k, interpolate: 100 })}
+                    pressCallback={() => pressKnob(k)}
+                    releaseCallback={() => releaseKnob(k)}
+                    rotateCallback={(p: number) => rotateKnob(k, p)}
+                  />
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
 
-      <table style={{ width: '100%', paddingLeft: '1rem' }}>
-        <tbody>
-          <tr>
-            {constants.buttons[0].map((b, i) => (
-              <td key={i}>
-                <TorsoButton b={b} row={0} col={i} onMouseDown={buttonPress} onMouseUp={buttonRelease} state={buttonStates[0][i]} />
+        <table style={{ width: '100%', paddingLeft: '1rem' }}>
+          <tbody>
+            <tr>
+              {constants.buttons[0].map((b, i) => (
+                <td key={i}>
+                  <TorsoButton
+                    b={b}
+                    row={0}
+                    col={i}
+                    onMouseDown={buttonPress}
+                    onMouseUp={buttonRelease}
+                    state={buttonStates[0][i]}
+                    text={buttonText[0][i]}
+                  />
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {constants.buttons[1].map((b, i) => (
+                <td key={i}>
+                  <TorsoButton
+                    b={b}
+                    row={1}
+                    col={i}
+                    onMouseDown={buttonPress}
+                    onMouseUp={buttonRelease}
+                    state={buttonStates[1][i]}
+                    text={buttonText[1][i]}
+                  />
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style={{ minWidth: '20em', padding: '1em' }}>
+        <table>
+          <tbody>
+            <tr>
+              <td>Index</td>
+              <td>
+                {bank}:{pattern}:{track}
               </td>
-            ))}
-          </tr>
-          <tr>
-            {constants.buttons[1].map((b, i) => (
-              <td key={i}>
-                <TorsoButton b={b} row={1} col={i} onMouseDown={buttonPress} onMouseUp={buttonRelease} state={buttonStates[1][i]} />
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 const note_list = {
   sharp: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
-  flat: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
+  flat: ['C', 'DB', 'D', 'EB', 'E', 'F', 'GB', 'G', 'AB', 'A', 'BB', 'B'],
 };
 
 export type NoteType = [string, number];
@@ -11,6 +11,7 @@ export function note_to_number(n: NoteType) {
   if (i === -1) {
     i = note_list.flat.indexOf(note.toUpperCase());
   }
+  console.log(note, i, octave);
 
   return 36 + octave * 12 + i;
 }

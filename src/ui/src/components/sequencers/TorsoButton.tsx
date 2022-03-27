@@ -15,7 +15,7 @@ const colors = {
   [ButtonState.passive]: '#bd9',
   [ButtonState.secondary]: '#F99',
   [ButtonState.whiteActive]: '#ffdddd',
-  [ButtonState.whiteInactive]: '#bbbbbb',
+  [ButtonState.whiteInactive]: '#eee',
   [ButtonState.blackActive]: '#997777',
   [ButtonState.blackInactive]: '#444444',
 };
@@ -46,7 +46,7 @@ export function TorsoButton({
       <svg width="4rem" height="4rem" viewBox="0 0 20 20" version="1.1" style={{ margin: 0, padding: 0 }}>
         <rect fill={colors[state]} width="15.5" height="15.5" x="0.25" y="0.25" stroke="#666" strokeWidth=".5" strokeOpacity="1" />
         <text alignmentBaseline="middle" textAnchor="middle" x="8" y="8" className="button-label">
-          {b[2]}
+          {text.length ? text : b[2]}
         </text>
         <text x="2" y="19.25" className="button-bot">
           {b[0]}
