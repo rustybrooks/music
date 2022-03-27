@@ -30,9 +30,12 @@ export class Note {
 
   constructor(note: NoteType);
   constructor(num: number, is_sharp: boolean);
+  constructor(note: string, octave: number);
   constructor(n: any, is_sharp: any = true) {
     this.is_sharp = is_sharp;
-    if (typeof n === 'number') {
+    if (typeof n === 'string') {
+      this.number = note_to_number([n, is_sharp]);
+    } else if (typeof n === 'number') {
       this.number = n;
       this.note = number_to_note(n, is_sharp);
     } else {

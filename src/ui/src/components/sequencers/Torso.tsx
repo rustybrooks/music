@@ -8,7 +8,7 @@ import { MidiConfig, Settings } from '../MidiConfig';
 import { MidiOutputs } from '../../types';
 import './Torso.css';
 import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
-import { note_to_number, NoteType } from '../../lib/Note';
+import { note_to_number, NoteType, number_to_note } from '../../lib/Note';
 import { ButtonState, TorsoButton } from './TorsoButton';
 import { TorsoKnob } from './TorsoKnob';
 import { scales } from '../../lib/sequencers/TorsoConstants';
@@ -30,6 +30,7 @@ export function Torso() {
   const [track, setTrack] = useState(0);
   const [bank, setBank] = useState(0);
   const [pattern, setPattern] = useState(0);
+  const [pitchOctave, setPitchOctave] = useState(3);
   const [foo, setFoo] = useState(0);
 
   // const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
@@ -119,11 +120,6 @@ export function Torso() {
       return [propKey, lval[value]];
     }
 
-    // const xxx = fmin + ((fmax - fmin) * valuePre) / interpolate;
-    // console.log('interpset', propKey, valuePre, value, interpolate, fmin, fmax, xxx, Math.round(xxx));
-    // if (lval) {
-    //   return [propKey, lval[value]];
-    // }
     return [propKey, value];
   };
 
@@ -573,6 +569,27 @@ export function Torso() {
       }
     }
   } else if ([Mode.PITCH].includes(mode)) {
+    const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
+    const ourNotes = ttrack.getNotes().map(n => number_to_note(n));
+
+    // white keys
+    ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach((n, i) => {
+      const row = 1;
+      const col = i;
+      const this_n: NoteType = [n, n ? pitchOctave : 0];
+      buttonStates[row][col] = ourNotes.includes(this_n) ? ButtonState.whiteActive : ButtonState.whiteInactive;
+    });
+
+    // black keys
+    ['', 'C#', 'D#', '', 'F#', 'G#', 'A#'].forEach((n, i) => {
+      const row = 0;
+      const col = i;
+      const this_n: NoteType = [n, n ? pitchOctave : 0];
+      buttonStates[row][col] = ourNotes.includes(this_n) ? ButtonState.blackActive : ButtonState.blackInactive;
+    });
+
+    buttonStates[0][7] = ButtonState.whiteInactive;
+    buttonStates[0][15] = ButtonState.whiteInactive;
   }
 
   return (

@@ -3,6 +3,10 @@ export enum ButtonState {
   active,
   passive,
   secondary,
+  whiteActive,
+  whiteInactive,
+  blackActive,
+  blackInactive,
 }
 
 const colors = {
@@ -10,6 +14,10 @@ const colors = {
   [ButtonState.active]: '#FF9',
   [ButtonState.passive]: '#bd9',
   [ButtonState.secondary]: '#F99',
+  [ButtonState.whiteActive]: '#ffdddd',
+  [ButtonState.whiteInactive]: '#bbbbbb',
+  [ButtonState.blackActive]: '#997777',
+  [ButtonState.blackInactive]: '#444444',
 };
 
 export function TorsoButton({
@@ -19,6 +27,7 @@ export function TorsoButton({
   row,
   col,
   state,
+  text = '',
 }: {
   b: any;
   row: number;
@@ -26,6 +35,7 @@ export function TorsoButton({
   onMouseDown?: (r: number, c: number) => void;
   onMouseUp?: (r: number, c: number) => void;
   state: ButtonState;
+  text?: string;
 }) {
   if (!b.length) {
     return <div style={{ width: '4rem' }} />;
