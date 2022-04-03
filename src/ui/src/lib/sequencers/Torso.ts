@@ -582,7 +582,7 @@ export class TorsoSequencer {
         for (let i = 0; i < due.length; i += 1) {
           const evt = Heap.heappop(due);
           console.log('send', evt);
-          this.messageCallback(`${evt.message} ${evt.tick}`);
+          // this.messageCallback(`${evt.message} ${evt.tick}`);
           if (evt.output) {
             evt.output.object.send(evt.message, evt.tick);
           }
@@ -598,7 +598,7 @@ export class TorsoSequencer {
       this.step += 1;
       const left = this.interval * this.step - (window.performance.now() - this.start_time);
       if (left < 0) {
-        console.log('overflow time', left);
+        // console.log('overflow time', left);
       } else {
         // console.log('sleep', left, firstLeft);
         await sleep(left);

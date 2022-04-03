@@ -46,7 +46,7 @@ export function Torso() {
   const mode = modes.slice(-1)[0];
 
   const addToHistory = (h: string) => {
-    setHistory([h, ...history].slice(0, 20));
+    setHistory(x => [h, ...x].slice(0, 20));
   };
 
   const sequencer = useMemo(() => {
@@ -67,10 +67,10 @@ export function Torso() {
       repeats: 1,
       sustain: 1,
       style: 1,
-      voicing: 3,
+      voicing: 1,
     });
     s.addTrack(trackKey(bank, pattern, track), ttrack);
-    s.setBPM(10);
+    s.setBPM(60);
     setTimeout(() => s.run(), 1);
     return s;
   }, []);
@@ -117,7 +117,6 @@ export function Torso() {
       ftype = knob.type;
     }
 
-    const valuePre = value;
     if (interpolate) {
       value = fmin + ((fmax - fmin) * value) / interpolate;
       if (ftype === 'int') {
@@ -696,7 +695,7 @@ export function Torso() {
       </div>
       <div style={{ minWidth: '20em', padding: '1em' }}>
         {history.map(h => (
-          <div id={h}>{h}</div>
+          <div key={h}>{h}</div>
         ))}
       </div>
     </div>
