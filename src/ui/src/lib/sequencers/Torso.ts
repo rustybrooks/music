@@ -6,6 +6,11 @@ import { MidiOutput } from '../../types';
 
 const MAX_STEPS = 64;
 
+function sleep(ms: number) {
+  // eslint-disable-next-line no-promise-executor-return
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 class SequencerEvent {
   tick = 0;
   message: number[];
@@ -41,7 +46,6 @@ export class TorsoTrackSlice {
   }) {
     Object.assign(this, { steps, pulses, notes, rotate });
     this.manual_steps = [...manual_steps, ...[...Array(MAX_STEPS - manual_steps.length)].map(() => 0)];
-
     this.generate();
   }
 
@@ -287,7 +291,7 @@ export class TorsoTrack {
 
   setBPM(value: number) {
     this.bpm = value;
-    this.beat = 60.0 / value;
+    this.beat = (1000 * 60.0) / value;
   }
 
   getSequence() {
@@ -455,6 +459,8 @@ export class TorsoTrack {
         }
       }
     }
+    // console.log('returning', events.length, 'events', start, end);
+    // return [];
     return events;
   }
 }
@@ -475,7 +481,7 @@ export class TorsoSequencer {
   finished = false;
   paused = false;
 
-  constructor(output: MidiOutput = null, messageCallback: (message: string) => void = null, interval = 3, lookahead = 10, bpm = 200) {
+  constructor(output: MidiOutput = null, messageCallback: (message: string) => void = null, interval = 3, lookahead = 20, bpm = 200) {
     this.output = output;
     this.messageCallback = messageCallback;
     this.interval = interval;
@@ -497,6 +503,7 @@ export class TorsoSequencer {
 
   getTrack(track_name: string, create = true) {
     if (create && !(track_name in this.tracks)) {
+      console.log('addTrack', track_name);
       this.addTrack(track_name, new TorsoTrack({ output: this.output }));
     }
 
@@ -509,6 +516,7 @@ export class TorsoSequencer {
 
   playPause() {
     this.paused = !this.paused;
+    console.log('playpause', this.paused);
   }
 
   pause() {
@@ -547,15 +555,14 @@ export class TorsoSequencer {
     this.fillLookahead();
   }
 
-  run() {
-    console.log('run');
+  async run() {
     this.reset();
 
     while (!this.stopped) {
-      console.log('runloop');
+      // const firstLeft = this.interval * this.step - (window.performance.now() - this.start_time);
       let reset = false;
       while (this.paused) {
-        // sleep .2s
+        await sleep(200);
         reset = true;
       }
       if (reset) this.reset();
@@ -590,10 +597,12 @@ export class TorsoSequencer {
 
       this.step += 1;
       const left = this.interval * this.step - (window.performance.now() - this.start_time);
-      if (left <= 0) {
-        console.log('overflow time');
+      if (left < 0) {
+        console.log('overflow time', left);
       } else {
-        setTimeout(this.run, left);
+        // console.log('sleep', left, firstLeft);
+        await sleep(left);
+        // setTimeout(this.run, left);
       }
     }
 

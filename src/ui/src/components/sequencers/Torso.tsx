@@ -50,28 +50,28 @@ export function Torso() {
   };
 
   const sequencer = useMemo(() => {
-    const s = new TorsoSequencer(null, addToHistory);
+    const s = new TorsoSequencer(null, addToHistory, 20);
     const slice = new TorsoTrackSlice({
       notes: [
         ['C', 4],
-        ['E', 4],
-        ['G', 4],
-        ['B', 4],
+        // ['E', 4],
+        // ['G', 4],
+        // ['B', 4],
       ].map((n: NoteType) => note_to_number(n)),
-      pulses: 16,
-      steps: 16,
+      pulses: 1,
+      steps: 1,
     });
     const ttrack = new TorsoTrack({
       output: null,
       slices: [slice],
-      repeats: 2,
+      repeats: 1,
       sustain: 1,
       style: 1,
       voicing: 3,
     });
-    s.addTrack('1', ttrack);
-    s.setBPM(1);
-    s.run();
+    s.addTrack(trackKey(bank, pattern, track), ttrack);
+    s.setBPM(10);
+    setTimeout(() => s.run(), 1);
     return s;
   }, []);
 
@@ -236,7 +236,6 @@ export function Torso() {
     }
 
     if (cmd === 'play_pause') {
-      console.log('play_pause');
       sequencer.playPause();
     } else if (cmd === 'set_clear') {
       pushMode(Mode.CLEAR, Mode.COPY);
@@ -697,7 +696,7 @@ export function Torso() {
       </div>
       <div style={{ minWidth: '20em', padding: '1em' }}>
         {history.map(h => (
-          <div>{h}</div>
+          <div id={h}>{h}</div>
         ))}
       </div>
     </div>
