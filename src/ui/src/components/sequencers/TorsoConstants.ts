@@ -282,7 +282,7 @@ export const buttons = [
     ['play', 'stop', '9', ['play_pause', null]],
     [],
     ['clear', 'copy', '-', ['set_clear', 'release_mode']],
-    ['ctrl', '', '=', ['set_control', 'release_control']],
+    ['shift', '', '=', ['set_control', 'release_control']],
   ],
   [
     ['', 'chrom', 'q'],

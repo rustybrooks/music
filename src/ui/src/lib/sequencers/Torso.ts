@@ -460,6 +460,7 @@ export class TorsoTrack {
 }
 
 export class TorsoSequencer {
+  messageCallback: (message: string) => void;
   output: MidiOutput;
   interval: number;
   lookahead: number;
@@ -474,8 +475,9 @@ export class TorsoSequencer {
   finished = false;
   paused = false;
 
-  constructor(output: MidiOutput = null, interval = 3, lookahead = 10, bpm = 200) {
+  constructor(output: MidiOutput = null, messageCallback: (message: string) => void = null, interval = 3, lookahead = 10, bpm = 200) {
     this.output = output;
+    this.messageCallback = messageCallback;
     this.interval = interval;
     this.lookahead = lookahead;
     this.bpm = bpm;
@@ -583,8 +585,9 @@ export class TorsoSequencer {
         for (let i = 0; i < due.length; i += 1) {
           const evt = Heap.heappop(due);
           console.log('send', evt);
-          if (this.output) {
-            this.output.object.send(evt.message, evt.tick);
+          this.messageCallback(`${evt.message} ${evt.tick}`);
+          if (evt.output) {
+            evt.output.object.send(evt.message, evt.tick);
           }
         }
       }

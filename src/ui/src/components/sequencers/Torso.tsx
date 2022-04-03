@@ -31,6 +31,7 @@ export function Torso() {
   const [bank, setBank] = useState(0);
   const [pattern, setPattern] = useState(0);
   const [pitchOctave, setPitchOctave] = useState(3);
+  const [history, setHistory] = useState([]);
   const [foo, setFoo] = useState(0);
 
   // const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
@@ -44,8 +45,12 @@ export function Torso() {
 
   const mode = modes.slice(-1)[0];
 
+  const addToHistory = (h: string) => {
+    setHistory([h, ...history].slice(0, 20));
+  };
+
   const sequencer = useMemo(() => {
-    const s = new TorsoSequencer();
+    const s = new TorsoSequencer(null, addToHistory);
     const slice = new TorsoTrackSlice({
       notes: [
         ['C', 4],
@@ -372,7 +377,7 @@ export function Torso() {
           buttonPress(x[1], x[2]);
         }
       }
-    } else if (key === 'Control') {
+    } else if (key === 'Shift') {
       setControl(!release);
     }
   };
@@ -683,6 +688,11 @@ export function Torso() {
             </tr>
           </tbody>
         </table>
+      </div>
+      <div style={{ minWidth: '20em', padding: '1em' }}>
+        {history.map(h => (
+          <div>{h}</div>
+        ))}
       </div>
     </div>
   );
