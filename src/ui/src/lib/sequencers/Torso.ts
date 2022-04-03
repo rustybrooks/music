@@ -471,7 +471,7 @@ export class TorsoSequencer {
   tracks: { [id: string]: TorsoTrack } = {};
   pending: SequencerEvent[] = [];
   last_lookahead: number = null;
-  stopped = true;
+  stopped = false;
   finished = false;
   paused = false;
 
@@ -504,27 +504,15 @@ export class TorsoSequencer {
   }
 
   stop() {
-    /*
-        this._stopped.set()
-
-        if this.is_alive():
-            this._finished.wait(timeout)
-
-        this.join()
-     */
+    this.stopped = true;
   }
 
   playPause() {
-    /*
-      if this._paused.is_set():
-          this._paused.clear()
-      else:
-          this._paused.set()
-    */
+    this.paused = !this.paused;
   }
 
   pause() {
-    // this._paused.set()
+    this.paused = true;
   }
 
   fillLookahead() {
@@ -560,9 +548,11 @@ export class TorsoSequencer {
   }
 
   run() {
+    console.log('run');
     this.reset();
 
     while (!this.stopped) {
+      console.log('runloop');
       let reset = false;
       while (this.paused) {
         // sleep .2s

@@ -70,6 +70,7 @@ export function Torso() {
       voicing: 3,
     });
     s.addTrack('1', ttrack);
+    s.setBPM(1);
     s.run();
     return s;
   }, []);
@@ -235,6 +236,7 @@ export function Torso() {
     }
 
     if (cmd === 'play_pause') {
+      console.log('play_pause');
       sequencer.playPause();
     } else if (cmd === 'set_clear') {
       pushMode(Mode.CLEAR, Mode.COPY);
