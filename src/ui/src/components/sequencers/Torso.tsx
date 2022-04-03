@@ -466,9 +466,13 @@ export function Torso() {
       }
     }
   } else if ([Mode.PATTERNS].includes(mode)) {
-    // ?
+    const row = Math.floor(pattern / 8);
+    const col = pattern % 8;
+    buttonStates[row][col] = ButtonState.active;
   } else if ([Mode.BANKS].includes(mode)) {
-    // ?
+    const row = Math.floor(bank / 8);
+    const col = bank % 8;
+    buttonStates[row][col] = ButtonState.active;
   } else if (
     [
       Mode.STEPS,
