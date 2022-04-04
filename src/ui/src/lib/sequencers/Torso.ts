@@ -460,7 +460,7 @@ export class TorsoTrack {
       const velocity = Math.min(Math.round(this.velocity + accent), 127);
       const swing = step % 2 ? 0 : this.timing - 0.5;
 
-      for (let r = 0; r < this.repeats; r += 1) {
+      for (let r = 0; r < this.repeats + 1; r += 1) {
         const notes: number[] = this.styleNotes(r);
         const melody_notes = notes.map(note => this.addNoteQuantized(note, melody_offset));
         for (const note of melody_notes) {

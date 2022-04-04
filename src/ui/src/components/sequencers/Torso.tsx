@@ -64,7 +64,7 @@ export function Torso() {
     const ttrack = new TorsoTrack({
       output: null,
       slices: [slice],
-      repeats: 1,
+      repeats: 0,
       sustain: 1,
       style: 1,
       voicing: 1,
