@@ -70,7 +70,7 @@ export function Torso() {
       voicing: 1,
     });
     s.addTrack(trackKey(bank, pattern, track), ttrack);
-    s.setBPM(60);
+    s.setBPM(10);
     setTimeout(() => s.run(), 1);
     return s;
   }, []);
@@ -419,8 +419,9 @@ export function Torso() {
   }, [handleKeyDown]);
 
   const settingsCallback = (settings: Settings) => {
+    console.log(settings);
     setOutputs(settings.midiOutputs);
-    sequencer.output = settings.midiOutputs.length ? midiOutputs[settings.midiOutputs[0]] : null;
+    sequencer.setOutput(settings.midiOutputs.length ? midiOutputs[settings.midiOutputs[0]] : null);
   };
 
   if (!sequencer) {

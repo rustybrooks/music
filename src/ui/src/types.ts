@@ -13,7 +13,6 @@ export class MidiMessage {
     // eslint-disable-next-line no-bitwise
     const mevent = b1 >> 4;
 
-    console.log('mevent', mevent);
     switch (mevent) {
       case 0x9:
         this.channel = b1 & 0xf;

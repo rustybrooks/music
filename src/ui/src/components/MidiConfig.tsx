@@ -23,6 +23,7 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
   };
 
   const toggleInput = (port_id: number) => {
+    console.log('toggle', port_id);
     if (selectedIns.includes(port_id)) {
       setSelectedIns(selectedIns.filter(i => i.id !== port_id));
     } else {

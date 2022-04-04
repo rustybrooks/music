@@ -11,16 +11,32 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+let sequencerId = 0;
+
 class SequencerEvent {
   tick = 0;
   message: number[];
   output: MidiOutput;
+  id: number;
 
   constructor(output: MidiOutput, tick: number, message: number[]) {
     this.output = output;
     this.tick = tick;
     this.message = message;
+    this.id = sequencerId;
+    // console.log('new msg', this.tick, this.message, this.id, this.output);
+    sequencerId += 1;
   }
+}
+
+function SequencerComparator(a: SequencerEvent, b: SequencerEvent) {
+  if (a.tick > b.tick) {
+    return 1;
+  }
+  if (a.tick === b.tick) {
+    return 0;
+  }
+  return -1;
 }
 
 export class TorsoTrackSlice {
@@ -212,6 +228,10 @@ export class TorsoTrack {
 
     this.setSlice(0);
     this.setScale(this.scale_type);
+  }
+
+  setOutput(output: MidiOutput) {
+    this.output = output;
   }
 
   addSlice(slice: TorsoTrackSlice) {
@@ -475,18 +495,25 @@ export class TorsoSequencer {
 
   start_time: number = null;
   tracks: { [id: string]: TorsoTrack } = {};
-  pending: SequencerEvent[] = [];
+  pending = new Heap(SequencerComparator);
   last_lookahead: number = null;
   stopped = false;
   finished = false;
-  paused = false;
+  paused = true;
 
-  constructor(output: MidiOutput = null, messageCallback: (message: string) => void = null, interval = 3, lookahead = 20, bpm = 200) {
+  constructor(output: MidiOutput = null, messageCallback: (message: string) => void = null, interval = 20, lookahead = 40, bpm = 200) {
     this.output = output;
     this.messageCallback = messageCallback;
     this.interval = interval;
     this.lookahead = lookahead;
     this.bpm = bpm;
+  }
+
+  setOutput(output: MidiOutput) {
+    Object.values(this.tracks).forEach(t => {
+      t.setOutput(output);
+    });
+    this.output = output;
   }
 
   setBPM(value: number) {
@@ -535,7 +562,10 @@ export class TorsoSequencer {
 
       const newvals = track.fillLookahead(this.last_lookahead, next_lookahead);
       if (newvals.length) {
-        newvals.map((n: any) => Heap.heappush(this.pending, n));
+        newvals.map((n: any) => {
+          this.pending.push(n);
+          // console.log('push pending', n, this.pending.length);
+        });
       }
 
       this.last_lookahead = next_lookahead;
@@ -544,7 +574,7 @@ export class TorsoSequencer {
 
   reset() {
     this.step = 0;
-    this.pending = [];
+    this.pending = new Heap(SequencerComparator);
     this.start_time = window.performance.now();
     this.last_lookahead = this.start_time;
     Object.values(this.tracks).forEach(track => {
@@ -569,23 +599,15 @@ export class TorsoSequencer {
 
       const t1 = window.performance.now();
       const t1o = t1 - this.start_time;
-      const due: SequencerEvent[] = [];
       while (true) {
-        if (!this.pending.length || this.pending[0].tick > t1o) {
+        if (!this.pending.length || this.pending.peek().tick > t1o) {
           break;
         }
-        const evt = Heap.heappop(this.pending);
-        Heap.heappush(due, evt);
-      }
-
-      if (due.length) {
-        for (let i = 0; i < due.length; i += 1) {
-          const evt = Heap.heappop(due);
-          console.log('send', evt);
-          // this.messageCallback(`${evt.message} ${evt.tick}`);
-          if (evt.output) {
-            evt.output.object.send(evt.message, evt.tick);
-          }
+        const evt = this.pending.pop();
+        console.log('send', evt);
+        // this.messageCallback(`${evt.message} ${evt.tick}`);
+        if (evt.output) {
+          evt.output.object.send(evt.message, evt.tick);
         }
       }
 
