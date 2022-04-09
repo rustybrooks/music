@@ -44,7 +44,7 @@ export class TorsoTrackSlice {
   pulses: number;
   notes: number[];
   rotate: number;
-  manual_steps: number[];
+  manualSteps: number[];
   sequence: number[] = [];
 
   constructor({
@@ -52,16 +52,16 @@ export class TorsoTrackSlice {
     pulses = 1,
     notes = [],
     rotate = 0,
-    manual_steps = [],
+    manualSteps = [],
   }: {
     steps?: number;
     pulses?: number;
     notes?: number[];
     rotate?: number;
-    manual_steps?: number[];
+    manualSteps?: number[];
   }) {
     Object.assign(this, { steps, pulses, notes, rotate });
-    this.manual_steps = [...manual_steps, ...[...Array(MAX_STEPS - manual_steps.length)].map(() => 0)];
+    this.manualSteps = [...manualSteps, ...[...Array(MAX_STEPS - manualSteps.length)].map(() => 0)];
     this.generate();
   }
 
@@ -84,11 +84,11 @@ export class TorsoTrackSlice {
   }
 
   getManualSteps() {
-    return this.manual_steps;
+    return this.manualSteps;
   }
 
   setManualSteps(value: number[]) {
-    this.manual_steps = value;
+    this.manualSteps = value;
     this.generate();
   }
 
@@ -101,7 +101,7 @@ export class TorsoTrackSlice {
       sequence[Math.round(i * interval)] = 1;
     }
 
-    this.manual_steps.forEach((v, i) => {
+    this.manualSteps.forEach((v, i) => {
       if (v < 0) {
         sequence[i] = 0;
       } else if (v > 0) {
@@ -120,16 +120,16 @@ export class TorsoTrack {
   pitch: number;
   harmony: number;
   accent: number;
-  accent_curve: number[];
+  accentCurve: number[];
   sustain: number;
   division: number;
   velocity: number;
   timing: number;
   delay: number;
   repeats: number;
-  repeat_offset: number;
-  repeat_time: number;
-  repeat_pace: number;
+  repeatOffset: number;
+  repeatTime: number;
+  repeatPace: number;
   voicing: number;
   style: string;
   melody: number;
@@ -137,17 +137,17 @@ export class TorsoTrack {
   root: number;
   muted: boolean;
 
-  slice_index = 0;
-  slice_step = 0;
+  sliceIndex = 0;
+  sliceStep = 0;
   bpm: number;
-  scale_type: string | number;
-  scale_notes: number[];
-  track_name: string;
+  scaleType: string | number;
+  scaleNotes: number[];
+  trackName: string;
   sequenceStart: number = null;
   beat: number = null;
   step = 1;
   slice: TorsoTrackSlice = null;
-  voiced_notes: number[];
+  voicedNotes: number[];
 
   constructor({
     output,
@@ -156,16 +156,16 @@ export class TorsoTrack {
     pitch = 0, // pitch shift to apply to all notes, integer
     harmony = 0, // transpose notes defined in pitch up one at a time?
     accent = 0.5, // 0-1 the percent of accent curve to apply
-    accent_curve = 0, // select from predefined accent curves
+    accentCurve = 0, // select from predefined accent curves
     sustain = 0.15, // Note length, in increments of step, i.e. 0.5 = half step
     division = 4, // how many pieces to divide a beat into
     velocity = 64, // base velocity - accent gets added to this
     timing = 0.5, // swing timing, 0.5=even, less means every other beat is early, more means late
     delay = 0, // delay pattern in relation to other patterns, +ve means later, in units of beat
     repeats = 0, // number of repeats to add, integer, will be is divisions of this.time
-    repeat_offset = 0, // this delays the repeats, in units of 1 beat
-    repeat_time = 1, // this is the same as divsion, but for repeats, minimum is 1
-    repeat_pace = null, // supposed to accelerate or decelerate repeats - not implemented
+    repeatOffset = 0, // this delays the repeats, in units of 1 beat
+    repeatTime = 1, // this is the same as divsion, but for repeats, minimum is 1
+    repeatPace = null, // supposed to accelerate or decelerate repeats - not implemented
     voicing = 0, // adds notes an octave above
     style = 0, // integer, picks
     melody = 0, // "depth" LFO for phrase (speed?)
@@ -180,16 +180,16 @@ export class TorsoTrack {
     pitch?: number;
     harmony?: number;
     accent?: number;
-    accent_curve?: number;
+    accentCurve?: number;
     sustain?: number;
     division?: number;
     velocity?: number;
     timing?: number;
     delay?: number;
     repeats?: number;
-    repeat_offset?: number;
-    repeat_time?: number;
-    repeat_pace?: number;
+    repeatOffset?: number;
+    repeatTime?: number;
+    repeatPace?: number;
     voicing?: number;
     style?: number;
     melody?: number;
@@ -210,9 +210,9 @@ export class TorsoTrack {
       timing,
       delay,
       repeats,
-      repeat_time,
-      repeat_offset,
-      repeat_pace,
+      repeatTime,
+      repeatOffset,
+      repeatPace,
       voicing,
       melody,
       phrase,
@@ -220,14 +220,14 @@ export class TorsoTrack {
       muted,
     });
 
-    this.scale_type = scale;
+    this.scaleType = scale;
     this.slices = slices || [new TorsoTrackSlice({})];
-    this.accent_curve = accentCurves[accent_curve];
+    this.accentCurve = accentCurves[accentCurve];
     this.style = styles[style];
     this.phrase = phrases[phrase];
 
     this.setSlice(0);
-    this.setScale(this.scale_type);
+    this.setScale(this.scaleType);
   }
 
   setOutput(output: MidiOutput) {
@@ -242,7 +242,7 @@ export class TorsoTrack {
   }
 
   getScale() {
-    return this.scale_type;
+    return this.scaleType;
   }
 
   setScale(scale: string | number) {
@@ -252,7 +252,7 @@ export class TorsoTrack {
     } else {
       scaleStr = scale;
     }
-    this.scale_notes = getScaleNumbers(0, scaleStr, 10);
+    this.scaleNotes = getScaleNumbers(0, scaleStr, 10);
   }
 
   getSlice() {
@@ -260,8 +260,8 @@ export class TorsoTrack {
   }
 
   setSlice(slice: number) {
-    this.slice_index = slice;
-    this.slice = this.slices[this.slice_index];
+    this.sliceIndex = slice;
+    this.slice = this.slices[this.sliceIndex];
     this.setVoicing(this.voicing);
   }
 
@@ -290,11 +290,11 @@ export class TorsoTrack {
   }
 
   getManualSteps() {
-    return this.slice.manual_steps;
+    return this.slice.manualSteps;
   }
 
   setManualSteps(value: number[]) {
-    this.slice.manual_steps = value;
+    this.slice.manualSteps = value;
   }
 
   getRotate() {
@@ -324,89 +324,89 @@ export class TorsoTrack {
 
   setVoicing(value: number) {
     this.voicing = value;
-    this.voiced_notes = [...this.slice.notes].sort();
+    this.voicedNotes = [...this.slice.notes].sort();
     const ln = this.slice.notes.length;
     if (ln) {
       for (let v = 0; v < value; v += 1) {
         const n = this.slice.notes[v % ln];
-        this.voiced_notes.push(n + 12 * (1 + Math.round(v / ln)));
+        this.voicedNotes.push(n + 12 * (1 + Math.round(v / ln)));
       }
     }
   }
 
   getVoicedNotes() {
-    return this.voiced_notes;
+    return this.voicedNotes;
   }
 
   addNoteQuantized(note: number, offset: number) {
     const qnote = this.quantize(note);
-    const notei = this.scale_notes.indexOf(qnote);
-    return this.scale_notes[Math.round(notei + offset)];
+    const notei = this.scaleNotes.indexOf(qnote);
+    return this.scaleNotes[Math.round(notei + offset)];
   }
 
   quantize(note: number) {
-    const overi = this.scale_notes.findIndex(n => n > note);
+    const overi = this.scaleNotes.findIndex(n => n > note);
     const underi = overi - 1;
 
     let val: number;
-    if (note - this.scale_notes[underi] < this.scale_notes[overi] - note) {
-      val = this.scale_notes[underi + this.root];
+    if (note - this.scaleNotes[underi] < this.scaleNotes[overi] - note) {
+      val = this.scaleNotes[underi + this.root];
     } else {
-      val = this.scale_notes[overi + this.root];
+      val = this.scaleNotes[overi + this.root];
     }
     return val;
   }
 
   styleNotes(index: number): number[] {
-    const lv = this.voiced_notes.length;
+    const lv = this.voicedNotes.length;
     if (!lv) return [];
 
     if (this.style === 'chord') {
-      return this.voiced_notes;
+      return this.voicedNotes;
     }
     if (this.style === 'upward') {
-      return [this.voiced_notes[index % lv]];
+      return [this.voicedNotes[index % lv]];
     }
     if (this.style === 'downward') {
-      return [this.voiced_notes[lv - (index % lv) - 1]];
+      return [this.voicedNotes[lv - (index % lv) - 1]];
     }
     if (this.style === 'converge') {
       const i = index % lv;
       if (i % 2 === 0) {
-        return [this.voiced_notes[Math.round(i / 2)]];
+        return [this.voicedNotes[Math.round(i / 2)]];
       }
-      return [this.voiced_notes[lv - (Math.round(i / 2) + 1)]];
+      return [this.voicedNotes[lv - (Math.round(i / 2) + 1)]];
     }
     if (this.style === 'diverge') {
       const i = lv - (index % lv) - 1;
       if (i % 2 === 0) {
-        return [this.voiced_notes[Math.round(i / 2)]];
+        return [this.voicedNotes[Math.round(i / 2)]];
       }
-      return [this.voiced_notes[lv - (Math.round(i / 2) + 1)]];
+      return [this.voicedNotes[lv - (Math.round(i / 2) + 1)]];
     }
     if (this.style === 'alternate_bass') {
-      const rest = this.voiced_notes.slice(1);
+      const rest = this.voicedNotes.slice(1);
       const notes = [];
       for (const r of rest) {
-        notes.push(this.voiced_notes[0]);
+        notes.push(this.voicedNotes[0]);
         notes.push(r);
       }
       return [notes[index]];
     }
     if (this.style === 'alternate_bass_2') {
-      const rest = this.voiced_notes.slice(2);
+      const rest = this.voicedNotes.slice(2);
       let i = 0;
       const notes = [];
       for (const r of rest) {
-        notes.push(this.voiced_notes[i % 2]);
+        notes.push(this.voicedNotes[i % 2]);
         notes.push(r);
         i += 1;
       }
       return [notes[index]];
     }
     if (this.style === 'alternate_melody') {
-      const rest = this.voiced_notes.slice(0, lv - 1);
-      const last = this.voiced_notes[lv - 1];
+      const rest = this.voicedNotes.slice(0, lv - 1);
+      const last = this.voicedNotes[lv - 1];
       const notes = [];
       for (const r of rest) {
         notes.push(r);
@@ -415,8 +415,8 @@ export class TorsoTrack {
       return [notes[index]];
     }
     if (this.style === 'alternate_melody_2') {
-      const rest = this.voiced_notes.slice(0, lv - 1);
-      const last = this.voiced_notes.slice(lv - 2);
+      const rest = this.voicedNotes.slice(0, lv - 1);
+      const last = this.voicedNotes.slice(lv - 2);
       const notes = [];
       let i = 0;
       for (const r of rest) {
@@ -428,26 +428,26 @@ export class TorsoTrack {
     }
     if (this.style === 'random') {
       const num = Math.floor(Math.random() * lv) + 1;
-      return [...Array(num)].map(() => this.voiced_notes[Math.floor(Math.random() * lv)]);
+      return [...Array(num)].map(() => this.voicedNotes[Math.floor(Math.random() * lv)]);
     }
 
     return [];
   }
 
   fillLookahead(start: number, end: number): any[] {
-    const first_step = Math.ceil((this.division * (start - this.sequenceStart + this.delay * this.beat)) / this.beat);
-    const last_step = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
+    const firstStep = Math.ceil((this.division * (start - this.sequenceStart + this.delay * this.beat)) / this.beat);
+    const lastStep = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
 
-    if (last_step < first_step) return [];
+    if (lastStep < firstStep) return [];
     const events = [];
 
-    for (let step = first_step; step < last_step + 1; step += 1) {
+    for (let step = firstStep; step < lastStep + 1; step += 1) {
       if (step === 0) {
         // this.random.update()
       }
 
-      if (step - this.slice_step >= this.slice.steps) {
-        this.setSlice((this.slice_index + 1) % this.slices.length);
+      if (step - this.sliceStep >= this.slice.steps) {
+        this.setSlice((this.sliceIndex + 1) % this.slices.length);
       }
 
       if (!this.slice.sequence[(step - this.slice.rotate) % this.slice.steps]) {
@@ -455,32 +455,32 @@ export class TorsoTrack {
         continue;
       }
 
-      const melody_offset = this.phrase[(step - this.slice.rotate) % this.phrase.length] * this.melody;
-      const accent = this.accent_curve[(step - this.slice.rotate) % this.accent_curve.length] * this.accent;
+      const melodyOffset = this.phrase[(step - this.slice.rotate) % this.phrase.length] * this.melody;
+      const accent = this.accentCurve[(step - this.slice.rotate) % this.accentCurve.length] * this.accent;
       const velocity = Math.min(Math.round(this.velocity + accent), 127);
       const swing = step % 2 ? 0 : this.timing - 0.5;
 
       for (let r = 0; r < this.repeats + 1; r += 1) {
         const notes: number[] = this.styleNotes(r);
-        const melody_notes = notes.map(note => this.addNoteQuantized(note, melody_offset));
-        for (const note of melody_notes) {
+        const melodyNotes = notes.map(note => this.addNoteQuantized(note, melodyOffset));
+        console.log(notes, melodyNotes);
+        for (const note of melodyNotes) {
           events.push(
             new SequencerEvent(
               this.output,
-              ((step + swing + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division,
+              ((step + swing + this.delay + this.repeatOffset + r / this.repeatTime) * this.beat) / this.division,
               [NOTE_ON + this.channel, note + this.pitch, velocity],
             ),
             new SequencerEvent(
               this.output,
-              ((step + this.sustain + this.delay + this.repeat_offset + r / this.repeat_time) * this.beat) / this.division,
+              ((step + this.sustain + this.delay + this.repeatOffset + r / this.repeatTime) * this.beat) / this.division,
               [NOTE_OFF + this.channel, note + this.pitch, 0],
             ),
           );
         }
       }
     }
-    // console.log('returning', events.length, 'events', start, end);
-    // return [];
+    console.log('returning', events.length, events);
     return events;
   }
 }
@@ -493,10 +493,10 @@ export class TorsoSequencer {
   bpm: number;
   step = 0;
 
-  start_time: number = null;
+  startTime: number = null;
   tracks: { [id: string]: TorsoTrack } = {};
   pending = new Heap(SequencerComparator);
-  last_lookahead: number = null;
+  lastLookahead: number = null;
   stopped = false;
   finished = false;
   paused = true;
@@ -523,18 +523,18 @@ export class TorsoSequencer {
     this.bpm = value;
   }
 
-  addTrack(track_name: string, track: TorsoTrack) {
-    this.tracks[track_name] = track;
+  addTrack(trackName: string, track: TorsoTrack) {
+    this.tracks[trackName] = track;
     track.setBPM(this.bpm);
   }
 
-  getTrack(track_name: string, create = true) {
-    if (create && !(track_name in this.tracks)) {
-      console.log('addTrack', track_name);
-      this.addTrack(track_name, new TorsoTrack({ output: this.output }));
+  getTrack(trackName: string, create = true) {
+    if (create && !(trackName in this.tracks)) {
+      console.log('addTrack', trackName);
+      this.addTrack(trackName, new TorsoTrack({ output: this.output }));
     }
 
-    return this.tracks[track_name];
+    return this.tracks[trackName];
   }
 
   stop() {
@@ -551,34 +551,34 @@ export class TorsoSequencer {
   }
 
   fillLookahead() {
-    if (this.last_lookahead === null) {
-      this.last_lookahead = window.performance.now();
+    if (this.lastLookahead === null) {
+      this.lastLookahead = window.performance.now();
     }
-    const next_lookahead = this.last_lookahead + this.lookahead;
+    const nextLookahead = this.lastLookahead + this.lookahead;
     Object.values(this.tracks).forEach(track => {
       if (track.muted) {
         return;
       }
 
-      const newvals = track.fillLookahead(this.last_lookahead, next_lookahead);
+      const newvals = track.fillLookahead(this.lastLookahead, nextLookahead);
       if (newvals.length) {
-        newvals.map((n: any) => {
+        newvals.forEach((n: any) => {
           this.pending.push(n);
           // console.log('push pending', n, this.pending.length);
         });
       }
 
-      this.last_lookahead = next_lookahead;
+      this.lastLookahead = nextLookahead;
     });
   }
 
   reset() {
     this.step = 0;
     this.pending = new Heap(SequencerComparator);
-    this.start_time = window.performance.now();
-    this.last_lookahead = this.start_time;
+    this.startTime = window.performance.now();
+    this.lastLookahead = this.startTime;
     Object.values(this.tracks).forEach(track => {
-      track.sequenceStart = this.start_time;
+      track.sequenceStart = this.startTime;
     });
 
     this.fillLookahead();
@@ -598,7 +598,7 @@ export class TorsoSequencer {
       if (reset) this.reset();
 
       const t1 = window.performance.now();
-      const t1o = t1 - this.start_time;
+      const t1o = t1 - this.startTime;
       while (true) {
         if (!this.pending.length || this.pending.peek().tick > t1o) {
           break;
@@ -611,14 +611,14 @@ export class TorsoSequencer {
         }
       }
 
-      if (t1 >= this.last_lookahead) {
+      if (t1 >= this.lastLookahead) {
         this.fillLookahead();
         // eslint-disable-next-line no-continue
         continue;
       }
 
       this.step += 1;
-      const left = this.interval * this.step - (window.performance.now() - this.start_time);
+      const left = this.interval * this.step - (window.performance.now() - this.startTime);
       if (left < 0) {
         // console.log('overflow time', left);
       } else {
