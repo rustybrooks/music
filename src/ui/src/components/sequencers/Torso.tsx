@@ -75,10 +75,11 @@ export function Torso() {
     const ttrack = new TorsoTrack({
       output: null,
       slices: [slice1, slice2],
-      repeats: 4,
+      repeats: 3,
       sustain: 1,
       style: 1,
       voicing: 1,
+      // timing: 8,
     });
     s.addTrack(trackKey(bank, pattern, track), ttrack);
     s.setBPM(10);

@@ -10,6 +10,7 @@ import { Home } from './components/instruments/Home';
 import './index.css';
 import { Torso } from './components/sequencers/Torso';
 import { CallbackMap, MidiInputs, MidiMessage, MidiOutputs } from './types';
+import { MidiVisualizer } from './components/displays/MidiVisualizer';
 
 interface InitialValue {
   midiCallbackMap: CallbackMap;
@@ -108,6 +109,7 @@ function AppX() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/torso" element={<Torso />} />
+          <Route path="/midiviz" element={<MidiVisualizer />} />
         </Routes>
       </div>
     </BrowserRouter>

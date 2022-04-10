@@ -35,6 +35,7 @@ export class Note {
   constructor(n: any, is_sharp: any = true) {
     this.is_sharp = is_sharp;
     if (typeof n === 'string') {
+      throw Error('What is happening here, why is_sharp');
       this.number = note_to_number([n, is_sharp]);
     } else if (typeof n === 'number') {
       this.number = n;

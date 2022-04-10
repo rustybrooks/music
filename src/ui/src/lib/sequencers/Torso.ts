@@ -2,14 +2,11 @@ import { Heap } from 'heap-js';
 import { accentCurves, NOTE_OFF, NOTE_ON, phrases, scales, styles } from './TorsoConstants';
 import { getScaleNumbers } from '../Scales';
 import { MidiOutput } from '../../types';
+import { sleep } from '../utils';
+import { synthMidiMessage } from '../synthesizers/Basic';
 // import { MidiMessage } from '../../types';
 
 const MAX_STEPS = 64;
-
-function sleep(ms: number) {
-  // eslint-disable-next-line no-promise-executor-return
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 let sequencerId = 0;
 
@@ -139,7 +136,7 @@ export class TorsoTrack {
 
   sliceIndex = 0;
   sliceStep = 0;
-  lastStep = 0;
+  lastStep = -1;
   bpm: number;
   scaleType: string | number;
   scaleNotes: number[];
@@ -440,11 +437,12 @@ export class TorsoTrack {
       this.lastStep + 1,
     );
     const lastStep = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
+    console.log(start, end, firstStep, lastStep, this.lastStep);
     if (lastStep < firstStep) return [];
     this.lastStep = lastStep;
     const events = [];
 
-    for (let step = firstStep; step < lastStep + 1; step += 1) {
+    for (let step = firstStep; step <= lastStep; step += 1) {
       if (step === 0) {
         // this.random.update()
       }
@@ -484,6 +482,7 @@ export class TorsoTrack {
         }
       }
     }
+    console.log('return', events.length);
     return events;
   }
 }
@@ -611,6 +610,8 @@ export class TorsoSequencer {
         this.messageCallback(`${evt.message} ${evt.tick}`);
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
+        } else {
+          synthMidiMessage(evt.message, evt.tick);
         }
       }
 
