@@ -51,20 +51,31 @@ export function Torso() {
 
   const sequencer = useMemo(() => {
     const s = new TorsoSequencer(null, addToHistory, 20);
-    const slice = new TorsoTrackSlice({
+    const slice1 = new TorsoTrackSlice({
       notes: [
         ['C', 4],
-        // ['E', 4],
-        // ['G', 4],
-        // ['B', 4],
+        ['E', 4],
+        ['G', 4],
+        ['B', 4],
       ].map((n: NoteType) => note_to_number(n)),
-      pulses: 1,
-      steps: 1,
+      pulses: 4,
+      steps: 16,
     });
+    const slice2 = new TorsoTrackSlice({
+      notes: [
+        ['A', 4],
+        ['C', 4],
+        ['E', 4],
+        ['G', 4],
+      ].map((n: NoteType) => note_to_number(n)),
+      pulses: 4,
+      steps: 16,
+    });
+
     const ttrack = new TorsoTrack({
       output: null,
-      slices: [slice],
-      repeats: 0,
+      slices: [slice1, slice2],
+      repeats: 4,
       sustain: 1,
       style: 1,
       voicing: 1,

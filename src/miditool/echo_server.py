@@ -30,6 +30,7 @@ def open_midi(name):
         time.sleep(2)
 
     midi_device = midi_matches[0]
+    print("midi device", midi_device")
     midis[name] = midiin.open_port(midi_device[0], name=midi_device[1])
     midis[name].set_callback(callback)
     midis[name].set_error_callback(error_callback)

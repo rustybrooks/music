@@ -139,13 +139,13 @@ export class TorsoTrack {
 
   sliceIndex = 0;
   sliceStep = 0;
+  lastStep = 0;
   bpm: number;
   scaleType: string | number;
   scaleNotes: number[];
   trackName: string;
   sequenceStart: number = null;
   beat: number = null;
-  step = 1;
   slice: TorsoTrackSlice = null;
   voicedNotes: number[];
 
@@ -435,10 +435,13 @@ export class TorsoTrack {
   }
 
   fillLookahead(start: number, end: number): any[] {
-    const firstStep = Math.ceil((this.division * (start - this.sequenceStart + this.delay * this.beat)) / this.beat);
+    const firstStep = Math.max(
+      Math.ceil((this.division * (start - this.sequenceStart + this.delay * this.beat)) / this.beat),
+      this.lastStep + 1,
+    );
     const lastStep = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
-
     if (lastStep < firstStep) return [];
+    this.lastStep = lastStep;
     const events = [];
 
     for (let step = firstStep; step < lastStep + 1; step += 1) {
@@ -447,6 +450,8 @@ export class TorsoTrack {
       }
 
       if (step - this.sliceStep >= this.slice.steps) {
+        console.log('next slice', this.lastStep, step);
+        this.sliceStep = step;
         this.setSlice((this.sliceIndex + 1) % this.slices.length);
       }
 
@@ -463,7 +468,6 @@ export class TorsoTrack {
       for (let r = 0; r < this.repeats + 1; r += 1) {
         const notes: number[] = this.styleNotes(r);
         const melodyNotes = notes.map(note => this.addNoteQuantized(note, melodyOffset));
-        console.log(notes, melodyNotes);
         for (const note of melodyNotes) {
           events.push(
             new SequencerEvent(
@@ -480,7 +484,6 @@ export class TorsoTrack {
         }
       }
     }
-    console.log('returning', events.length, events);
     return events;
   }
 }
@@ -605,7 +608,7 @@ export class TorsoSequencer {
         }
         const evt = this.pending.pop();
         console.log('send', evt);
-        // this.messageCallback(`${evt.message} ${evt.tick}`);
+        this.messageCallback(`${evt.message} ${evt.tick}`);
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
         }
