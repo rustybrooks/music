@@ -226,13 +226,12 @@ export function Torso() {
   };
 
   const pushMode = (m: Mode, ma: Mode) => {
-    if (control) {
-      if (ma) {
-        setModes([...modes, ma]);
-      }
-    } else {
-      setModes([...modes, m]);
+    let thisMode = m;
+    if (control && ma) {
+      thisMode = ma;
     }
+    if (modes.includes(thisMode)) return;
+    setModes([...modes, thisMode]);
   };
 
   const popMode = () => {

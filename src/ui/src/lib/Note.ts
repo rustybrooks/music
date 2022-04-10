@@ -11,7 +11,6 @@ export function note_to_number(n: NoteType) {
   if (i === -1) {
     i = note_list.flat.indexOf(note.toUpperCase());
   }
-  console.log(note, i, octave);
 
   return 36 + octave * 12 + i;
 }

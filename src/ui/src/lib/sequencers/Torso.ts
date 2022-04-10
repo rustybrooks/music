@@ -3,7 +3,7 @@ import { accentCurves, NOTE_OFF, NOTE_ON, phrases, scales, styles } from './Tors
 import { getScaleNumbers } from '../Scales';
 import { MidiOutput } from '../../types';
 import { sleep } from '../utils';
-import { synthMidiMessage } from '../synthesizers/Basic';
+import { audioContext, synthMidiMessage } from '../synthesizers/Basic';
 // import { MidiMessage } from '../../types';
 
 const MAX_STEPS = 64;
@@ -437,7 +437,7 @@ export class TorsoTrack {
       this.lastStep + 1,
     );
     const lastStep = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
-    console.log(start, end, firstStep, lastStep, this.lastStep);
+    // console.log(start, end, firstStep, lastStep, this.lastStep);
     if (lastStep < firstStep) return [];
     this.lastStep = lastStep;
     const events = [];
@@ -467,22 +467,18 @@ export class TorsoTrack {
         const notes: number[] = this.styleNotes(r);
         const melodyNotes = notes.map(note => this.addNoteQuantized(note, melodyOffset));
         for (const note of melodyNotes) {
+          const base = step + swing + this.delay + this.repeatOffset + r / this.repeatTime;
+          const startTick = (base * this.beat) / this.division;
+          const endTick = ((base + this.sustain) * this.beat) / this.division;
+
           events.push(
-            new SequencerEvent(
-              this.output,
-              ((step + swing + this.delay + this.repeatOffset + r / this.repeatTime) * this.beat) / this.division,
-              [NOTE_ON + this.channel, note + this.pitch, velocity],
-            ),
-            new SequencerEvent(
-              this.output,
-              ((step + this.sustain + this.delay + this.repeatOffset + r / this.repeatTime) * this.beat) / this.division,
-              [NOTE_OFF + this.channel, note + this.pitch, 0],
-            ),
+            new SequencerEvent(this.output, this.sequenceStart + startTick, [NOTE_ON + this.channel, note + this.pitch, velocity]),
+            new SequencerEvent(this.output, this.sequenceStart + endTick, [NOTE_OFF + this.channel, note + this.pitch, 0]),
           );
         }
       }
     }
-    console.log('return', events.length);
+
     return events;
   }
 }
@@ -496,6 +492,7 @@ export class TorsoSequencer {
   step = 0;
 
   startTime: number = null;
+  startAudioTime: number = null;
   tracks: { [id: string]: TorsoTrack } = {};
   pending = new Heap(SequencerComparator);
   lastLookahead: number = null;
@@ -578,13 +575,19 @@ export class TorsoSequencer {
     this.step = 0;
     this.pending = new Heap(SequencerComparator);
     this.startTime = window.performance.now();
+    this.startAudioTime = audioContext.currentTime;
+    console.log('setting startTime', this.startTime, this.startAudioTime);
     this.lastLookahead = this.startTime;
-    Object.values(this.tracks).forEach(track => {
-      track.sequenceStart = this.startTime;
-    });
 
-    this.fillLookahead();
-    this.fillLookahead();
+    for (const track of Object.values(this.tracks)) {
+      track.sequenceStart = this.startTime;
+      track.lastStep = -1;
+    }
+
+    if (!this.paused) {
+      this.fillLookahead();
+      this.fillLookahead();
+    }
   }
 
   async run() {
@@ -600,18 +603,18 @@ export class TorsoSequencer {
       if (reset) this.reset();
 
       const t1 = window.performance.now();
-      const t1o = t1 - this.startTime;
       while (true) {
-        if (!this.pending.length || this.pending.peek().tick > t1o) {
+        if (!this.pending.length || this.pending.peek().tick > t1 + 150) {
           break;
         }
         const evt = this.pending.pop();
-        console.log('send', evt);
+        // console.log('send', evt);
         this.messageCallback(`${evt.message} ${evt.tick}`);
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
         } else {
-          synthMidiMessage(evt.message, evt.tick);
+          console.log('send thing', evt.tick, this.startTime, evt.tick - this.startTime);
+          synthMidiMessage(evt.message, (evt.tick - this.startTime) / 1000 + this.startAudioTime);
         }
       }
 
