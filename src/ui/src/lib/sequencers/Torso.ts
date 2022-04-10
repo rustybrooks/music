@@ -437,7 +437,6 @@ export class TorsoTrack {
       this.lastStep + 1,
     );
     const lastStep = Math.floor((this.division * (end - this.sequenceStart + this.delay * this.beat)) / this.beat);
-    // console.log(start, end, firstStep, lastStep, this.lastStep);
     if (lastStep < firstStep) return [];
     this.lastStep = lastStep;
     const events = [];
@@ -613,7 +612,6 @@ export class TorsoSequencer {
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
         } else {
-          console.log('send thing', evt.tick, this.startTime, evt.tick - this.startTime);
           synthMidiMessage(evt.message, (evt.tick - this.startTime) / 1000 + this.startAudioTime);
         }
       }
