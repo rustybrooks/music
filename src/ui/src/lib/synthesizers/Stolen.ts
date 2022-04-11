@@ -1,3 +1,4 @@
+/*
 const notes = {
   C4: 261.63,
   Db4: 277.18,
@@ -223,3 +224,4 @@ function playCurrentNote() {
   noteGain.connect(masterVolume);
   noteGain.connect(delay);
 }
+*/

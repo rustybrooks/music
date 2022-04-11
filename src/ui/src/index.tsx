@@ -109,7 +109,6 @@ function AppX() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/torso" element={<Torso />} />
-          <Route path="/midiviz" element={<MidiVisualizer />} />
         </Routes>
       </div>
     </BrowserRouter>

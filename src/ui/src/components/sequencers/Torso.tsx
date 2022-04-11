@@ -1,17 +1,18 @@
 import { useGetAndSet } from 'react-context-hook';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { isFunction } from 'webpack-merge/dist/utils';
 import * as constants from './TorsoConstants';
 import { keyMap, Mode } from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
-import { MidiOutputs } from '../../types';
+import { MidiMessage, MidiOutputs } from '../../types';
 import './Torso.css';
-import { TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
+import { SequencerEvent, TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType, number_to_note } from '../../lib/Note';
 import { ButtonState, TorsoButton } from './TorsoButton';
 import { TorsoKnob } from './TorsoKnob';
 import { scales } from '../../lib/sequencers/TorsoConstants';
+import { MidiVisualizer } from '../displays/MidiVisualizer';
 
 function trackKey(bank: number, pattern: number, track: number) {
   return `${bank}:${pattern}:${track}`;
@@ -31,13 +32,10 @@ export function Torso() {
   const [bank, setBank] = useState(0);
   const [pattern, setPattern] = useState(0);
   const [pitchOctave, setPitchOctave] = useState(3);
-  const [history, setHistory] = useState([]);
+  const [visualizerCallback, setVisualizerCallback] = useState(null);
   const [foo, setFoo] = useState(0);
 
-  // const [midiCallbackMap, setMidiCallbackMap] = useGetAndSet<CallbackMap>('midiCallbackMap');
-  // const [midiInputs, setMidiInputs] = useGetAndSet<MidiInputs>('midiInputs');
   const [midiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
-  // const [midiAccess, setMidiAccess] = useGetAndSet<WebMidi.MIDIAccess>('midiAccess');
   const [, setOutputs] = useState([]);
 
   const buttonStates = [[...Array(13)].map(() => ButtonState.inactive), [...Array(13)].map(() => ButtonState.inactive)];
@@ -45,9 +43,17 @@ export function Torso() {
 
   const mode = modes.slice(-1)[0];
 
-  const addToHistory = (h: string) => {
-    setHistory(x => [h, ...x].slice(0, 20));
-  };
+  const visualizerCallbackCallback = useCallback((callback: any) => {
+    setVisualizerCallback(() => callback);
+  }, []);
+
+  const addToHistory = useCallback(
+    (h: SequencerEvent) => {
+      console.log('addToHistory', h, visualizerCallback);
+      if (visualizerCallback) visualizerCallback(h);
+    },
+    [visualizerCallback],
+  );
 
   const sequencer = useMemo(() => {
     const s = new TorsoSequencer(null, addToHistory, 20);
@@ -58,7 +64,7 @@ export function Torso() {
         ['G', 4],
         ['B', 4],
       ].map((n: NoteType) => note_to_number(n)),
-      pulses: 4,
+      pulses: 8,
       steps: 16,
     });
     const slice2 = new TorsoTrackSlice({
@@ -68,24 +74,25 @@ export function Torso() {
         ['E', 4],
         ['G', 4],
       ].map((n: NoteType) => note_to_number(n)),
-      pulses: 4,
+      pulses: 8,
       steps: 16,
     });
 
     const ttrack = new TorsoTrack({
       output: null,
       slices: [slice1, slice2],
-      repeats: 3,
-      sustain: 1,
+      repeats: 4,
+      sustain: 0.5,
       style: 1,
       voicing: 1,
+      repeatTime: 4,
       // timing: 8,
     });
     s.addTrack(trackKey(bank, pattern, track), ttrack);
     s.setBPM(10);
     setTimeout(() => s.run(), 1);
     return s;
-  }, []);
+  }, [visualizerCallback]);
 
   const interpolateSetValue = (value: any, interpolate: number = null): [keyof TorsoTrack, any] => {
     const knob = getKnob(mode);
@@ -706,9 +713,7 @@ export function Torso() {
         </table>
       </div>
       <div style={{ minWidth: '20em', padding: '1em' }}>
-        {history.map(h => (
-          <div key={h}>{h}</div>
-        ))}
+        <MidiVisualizer callbackCallback={visualizerCallbackCallback} />
       </div>
     </div>
   );

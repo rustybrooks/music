@@ -10,7 +10,7 @@ const MAX_STEPS = 64;
 
 let sequencerId = 0;
 
-class SequencerEvent {
+export class SequencerEvent {
   tick = 0;
   message: number[];
   output: MidiOutput;
@@ -483,7 +483,7 @@ export class TorsoTrack {
 }
 
 export class TorsoSequencer {
-  messageCallback: (message: string) => void;
+  messageCallback: (message: SequencerEvent) => void;
   output: MidiOutput;
   interval: number;
   lookahead: number;
@@ -499,7 +499,13 @@ export class TorsoSequencer {
   finished = false;
   paused = true;
 
-  constructor(output: MidiOutput = null, messageCallback: (message: string) => void = null, interval = 20, lookahead = 40, bpm = 200) {
+  constructor(
+    output: MidiOutput = null,
+    messageCallback: (message: SequencerEvent) => void = null,
+    interval = 20,
+    lookahead = 40,
+    bpm = 200,
+  ) {
     this.output = output;
     this.messageCallback = messageCallback;
     this.interval = interval;
@@ -608,7 +614,7 @@ export class TorsoSequencer {
         }
         const evt = this.pending.pop();
         // console.log('send', evt);
-        this.messageCallback(`${evt.message} ${evt.tick}`);
+        this.messageCallback(evt);
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
         } else {
