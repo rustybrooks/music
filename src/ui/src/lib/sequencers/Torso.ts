@@ -21,7 +21,6 @@ export class SequencerEvent {
     this.tick = tick;
     this.message = message;
     this.id = sequencerId;
-    // console.log('new msg', this.tick, this.message, this.id, this.output);
     sequencerId += 1;
   }
 }
@@ -464,7 +463,6 @@ export class TorsoTrack {
       }
 
       if (step - this.sliceStep >= this.slice.steps) {
-        console.log('next slice', this.lastStep, step);
         this.sliceStep = step;
         this.setSlice((this.sliceIndex + 1) % this.slices.length);
       }
@@ -553,7 +551,6 @@ export class TorsoSequencer {
 
   getTrack(trackName: string, create = true) {
     if (create && !(trackName in this.tracks)) {
-      console.log('addTrack', trackName);
       this.addTrack(trackName, new TorsoTrack({ output: this.output }));
     }
 
@@ -588,7 +585,6 @@ export class TorsoSequencer {
       if (newvals.length) {
         newvals.forEach((n: any) => {
           this.pending.push(n);
-          // console.log('push pending', n, this.pending.length);
         });
       }
 
@@ -601,7 +597,6 @@ export class TorsoSequencer {
       const evt = this.pending.pop();
       if (!evt) break;
       if (evt.message[0] >= NOTE_OFF && evt.message[0] < NOTE_OFF + 16) {
-        console.log('end');
         if (evt.output) {
           evt.output.object.send(evt.message, 0);
         } else {
@@ -614,7 +609,6 @@ export class TorsoSequencer {
     this.pending = new Heap(SequencerComparator);
     this.startTime = window.performance.now();
     this.startAudioTime = audioContext.currentTime;
-    console.log('setting startTime', this.startTime, this.startAudioTime);
     this.lastLookahead = this.startTime;
 
     for (const track of Object.values(this.tracks)) {
@@ -643,7 +637,6 @@ export class TorsoSequencer {
           break;
         }
         const evt = this.pending.pop();
-        // console.log('send', evt);
         this.messageCallback(evt);
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
