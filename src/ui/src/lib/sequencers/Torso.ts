@@ -280,12 +280,10 @@ export class TorsoTrack {
   }
 
   getSteps() {
-    console.log('getsteps', this.slice, this.slice.getSteps());
     return this.slice.getSteps();
   }
 
   setSteps(value: number) {
-    console.log('setsteps', value);
     this.slice.setSteps(value);
   }
 

@@ -38,7 +38,7 @@ function TorsoTable({
 }) {
   const selectedTrack = sequencer.getTrack(trackKey(bank, pattern, track));
   return (
-    <div style={{ minWidth: '20em', padding: '1em' }}>
+    <div style={{ minWidth: '15em', padding: '1em' }}>
       <table>
         <tbody>
           <tr>
@@ -52,6 +52,88 @@ function TorsoTable({
           <tr>
             <td>Steps</td>
             <td>{selectedTrack.getSteps()}</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Pulses</td>
+            <td>{selectedTrack.getPulses()}</td>
+            <td>Rotate</td>
+            <td>{selectedTrack.getRotate()}</td>
+          </tr>
+          <tr>
+            <td>Cycles</td>
+            <td></td>
+            <td>Division</td>
+            <td>{selectedTrack.division}</td>
+          </tr>
+          <tr>
+            <td>Velocity</td>
+            <td>{selectedTrack.velocity}</td>
+            <td>Sustain</td>
+            <td>{selectedTrack.sustain}</td>
+          </tr>
+          <tr>
+            <td>Pitch</td>
+            <td>{selectedTrack.pitch}</td>
+            <td>Harmony</td>
+            <td>{selectedTrack.harmony}</td>
+          </tr>
+          <tr>
+            <td>Length</td>
+            <td>{}</td>
+            <td>Quantize</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Repeats</td>
+            <td>{selectedTrack.repeats}</td>
+            <td>Offset</td>
+            <td>{selectedTrack.repeatOffset}</td>
+          </tr>
+          <tr>
+            <td>Time</td>
+            <td>{selectedTrack.repeatTime}</td>
+            <td>Pace</td>
+            <td>{selectedTrack.repeatPace}</td>
+          </tr>
+          <tr>
+            <td>Voicing</td>
+            <td>{selectedTrack.getVoicing()}</td>
+            <td>Style</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Meoldy</td>
+            <td>{selectedTrack.melody}</td>
+          </tr>
+          <tr>
+            <td>Accent</td>
+            <td>{selectedTrack.accent}</td>
+          </tr>
+          <tr>
+            <td>Timing</td>
+            <td>{selectedTrack.timing}</td>
+            <td>Delay</td>
+            <td>{selectedTrack.delay}</td>
+          </tr>
+          <tr>
+            <td>Scale</td>
+            <td>{selectedTrack.getScale()}</td>
+            <td>Root</td>
+            <td>{selectedTrack.root}</td>
+          </tr>
+          <tr>
+            <td>MIDI</td>
+            <td>{}</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Random</td>
+            <td>{}</td>
+            <td>RRate</td>
+            <td></td>
           </tr>
         </tbody>
       </table>
@@ -188,7 +270,6 @@ export function Torso() {
   const setValue = (value: any, interpolate: number = null) => {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
     const [propKey, newValue] = interpolateSetValue(value, interpolate);
-    console.log('setValue', propKey, typeof ttrack[propKey] === 'function', newValue);
     if (propKey === 'bpm') {
       sequencer.setBPM(value);
     } else if (typeof ttrack[propKey] === 'function') {
@@ -335,7 +416,6 @@ export function Torso() {
             const n1 = btext.slice(0, -1);
             const n2 = parseInt(btext.slice(-1), 10);
             const note = note_to_number([n1, n2]);
-            console.log('!!!', [n1, n2], note, noteVals.includes(note));
             if (noteVals.includes(note)) {
               const ind = noteVals.indexOf(note);
               noteVals.splice(ind, 1);
