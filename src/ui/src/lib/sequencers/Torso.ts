@@ -126,7 +126,7 @@ export class TorsoTrack {
   pitch: number;
   harmony: number;
   accent: number;
-  accentCurve: number[];
+  accentCurve: number;
   sustain: number;
   division: number;
   velocity: number;
@@ -139,9 +139,11 @@ export class TorsoTrack {
   voicing: number;
   style: string;
   melody: number;
-  phrase: number[];
+  phrase: number;
   root: number;
   muted: boolean;
+  random: number;
+  random_rate: number;
 
   sliceIndex = 0;
   sliceStep = 0;
@@ -179,6 +181,8 @@ export class TorsoTrack {
     scale = 0, // integer, picks scale from a list for phrase to operate on (default = chromatic)
     root = 0, // which note of the scale to set as the root
     muted = false,
+    random = 0,
+    random_rate = 0,
   }: {
     output: MidiOutput;
     channel?: number;
@@ -203,6 +207,8 @@ export class TorsoTrack {
     scale?: string | number;
     root?: number;
     muted?: boolean;
+    random?: number;
+    random_rate?: number;
   }) {
     Object.assign(this, {
       output,
@@ -224,13 +230,15 @@ export class TorsoTrack {
       phrase,
       root,
       muted,
+      random,
+      random_rate,
     });
 
     this.scaleType = scale;
     this.slices = slices || [new TorsoTrackSlice({})];
-    this.accentCurve = accentCurves[accentCurve];
+    this.accentCurve = accentCurve;
     this.style = styles[style];
-    this.phrase = phrases[phrase];
+    this.phrase = phrase;
 
     this.setSlice(0);
     this.setScale(this.scaleType);
@@ -466,8 +474,10 @@ export class TorsoTrack {
         continue;
       }
 
-      const melodyOffset = this.phrase[(step - this.slice.rotate) % this.phrase.length] * this.melody;
-      const accent = this.accentCurve[(step - this.slice.rotate) % this.accentCurve.length] * this.accent;
+      const tphrase = phrases[this.phrase];
+      const melodyOffset = tphrase[(step - this.slice.rotate) % tphrase.length] * this.melody;
+      const acurve = accentCurves[this.accentCurve];
+      const accent = acurve[(step - this.slice.rotate) % acurve.length] * this.accent;
       const velocity = Math.min(Math.round(this.velocity + accent), 127);
       const swing = step % 2 ? 0 : this.timing - 0.5;
 

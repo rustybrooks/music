@@ -101,15 +101,19 @@ function TorsoTable({
             <td>Voicing</td>
             <td>{selectedTrack.getVoicing()}</td>
             <td>Style</td>
-            <td></td>
+            <td>{selectedTrack.style.toString()}</td>
           </tr>
           <tr>
-            <td>Meoldy</td>
+            <td>Melody</td>
             <td>{selectedTrack.melody}</td>
+            <td>Phrase</td>
+            <td>{selectedTrack.phrase}</td>
           </tr>
           <tr>
             <td>Accent</td>
             <td>{selectedTrack.accent}</td>
+            <td>Accent Curve</td>
+            <td>{selectedTrack.accentCurve}</td>
           </tr>
           <tr>
             <td>Timing</td>
@@ -125,15 +129,15 @@ function TorsoTable({
           </tr>
           <tr>
             <td>MIDI</td>
-            <td>{}</td>
+            <td>{selectedTrack.channel}</td>
             <td></td>
             <td></td>
           </tr>
           <tr>
             <td>Random</td>
-            <td>{}</td>
+            <td>{selectedTrack.random}</td>
             <td>RRate</td>
-            <td></td>
+            <td>{selectedTrack.random_rate}</td>
           </tr>
         </tbody>
       </table>
@@ -219,7 +223,7 @@ export function Torso() {
     }
 
     if (control && !knob.alt_property) {
-      console.log(`No alt property for mode=${mode}`);
+      console.log(`(set) No alt property for mode=${mode} knob=${JSON.stringify(knob, null, 2)}`);
       return [null, null];
     }
 
@@ -305,8 +309,8 @@ export function Torso() {
       return null;
     }
 
-    if (thisControl && !thisKnob.alt_property) {
-      console.log(`No alt property for mode=${mode}`);
+    if (thisControl && !knob && !thisKnob.alt_property) {
+      console.log(`(get) No alt property for mode=${mode} useControl=${useControl} knob=${JSON.stringify(thisKnob, null, 2)}`);
       return null;
     }
 
