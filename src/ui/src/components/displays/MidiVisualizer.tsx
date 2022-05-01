@@ -26,7 +26,7 @@ export function MidiVisualizer({
   const [notes, setNotes] = useState<NoteThing[]>([]);
 
   const addSequencerEvent = (event: SequencerEvent) => {
-    console.log('new seq event', event);
+//    console.log('new seq event', event);
   };
 
   useEffect(() => {

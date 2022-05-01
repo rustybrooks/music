@@ -565,11 +565,12 @@ export class TorsoSequencer {
   }
 
   playPause() {
+    this.reset();
     this.paused = !this.paused;
-    console.log('playpause', this.paused);
   }
 
   pause() {
+    this.reset();
     this.paused = true;
   }
 
@@ -596,6 +597,19 @@ export class TorsoSequencer {
   }
 
   reset() {
+    while (true) {
+      const evt = this.pending.pop();
+      if (!evt) break;
+      if (evt.message[0] >= NOTE_OFF && evt.message[0] < NOTE_OFF + 16) {
+        console.log('end');
+        if (evt.output) {
+          evt.output.object.send(evt.message, 0);
+        } else {
+          synthMidiMessage(evt.message, 0);
+        }
+      }
+    }
+
     this.step = 0;
     this.pending = new Heap(SequencerComparator);
     this.startTime = window.performance.now();
@@ -619,12 +633,9 @@ export class TorsoSequencer {
 
     while (!this.stopped) {
       // const firstLeft = this.interval * this.step - (window.performance.now() - this.start_time);
-      let reset = false;
       while (this.paused) {
         await sleep(200);
-        reset = true;
       }
-      if (reset) this.reset();
 
       const t1 = window.performance.now();
       while (true) {

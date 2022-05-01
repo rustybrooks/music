@@ -28,10 +28,10 @@ export function synthMidiMessage(event: number[], tick: number) {
   const [type, note, velocity] = event;
   if (type >= NOTE_ON && type < NOTE_ON + 16) {
     startNote(new Note(note, false), velocity, 'triangle', tick);
-    console.log('start', note, tick, audioContext.currentTime, tick - audioContext.currentTime);
+//    console.log('start', note, tick, audioContext.currentTime, tick - audioContext.currentTime);
   } else {
     stopNote(new Note(note, false), tick);
-    console.log('stop', note, tick);
+//    console.log('stop', note, tick);
   }
 }
 
