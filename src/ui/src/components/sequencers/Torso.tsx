@@ -1,7 +1,6 @@
 import { useGetAndSet } from 'react-context-hook';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { isFunction } from 'webpack-merge/dist/utils';
 import * as constants from './TorsoConstants';
 import { keyMap, Mode } from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
@@ -22,6 +21,42 @@ function getKnob(mode: Mode) {
   const r1 = constants.knobs[0].find(el => el.mode === mode || el.alt_mode === mode);
   const r2 = constants.knobs[1].find(el => el.mode === mode || el.alt_mode === mode);
   return r1 || r2;
+}
+
+function TorsoTable({
+  sequencer,
+  bank,
+  pattern,
+  track,
+  foo,
+}: {
+  sequencer: TorsoSequencer;
+  bank: number;
+  pattern: number;
+  track: number;
+  foo: number;
+}) {
+  const selectedTrack = sequencer.getTrack(trackKey(bank, pattern, track));
+  return (
+    <div style={{ minWidth: '20em', padding: '1em' }}>
+      <table>
+        <tbody>
+          <tr>
+            <td>Index</td>
+            <td>
+              {bank}:{pattern}:{track}
+            </td>
+            <td>BPM</td>
+            <td>{sequencer.bpm}</td>
+          </tr>
+          <tr>
+            <td>Steps</td>
+            <td>{selectedTrack.getSteps()}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function Torso() {
@@ -106,7 +141,7 @@ export function Torso() {
       return [null, null];
     }
 
-    const propKey = knob[control ? 'alt_property' : 'property'];
+    const propKey = knob[control ? 'alt_set_property' : 'set_property'];
     if (!propKey) {
       console.log(`setValue - mode=${mode} no property`);
       return [null, null];
@@ -153,10 +188,10 @@ export function Torso() {
   const setValue = (value: any, interpolate: number = null) => {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
     const [propKey, newValue] = interpolateSetValue(value, interpolate);
-    // console.log('setValue', propKey, newValue);
+    console.log('setValue', propKey, typeof ttrack[propKey] === 'function', newValue);
     if (propKey === 'bpm') {
       sequencer.setBPM(value);
-    } else if (isFunction(propKey)) {
+    } else if (typeof ttrack[propKey] === 'function') {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       ttrack[propKey](newValue);
@@ -200,7 +235,7 @@ export function Torso() {
     // }
 
     let value;
-    if (isFunction(ttrack[propKey])) {
+    if (typeof ttrack[propKey] === 'function') {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignores
       value = ttrack[propKey]();
@@ -700,18 +735,7 @@ export function Torso() {
           </tbody>
         </table>
       </div>
-      <div style={{ minWidth: '20em', padding: '1em' }}>
-        <table>
-          <tbody>
-            <tr>
-              <td>Index</td>
-              <td>
-                {bank}:{pattern}:{track}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <TorsoTable bank={bank} pattern={pattern} track={track} sequencer={sequencer} foo={foo} />
       <div style={{ minWidth: '20em', padding: '1em' }}>
         <MidiVisualizer callbackCallback={visualizerCallbackCallback} />
       </div>

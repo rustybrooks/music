@@ -89,6 +89,15 @@ export class TorsoTrackSlice {
     this.generate();
   }
 
+  getRotate() {
+    return this.rotate;
+  }
+
+  setRotate(value: number) {
+    this.rotate = value;
+    this.generate();
+  }
+
   generate() {
     const pulses = Math.min(this.pulses, this.steps);
     const interval = Math.round(this.steps / pulses);
@@ -271,35 +280,37 @@ export class TorsoTrack {
   }
 
   getSteps() {
-    return this.slice.steps;
+    console.log('getsteps', this.slice, this.slice.getSteps());
+    return this.slice.getSteps();
   }
 
   setSteps(value: number) {
-    this.slice.steps = value;
+    console.log('setsteps', value);
+    this.slice.setSteps(value);
   }
 
   getPulses() {
-    return this.slice.pulses;
+    return this.slice.getPulses();
   }
 
   setPulses(value: number) {
-    this.slice.pulses = value;
+    this.slice.setPulses(value);
   }
 
   getManualSteps() {
-    return this.slice.manualSteps;
+    return this.slice.getManualSteps();
   }
 
   setManualSteps(value: number[]) {
-    this.slice.manualSteps = value;
+    this.slice.setManualSteps(value);
   }
 
   getRotate() {
-    return this.slice.rotate;
+    return this.slice.getRotate();
   }
 
   setRotate(value: number) {
-    this.slice.rotate = value;
+    this.slice.setRotate(value);
   }
 
   getBPM() {

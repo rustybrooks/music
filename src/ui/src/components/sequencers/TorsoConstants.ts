@@ -52,6 +52,7 @@ export interface Knob {
   keybind: string;
   mode?: Mode;
   property?: keyof TorsoTrack;
+  set_property?: keyof TorsoTrack;
   min?: number;
   max?: number;
   type?: string;
@@ -59,6 +60,7 @@ export interface Knob {
   alt_min?: number;
   alt_max?: number;
   alt_property?: keyof TorsoTrack;
+  alt_set_property?: keyof TorsoTrack;
   alt_suppress_dial?: boolean;
   alt_type?: string;
   list?: any[];
@@ -73,11 +75,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'a',
       mode: Mode.STEPS,
       property: 'getSteps',
+      set_property: 'setSteps',
       min: 1,
       max: maxSteps,
       type: 'int',
       alt_mode: Mode.MANUAL_STEPS,
       alt_property: 'getManualSteps',
+      alt_set_property: 'setManualSteps',
       alt_suppress_dial: true,
     },
     {
@@ -86,11 +90,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 's',
       mode: Mode.PULSES,
       property: 'getPulses',
+      set_property: 'setPulses',
       min: 1,
       max: maxSteps,
       type: 'int',
       alt_mode: Mode.ROTATE,
       alt_property: 'getRotate',
+      alt_set_property: 'setRotate',
       alt_min: 0,
       alt_max: 15,
     },
@@ -105,6 +111,7 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'f',
       mode: Mode.DIVISION,
       property: 'division',
+      set_property: 'division',
       list: divisions,
       min: 0,
     },
@@ -114,6 +121,7 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'g',
       mode: Mode.VELOCITY,
       property: 'velocity',
+      set_property: 'velocity',
       min: 0,
       max: 127,
       type: 'int',
@@ -124,6 +132,7 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'h',
       mode: Mode.SUSTAIN,
       property: 'sustain',
+      set_property: 'sustain',
       min: 0,
       max: 1,
       type: 'float',
@@ -135,11 +144,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'j',
       mode: Mode.PITCH,
       property: 'pitch',
+      set_property: 'pitch',
       min: -36,
       max: 36,
       type: 'int',
       alt_mode: Mode.HARMONY,
       alt_property: 'harmony', // FIXME min/max etc?
+      alt_set_property: 'harmony', // FIXME min/max etc?
     },
     {
       label: 'length',
@@ -154,6 +165,7 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'l',
       mode: Mode.TEMPO,
       property: 'bpm',
+      set_property: 'bpm',
       min: 30,
       max: 300,
       type: 'int',
@@ -166,11 +178,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'z',
       mode: Mode.REPEATS,
       property: 'repeats',
+      set_property: 'repeats',
       min: 0,
       max: 15,
       type: 'int',
       alt_mode: Mode.REPEAT_OFFSET,
       alt_property: 'repeatOffset',
+      alt_set_property: 'repeatOffset',
       alt_min: 0,
       alt_max: 15,
       alt_type: 'int',
@@ -181,6 +195,7 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'x',
       mode: Mode.REPEAT_TIME,
       property: 'repeatTime',
+      set_property: 'repeatTime',
       list: divisions,
       alt_mode: Mode.REPEAT_PACE,
     },
@@ -190,11 +205,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'c',
       mode: Mode.VOICING,
       property: 'voicing',
+      set_property: 'voicing',
       min: 0,
       max: 15,
       type: 'int',
       alt_mode: Mode.STYLE,
       alt_property: 'style',
+      alt_set_property: 'style',
       alt_list: styles,
     },
     {
@@ -203,11 +220,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'v',
       mode: Mode.MELODY,
       property: 'melody',
+      set_property: 'melody',
       min: 0,
       max: 1,
       type: 'float',
       alt_mode: Mode.PHRASE,
       alt_property: 'phrase',
+      alt_set_property: 'phrase',
       alt_list: phrases,
     },
     {
@@ -216,11 +235,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'b',
       mode: Mode.ACCENT,
       property: 'accent',
+      set_property: 'accent',
       min: 0,
       max: 1,
       type: 'float',
       alt_mode: Mode.ACCENT_CURVE,
       alt_property: 'accentCurve',
+      alt_set_property: 'accentCurve',
       alt_list: accentCurves,
     },
     {
@@ -229,11 +250,13 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'n',
       mode: Mode.TIMING,
       property: 'timing',
+      set_property: 'timing',
       min: 0,
       max: 1,
       type: 'float',
       alt_mode: Mode.DELAY,
       alt_property: 'delay',
+      alt_set_property: 'delay',
     },
     {
       label: 'scale',
@@ -241,9 +264,11 @@ export const knobs: Array<Array<Knob>> = [
       keybind: 'm',
       mode: Mode.SCALE,
       property: 'getScale',
+      set_property: 'setScale',
       list: scales,
       alt_mode: Mode.ROOT,
       alt_property: 'root',
+      alt_set_property: 'root',
       alt_max: 12,
       type: 'int',
     },
@@ -253,6 +278,7 @@ export const knobs: Array<Array<Knob>> = [
       keybind: ',',
       mode: Mode.CHANNEL,
       property: 'channel',
+      set_property: 'channel',
       min: 0,
       max: 16,
       type: 'int',
