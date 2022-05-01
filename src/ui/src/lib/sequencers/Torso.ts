@@ -137,7 +137,7 @@ export class TorsoTrack {
   repeatTime: number;
   repeatPace: number;
   voicing: number;
-  style: string;
+  style: number;
   melody: number;
   phrase: number;
   root: number;
@@ -237,7 +237,7 @@ export class TorsoTrack {
     this.scaleType = scale;
     this.slices = slices || [new TorsoTrackSlice({})];
     this.accentCurve = accentCurve;
-    this.style = styles[style];
+    this.style = style;
     this.phrase = phrase;
 
     this.setSlice(0);
@@ -374,31 +374,31 @@ export class TorsoTrack {
   styleNotes(index: number): number[] {
     const lv = this.voicedNotes.length;
     if (!lv) return [];
-
-    if (this.style === 'chord') {
+    const style = styles[this.style];
+    if (style === 'chord') {
       return this.voicedNotes;
     }
-    if (this.style === 'upward') {
+    if (style === 'upward') {
       return [this.voicedNotes[index % lv]];
     }
-    if (this.style === 'downward') {
+    if (style === 'downward') {
       return [this.voicedNotes[lv - (index % lv) - 1]];
     }
-    if (this.style === 'converge') {
+    if (style === 'converge') {
       const i = index % lv;
       if (i % 2 === 0) {
         return [this.voicedNotes[Math.round(i / 2)]];
       }
       return [this.voicedNotes[lv - (Math.round(i / 2) + 1)]];
     }
-    if (this.style === 'diverge') {
+    if (style === 'diverge') {
       const i = lv - (index % lv) - 1;
       if (i % 2 === 0) {
         return [this.voicedNotes[Math.round(i / 2)]];
       }
       return [this.voicedNotes[lv - (Math.round(i / 2) + 1)]];
     }
-    if (this.style === 'alternate_bass') {
+    if (style === 'alternate_bass') {
       const rest = this.voicedNotes.slice(1);
       const notes = [];
       for (const r of rest) {
@@ -407,7 +407,7 @@ export class TorsoTrack {
       }
       return [notes[index]];
     }
-    if (this.style === 'alternate_bass_2') {
+    if (style === 'alternate_bass_2') {
       const rest = this.voicedNotes.slice(2);
       let i = 0;
       const notes = [];
@@ -418,7 +418,7 @@ export class TorsoTrack {
       }
       return [notes[index]];
     }
-    if (this.style === 'alternate_melody') {
+    if (style === 'alternate_melody') {
       const rest = this.voicedNotes.slice(0, lv - 1);
       const last = this.voicedNotes[lv - 1];
       const notes = [];
@@ -428,7 +428,7 @@ export class TorsoTrack {
       }
       return [notes[index]];
     }
-    if (this.style === 'alternate_melody_2') {
+    if (style === 'alternate_melody_2') {
       const rest = this.voicedNotes.slice(0, lv - 1);
       const last = this.voicedNotes.slice(lv - 2);
       const notes = [];
@@ -440,7 +440,7 @@ export class TorsoTrack {
       }
       return [notes[index]];
     }
-    if (this.style === 'random') {
+    if (style === 'random') {
       const num = Math.floor(Math.random() * lv) + 1;
       return [...Array(num)].map(() => this.voicedNotes[Math.floor(Math.random() * lv)]);
     }
