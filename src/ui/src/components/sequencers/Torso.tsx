@@ -169,7 +169,7 @@ export function Torso() {
   }, []);
 
   const addToHistory = useCallback(
-    (h: SequencerEvent) => {
+    (h: SequencerEvent[]) => {
       if (visualizerCallback) visualizerCallback(h);
     },
     [visualizerCallback],

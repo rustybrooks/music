@@ -17,7 +17,6 @@ interface InitialValue {
   midiInputs: MidiInputs;
   midiOutputs: MidiOutputs;
   midiAccess: WebMidi.MIDIAccess;
-  visualizerNotes: any[];
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -27,7 +26,6 @@ const initialValue: InitialValue = {
   midiInputs: {},
   midiOutputs: {},
   midiAccess: null,
-  visualizerNotes: [],
 };
 
 function AppX() {

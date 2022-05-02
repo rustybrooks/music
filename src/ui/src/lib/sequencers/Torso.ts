@@ -15,12 +15,14 @@ export class SequencerEvent {
   message: number[];
   output: MidiOutput;
   id: number;
+  startId: number;
 
-  constructor(output: MidiOutput, tick: number, message: number[]) {
+  constructor(output: MidiOutput, tick: number, message: number[], startId: number = null) {
     this.output = output;
     this.tick = tick;
     this.message = message;
     this.id = sequencerId;
+    this.startId = startId;
     sequencerId += 1;
   }
 }
@@ -447,7 +449,7 @@ export class TorsoTrack {
     return [];
   }
 
-  fillLookahead(start: number, end: number): any[] {
+  fillLookahead(start: number, end: number): SequencerEvent[] {
     const firstStep = Math.max(
       Math.ceil((this.division * (start - this.sequenceStart + this.delay * this.beat)) / this.beat),
       this.lastStep + 1,
@@ -487,10 +489,20 @@ export class TorsoTrack {
           const startTick = (base * this.beat) / this.division;
           const endTick = ((base + this.sustain) * this.beat) / this.division;
 
-          events.push(
-            new SequencerEvent(this.output, this.sequenceStart + startTick, [NOTE_ON + this.channel, note + this.pitch, velocity]),
-            new SequencerEvent(this.output, this.sequenceStart + endTick, [NOTE_OFF + this.channel, note + this.pitch, 0]),
+          const startEvent = new SequencerEvent(this.output, this.sequenceStart + startTick, [
+            NOTE_ON + this.channel,
+            note + this.pitch,
+            velocity,
+          ]);
+
+          const endEvent = new SequencerEvent(
+            this.output,
+            this.sequenceStart + endTick,
+            [NOTE_OFF + this.channel, note + this.pitch, 0],
+            startEvent.id,
           );
+
+          events.push(startEvent, endEvent);
         }
       }
     }
@@ -500,7 +512,7 @@ export class TorsoTrack {
 }
 
 export class TorsoSequencer {
-  messageCallback: (message: SequencerEvent) => void;
+  messageCallback: (message: SequencerEvent[]) => void;
   output: MidiOutput;
   interval: number;
   lookahead: number;
@@ -518,7 +530,7 @@ export class TorsoSequencer {
 
   constructor(
     output: MidiOutput = null,
-    messageCallback: (message: SequencerEvent) => void = null,
+    messageCallback: (message: SequencerEvent[]) => void = null,
     interval = 20,
     lookahead = 40,
     bpm = 200,
@@ -582,6 +594,7 @@ export class TorsoSequencer {
       }
 
       const newvals = track.fillLookahead(this.lastLookahead, nextLookahead);
+      this.messageCallback(newvals);
       if (newvals.length) {
         newvals.forEach((n: any) => {
           this.pending.push(n);
@@ -637,7 +650,6 @@ export class TorsoSequencer {
           break;
         }
         const evt = this.pending.pop();
-        this.messageCallback(evt);
         if (evt.output) {
           evt.output.object.send(evt.message, evt.tick);
         } else {
