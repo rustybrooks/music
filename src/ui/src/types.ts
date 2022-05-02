@@ -97,13 +97,3 @@ export interface CallbackMap {
 export interface MidiMessageType {
   data: number[];
 }
-
-// connection: "open"
-// id: "349671162"
-// manufacturer: ""
-// name: "echo server"
-// onmidimessage: (m) => {…}
-// onstatechange: null
-// state: "connected"
-// type: "input"
-// version: ""
