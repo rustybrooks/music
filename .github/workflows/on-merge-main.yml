@@ -29,4 +29,4 @@ jobs:
           yarn install --frozen-lockfile
           yarn build
           aws s3 sync --delete --quiet dist/ s3://music-ui/prod/
-          aws cloudfront create-invalidation --distribution-id E2FN07MF5Y5JDB --paths "/*"
+          aws cloudfront create-invalidation --distribution-id E2Z4PKFDQGOFU7 --paths "/*"
