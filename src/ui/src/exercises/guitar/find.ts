@@ -16,8 +16,7 @@ export const FindNotes = (tuning: any, notes: any, order_matters = false, octave
     const note = tuning[string].add(fret);
 
     let match_notes = [];
-    if (order_matters) {
-    } else {
+    if (!order_matters) {
       match_notes = notes;
     }
 
@@ -37,5 +36,6 @@ export const FindNotes = (tuning: any, notes: any, order_matters = false, octave
 
   return Object.freeze({
     callback,
+    display,
   });
 };

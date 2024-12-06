@@ -10,7 +10,7 @@ mainGainNode.gain.value = 1 / 8;
 
 const notes: { [id: number]: OscillatorNode } = {};
 
-export async function startNote(note: Note, velocity: number, type: OscillatorType, when = 0) {
+export async function startNote(note: Note, _velocity: number, type: OscillatorType, when = 0) {
   const osc = audioContext.createOscillator();
   osc.connect(mainGainNode);
   osc.type = type;
@@ -19,7 +19,7 @@ export async function startNote(note: Note, velocity: number, type: OscillatorTy
   notes[note.number] = osc;
 }
 
-export async function stopNote(note: Note, when: number = undefined) {
+export async function stopNote(note: Note, when: number = 0) {
   if (!notes[note.number]) return;
   notes[note.number].stop(when);
 }
@@ -28,10 +28,8 @@ export function synthMidiMessage(event: number[], tick: number) {
   const [type, note, velocity] = event;
   if (type >= NOTE_ON && type < NOTE_ON + 16) {
     startNote(new Note(note, false), velocity, 'triangle', tick);
-//    console.log('start', note, tick, audioContext.currentTime, tick - audioContext.currentTime);
   } else {
     stopNote(new Note(note, false), tick);
-//    console.log('stop', note, tick);
   }
 }
 

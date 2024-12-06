@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-loss-of-precision */
+
 import { note_to_number } from '../Note';
 
 export const noteFreq: { [id: number]: number } = {};

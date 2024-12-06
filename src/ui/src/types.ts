@@ -27,6 +27,7 @@ export class MidiMessage {
         }
         break;
       case 0x8:
+        // eslint-disable-next-line no-bitwise
         this.channel = b1 & 0xf;
         this.note = b2;
         this.velocity = b3;

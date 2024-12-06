@@ -1,8 +1,9 @@
 import * as React from 'react';
-import MidiInputs from './MidiInputs';
+import { MidiInputs } from './MidiInputs';
+import { MidiMessage } from '../types';
 
-const MidiMonitor = () => {
-  const [messages, setMessages] = React.useState([]);
+export const MidiMonitor = () => {
+  const [messages, setMessages] = React.useState<MidiMessage[]>([]);
 
   const our_callback = (m: any) => {
     messages.push(m);
@@ -36,5 +37,3 @@ const MidiMonitor = () => {
     </div>
   );
 };
-
-export default MidiMonitor;

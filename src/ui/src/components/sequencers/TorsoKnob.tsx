@@ -40,7 +40,7 @@ export function TorsoKnob({
     pressCallback();
   };
 
-  const onMouseUp = (event: MouseEvent<HTMLDivElement>) => {
+  const onMouseUp = (_event: MouseEvent<HTMLDivElement>) => {
     setMousePressed(false);
     releaseCallback();
   };

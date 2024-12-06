@@ -768,6 +768,11 @@
     "@types/prop-types" "*"
     csstype "^3.0.2"
 
+"@types/webmidi@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/webmidi/-/webmidi-2.1.0.tgz#085ec7279a9c9c13453589db9ecebbcfa4bf771b"
+  integrity sha512-k898MjEUSHB+6rSeCPQk/kLgie0wgWZ2t78GlWj86HbTQ+XmtbBafYg5LNjn8bVHfItEhPGZPf579Xfc6keV6w==
+
 "@typescript-eslint/eslint-plugin@8.17.0":
   version "8.17.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.17.0.tgz#2ee073c421f4e81e02d10e731241664b6253b23c"

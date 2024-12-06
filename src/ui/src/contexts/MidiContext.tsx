@@ -4,7 +4,7 @@ import { CallbackMap, MidiInputs, MidiOutputs } from '../types';
 export type MidiContextType = {
   midiInputs: MidiInputs;
   midiOutputs: MidiOutputs;
-  midiAccess: WebMidi.MIDIAccess;
+  midiAccess: WebMidi.MIDIAccess | null;
   midiCallbackMap: CallbackMap;
 };
 

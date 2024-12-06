@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useGetAndSet } from 'react-context-hook';
+import { useCallback, useEffect, useState } from 'react';
 import { Note } from '../../lib/Note';
 import { SequencerEvent } from '../../lib/sequencers/Torso';
 

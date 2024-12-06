@@ -1,10 +1,10 @@
 import { Note } from '../../lib/Note';
 
-export const FindNotes = (tuning: any, notes: any, order_matters = false, octave_matters = false) => {
+export const FindNotes = (_tuning: any, _notes: any, _order_matters = false, _octave_matters = false) => {
   // const score = 0;
   // const hits = [];
 
-  function callback(x: number, y: number, note: Note, is_press: boolean) {
+  function callback(_x: number, _y: number, _note: Note, is_press: boolean) {
     // console.log(string, fret, is_press)
     if (!is_press) {
       return [['set_press', 'blank']];

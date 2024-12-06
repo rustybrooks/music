@@ -1,13 +1,15 @@
-import * as React from 'react';
-import { useStoreValue } from 'react-context-hook';
+import { useContext } from 'react';
+import { MidiContext } from '../contexts/MidiContext';
 
 interface MidiInputsProps {
   callback: any;
 }
 
-const MidiInputs = ({ callback }: MidiInputsProps) => {
-  const midiInputs = useStoreValue('midiInputs');
-  const midiCallbacks = useStoreValue('midiCallbacks');
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+export const MidiInputs = ({ callback }: MidiInputsProps) => {
+  const { midiInputs } = useContext(MidiContext);
+
   console.log('midiinputs render', midiInputs);
 
   return (
@@ -22,7 +24,7 @@ const MidiInputs = ({ callback }: MidiInputsProps) => {
           <th>Connection</th>
         </tr>
         {Object.values(midiInputs).map((i: any) => {
-          midiCallbacks.listen(i.id, callback, callback);
+          // midiCallbacks.listen(i.id, callback, callback); // FIXME this used to come from the store?
           return (
             <tr key={i.id}>
               <td>{i.name}</td>
@@ -35,5 +37,3 @@ const MidiInputs = ({ callback }: MidiInputsProps) => {
     </table>
   );
 };
-
-export default MidiInputs;

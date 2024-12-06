@@ -22,8 +22,8 @@ const colors = {
 
 export function TorsoButton({
   b,
-  onMouseDown,
-  onMouseUp,
+  onMouseDown = () => {},
+  onMouseUp = () => {},
   row,
   col,
   state,

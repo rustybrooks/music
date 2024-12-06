@@ -15,9 +15,9 @@ export class SequencerEvent {
   message: number[];
   output: MidiOutput;
   id: number;
-  startId: number;
+  startId: number | null;
 
-  constructor(output: MidiOutput, tick: number, message: number[], startId: number = null) {
+  constructor(output: MidiOutput, tick: number, message: number[], startId: number | null = null) {
     this.output = output;
     this.tick = tick;
     this.message = message;
@@ -38,10 +38,10 @@ function SequencerComparator(a: SequencerEvent, b: SequencerEvent) {
 }
 
 export class TorsoTrackSlice {
-  steps: number;
-  pulses: number;
-  notes: number[];
-  rotate: number;
+  steps!: number;
+  pulses!: number;
+  notes!: number[];
+  rotate!: number;
   manualSteps: number[];
   sequence: number[] = [];
 
@@ -121,42 +121,41 @@ export class TorsoTrackSlice {
 }
 
 export class TorsoTrack {
-  output: MidiOutput | null;
-  channel: number;
+  output!: MidiOutput | null;
+  channel!: number;
   slices: TorsoTrackSlice[];
-  pitch: number;
-  harmony: number;
-  accent: number;
+  pitch!: number;
+  harmony!: number;
+  accent!: number;
   accentCurve: number;
-  sustain: number;
-  division: number;
-  velocity: number;
-  timing: number;
-  delay: number;
-  repeats: number;
-  repeatOffset: number;
-  repeatTime: number;
-  repeatPace: number;
-  voicing: number;
+  sustain!: number;
+  division!: number;
+  velocity!: number;
+  timing!: number;
+  delay!: number;
+  repeats!: number;
+  repeatOffset!: number;
+  repeatTime!: number;
+  repeatPace!: number;
+  voicing!: number;
   style: number;
-  melody: number;
+  melody!: number;
   phrase: number;
-  root: number;
-  muted: boolean;
-  random: number;
-  random_rate: number;
+  root!: number;
+  muted!: boolean;
+  random!: number;
+  random_rate!: number;
 
   sliceIndex = 0;
   sliceStep = 0;
   lastStep = -1;
-  bpm: number;
+  bpm!: number;
   scaleType: string | number;
-  scaleNotes: number[];
-  trackName: string;
-  sequenceStart: number = null;
-  beat: number = null;
-  slice: TorsoTrackSlice = null;
-  voicedNotes: number[];
+  scaleNotes!: number[];
+  sequenceStart: number = 0;
+  beat: number = 0;
+  slice!: TorsoTrackSlice;
+  voicedNotes!: number[];
 
   constructor({
     output,
@@ -187,7 +186,7 @@ export class TorsoTrack {
   }: {
     output: MidiOutput | null;
     channel?: number;
-    slices?: TorsoTrackSlice[];
+    slices?: TorsoTrackSlice[] | null;
     pitch?: number;
     harmony?: number;
     accent?: number;
@@ -489,20 +488,21 @@ export class TorsoTrack {
           const startTick = (base * this.beat) / this.division;
           const endTick = ((base + this.sustain) * this.beat) / this.division;
 
-          const startEvent = new SequencerEvent(this.output, this.sequenceStart + startTick, [
-            NOTE_ON + this.channel,
-            note + this.pitch,
-            velocity,
-          ]);
+          if (this.output) {
+            const startEvent = new SequencerEvent(this.output, this.sequenceStart + startTick, [
+              NOTE_ON + this.channel,
+              note + this.pitch,
+              velocity,
+            ]);
 
-          const endEvent = new SequencerEvent(
-            this.output,
-            this.sequenceStart + endTick,
-            [NOTE_OFF + this.channel, note + this.pitch, 0],
-            startEvent.id,
-          );
-
-          events.push(startEvent, endEvent);
+            const endEvent = new SequencerEvent(
+              this.output,
+              this.sequenceStart + endTick,
+              [NOTE_OFF + this.channel, note + this.pitch, 0],
+              startEvent.id,
+            );
+            events.push(startEvent, endEvent);
+          }
         }
       }
     }
@@ -519,11 +519,11 @@ export class TorsoSequencer {
   bpm: number;
   step = 0;
 
-  startTime: number | null = null;
-  startAudioTime: number | null = null;
+  startTime: number = 0;
+  startAudioTime: number = 0;
   tracks: { [id: string]: TorsoTrack } = {};
   pending = new Heap(SequencerComparator);
-  lastLookahead: number | null = null;
+  lastLookahead: number = 0;
   stopped = false;
   finished = false;
   paused = true;
@@ -584,7 +584,7 @@ export class TorsoSequencer {
   }
 
   fillLookahead() {
-    if (this.lastLookahead === null) {
+    if (this.lastLookahead === 0) {
       this.lastLookahead = window.performance.now();
     }
     const nextLookahead = this.lastLookahead + this.lookahead;
@@ -593,7 +593,7 @@ export class TorsoSequencer {
         return;
       }
 
-      const newvals = track.fillLookahead(this.lastLookahead || 0, nextLookahead);
+      const newvals = track.fillLookahead(this.lastLookahead, nextLookahead);
       this.messageCallback(newvals);
       if (newvals.length) {
         newvals.forEach((n: any) => {
@@ -646,14 +646,16 @@ export class TorsoSequencer {
 
       const t1 = window.performance.now();
       while (true) {
-        if (!this.pending.length || this.pending.peek().tick > t1 + 150) {
+        if (!this.pending.length || (this.pending.peek()?.tick || 0) > t1 + 150) {
           break;
         }
         const evt = this.pending.pop();
-        if (evt.output) {
-          evt.output.object.send(evt.message, evt.tick);
-        } else {
-          synthMidiMessage(evt.message, (evt.tick - this.startTime) / 1000 + this.startAudioTime);
+        if (evt) {
+          if (evt.output) {
+            evt.output.object.send(evt.message, evt.tick);
+          } else {
+            synthMidiMessage(evt.message, (evt.tick - this.startTime) / 1000 + this.startAudioTime);
+          }
         }
       }
 
@@ -673,7 +675,5 @@ export class TorsoSequencer {
         // setTimeout(this.run, left);
       }
     }
-
-    // this.finished.set
   }
 }
