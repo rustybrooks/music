@@ -1,8 +1,0 @@
-{
-  "extends": ["@rustybrooks/eslint-config-prettier"],
-  "rules": {
-    "no-bitwise": "off",
-    "no-console": "off",
-    "max-classes-per-file": "off",
-  }
-}

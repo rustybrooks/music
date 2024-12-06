@@ -1,5 +1,5 @@
 import { accentCurves, divisions, phrases, scales, styles } from '../../lib/sequencers/TorsoConstants';
-import { TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
+import { TorsoTrack } from '../../lib/sequencers/Torso';
 
 export const maxSteps = 16;
 
@@ -345,7 +345,7 @@ for (const row of [0, 1]) {
     keyMap[knob.keybind] = ['knob', row, i];
   }
   for (const [i, button] of buttons[row].entries()) {
-    const kv: string | string[] = button[2];
+    const kv: string | (string | null)[] = button[2];
     if (kv) {
       if (typeof kv === 'string') {
         keyMap[kv] = ['button', row, i];

@@ -1,8 +1,0 @@
-{
-  "extends": "@rustybrooks/eslint-config-prettier",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "allowJs": true,
-    "lib": ["es2016", "dom"]
-  }
-}
