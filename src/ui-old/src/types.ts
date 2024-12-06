@@ -2,10 +2,10 @@ const NOTEON = 'NoteOn';
 const NOTEOFF = 'NoteOff';
 
 export class MidiMessage {
-  note: number | null = null;
-  command: string | null = null;
-  channel: number | null = null;
-  velocity: number | null = null;
+  note: number = null;
+  command: string = null;
+  channel: number = null;
+  velocity: number = null;
 
   constructor(m: MidiMessageType) {
     const [b1, b2, b3] = m.data;
@@ -15,7 +15,6 @@ export class MidiMessage {
 
     switch (mevent) {
       case 0x9:
-        // eslint-disable-next-line no-bitwise
         this.channel = b1 & 0xf;
         this.note = b2;
         this.velocity = b3;

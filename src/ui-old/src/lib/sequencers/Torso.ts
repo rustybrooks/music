@@ -121,7 +121,7 @@ export class TorsoTrackSlice {
 }
 
 export class TorsoTrack {
-  output: MidiOutput | null;
+  output: MidiOutput;
   channel: number;
   slices: TorsoTrackSlice[];
   pitch: number;
@@ -185,7 +185,7 @@ export class TorsoTrack {
     random = 0,
     random_rate = 0,
   }: {
-    output: MidiOutput | null;
+    output: MidiOutput;
     channel?: number;
     slices?: TorsoTrackSlice[];
     pitch?: number;
@@ -200,7 +200,7 @@ export class TorsoTrack {
     repeats?: number;
     repeatOffset?: number;
     repeatTime?: number;
-    repeatPace?: number | null;
+    repeatPace?: number;
     voicing?: number;
     style?: number;
     melody?: number;
@@ -245,7 +245,7 @@ export class TorsoTrack {
     this.setScale(this.scaleType);
   }
 
-  setOutput(output: MidiOutput | null) {
+  setOutput(output: MidiOutput) {
     this.output = output;
   }
 
@@ -513,24 +513,24 @@ export class TorsoTrack {
 
 export class TorsoSequencer {
   messageCallback: (message: SequencerEvent[]) => void;
-  output: MidiOutput | null;
+  output: MidiOutput;
   interval: number;
   lookahead: number;
   bpm: number;
   step = 0;
 
-  startTime: number | null = null;
-  startAudioTime: number | null = null;
+  startTime: number = null;
+  startAudioTime: number = null;
   tracks: { [id: string]: TorsoTrack } = {};
   pending = new Heap(SequencerComparator);
-  lastLookahead: number | null = null;
+  lastLookahead: number = null;
   stopped = false;
   finished = false;
   paused = true;
 
   constructor(
-    output: MidiOutput | null = null,
-    messageCallback: (message: SequencerEvent[]) => void = () => {},
+    output: MidiOutput = null,
+    messageCallback: (message: SequencerEvent[]) => void = null,
     interval = 20,
     lookahead = 40,
     bpm = 200,
@@ -542,7 +542,7 @@ export class TorsoSequencer {
     this.bpm = bpm;
   }
 
-  setOutput(output: MidiOutput | null) {
+  setOutput(output: MidiOutput) {
     Object.values(this.tracks).forEach(t => {
       t.setOutput(output);
     });
@@ -593,7 +593,7 @@ export class TorsoSequencer {
         return;
       }
 
-      const newvals = track.fillLookahead(this.lastLookahead || 0, nextLookahead);
+      const newvals = track.fillLookahead(this.lastLookahead, nextLookahead);
       this.messageCallback(newvals);
       if (newvals.length) {
         newvals.forEach((n: any) => {

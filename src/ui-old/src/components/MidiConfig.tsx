@@ -1,6 +1,6 @@
 import './MidiConfig.css';
-import { useContext, useState } from 'react';
-import { MidiContext } from '../contexts/MidiContext';
+import { useState } from 'react';
+import { useStoreValue } from 'react-context-hook';
 
 export interface Settings {
   midiInputs: number[];
@@ -13,10 +13,10 @@ type SettingsCallback = {
 
 export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCallback }) {
   const [open, setOpen] = useState(false);
-  const [selectedIns, setSelectedIns] = useState<number[]>([]);
-  const [selectedOuts, setSelectedOuts] = useState<number[]>([]);
-
-  const { midiInputs, midiOutputs } = useContext(MidiContext);
+  const [selectedIns, setSelectedIns] = useState([]);
+  const [selectedOuts, setSelectedOuts] = useState([]);
+  const midiInputs = useStoreValue('midiInputs');
+  const midiOutputs = useStoreValue('midiOutputs');
 
   const onToggle = (val: boolean) => {
     setOpen(val);
@@ -25,7 +25,7 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
   const toggleInput = (port_id: number) => {
     console.log('toggle', port_id);
     if (selectedIns.includes(port_id)) {
-      setSelectedIns(selectedIns.filter(i => i !== port_id));
+      setSelectedIns(selectedIns.filter(i => i.id !== port_id));
     } else {
       setSelectedIns([...selectedIns, port_id]);
     }
@@ -37,7 +37,7 @@ export function MidiConfig({ settingsCallback }: { settingsCallback: SettingsCal
 
   const toggleOutput = (port_id: number) => {
     if (selectedOuts.includes(port_id)) {
-      setSelectedOuts(selectedOuts.filter(i => i !== port_id));
+      setSelectedOuts(selectedOuts.filter(i => i.id !== port_id));
     } else {
       setSelectedOuts([...selectedOuts, port_id]);
     }

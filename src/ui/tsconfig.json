@@ -1,8 +1,7 @@
 {
-  "extends": "@rustybrooks/eslint-config-prettier",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "allowJs": true,
-    "lib": ["es2016", "dom"]
-  }
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }

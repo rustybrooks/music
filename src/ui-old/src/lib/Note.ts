@@ -5,7 +5,7 @@ const note_list = {
 
 export type NoteType = [string, number];
 
-export function note_to_number(n: NoteType): number {
+export function note_to_number(n: NoteType) {
   const [note, octave] = n;
   let i = note_list.sharp.indexOf(note.toUpperCase());
   if (i === -1) {
@@ -21,7 +21,7 @@ export function number_to_note(n: number, is_sharp = false): NoteType {
 
 export class Note {
   number = 0;
-  note: NoteType | null = null;
+  note: NoteType = null;
   is_sharp = true;
 
   add(i: number) {
@@ -35,7 +35,7 @@ export class Note {
     this.is_sharp = is_sharp;
     if (typeof n === 'string') {
       throw Error('What is happening here, why is_sharp');
-      // this.number = note_to_number([n, is_sharp]);
+      this.number = note_to_number([n, is_sharp]);
     } else if (typeof n === 'number') {
       this.number = n;
       this.note = number_to_note(n, is_sharp);

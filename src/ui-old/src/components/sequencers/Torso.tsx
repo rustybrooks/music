@@ -1,8 +1,10 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useGetAndSet } from 'react-context-hook';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import * as constants from './TorsoConstants';
 import { keyMap, Mode } from './TorsoConstants';
 import { MidiConfig, Settings } from '../MidiConfig';
+import { MidiMessage, MidiOutputs } from '../../types';
 import './Torso.css';
 import { SequencerEvent, TorsoSequencer, TorsoTrack, TorsoTrackSlice } from '../../lib/sequencers/Torso';
 import { note_to_number, NoteType, number_to_note } from '../../lib/Note';
@@ -10,7 +12,6 @@ import { ButtonState, TorsoButton } from './TorsoButton';
 import { TorsoKnob } from './TorsoKnob';
 import { scales } from '../../lib/sequencers/TorsoConstants';
 import { MidiVisualizer } from '../displays/MidiVisualizer';
-import { MidiContext } from '../../contexts/MidiContext';
 
 function trackKey(bank: number, pattern: number, track: number) {
   return `${bank}:${pattern}:${track}`;
@@ -27,15 +28,13 @@ function TorsoTable({
   bank,
   pattern,
   track,
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  _foo,
+  foo,
 }: {
   sequencer: TorsoSequencer;
   bank: number;
   pattern: number;
   track: number;
-  _foo: any;
+  foo: number;
 }) {
   const selectedTrack = sequencer.getTrack(trackKey(bank, pattern, track));
   return (
@@ -147,19 +146,18 @@ function TorsoTable({
 }
 
 export function Torso() {
-  const hasPrevKeyPress = useRef<{ [id: string]: number | null }>({});
+  const hasPrevKeyPress = useRef<{ [id: string]: number }>({});
   const [modes, setModes] = useState([Mode.TRACKS]);
   const [control, setControl] = useState(false);
   const [track, setTrack] = useState(0);
   const [bank, setBank] = useState(0);
   const [pattern, setPattern] = useState(0);
   const [pitchOctave, setPitchOctave] = useState(3);
-  const [visualizerCallback, setVisualizerCallback] = useState<(h: SequencerEvent[]) => void>(() => {});
+  const [visualizerCallback, setVisualizerCallback] = useState(null);
   const [foo, setFoo] = useState(0);
 
-  const { midiOutputs } = useContext(MidiContext);
-
-  const [, setOutputs] = useState<number[]>([]);
+  const [midiOutputs] = useGetAndSet<MidiOutputs>('midiOutputs');
+  const [, setOutputs] = useState([]);
 
   const buttonStates = [[...Array(13)].map(() => ButtonState.inactive), [...Array(13)].map(() => ButtonState.inactive)];
   const buttonText = [[...Array(13)].map(() => ''), [...Array(13)].map(() => '')];
@@ -180,16 +178,22 @@ export function Torso() {
   const sequencer = useMemo(() => {
     const s = new TorsoSequencer(null, addToHistory, 20);
     const slice1 = new TorsoTrackSlice({
-      notes: [['C', 4] satisfies NoteType, ['E', 4] satisfies NoteType, ['G', 4] satisfies NoteType, ['B', 4] satisfies NoteType].map(
-        (n: NoteType) => note_to_number(n),
-      ),
+      notes: [
+        ['C', 4],
+        ['E', 4],
+        ['G', 4],
+        ['B', 4],
+      ].map((n: NoteType) => note_to_number(n)),
       pulses: 8,
       steps: 16,
     });
     const slice2 = new TorsoTrackSlice({
-      notes: [['A', 4] satisfies NoteType, ['C', 4] satisfies NoteType, ['E', 4] satisfies NoteType, ['G', 4] satisfies NoteType].map(
-        (n: NoteType) => note_to_number(n),
-      ),
+      notes: [
+        ['A', 4],
+        ['C', 4],
+        ['E', 4],
+        ['G', 4],
+      ].map((n: NoteType) => note_to_number(n)),
       pulses: 8,
       steps: 16,
     });
@@ -210,7 +214,7 @@ export function Torso() {
     return s;
   }, [visualizerCallback]);
 
-  const interpolateSetValue = (value: any, interpolate: number | null = null): [keyof TorsoTrack | null, any] => {
+  const interpolateSetValue = (value: any, interpolate: number = null): [keyof TorsoTrack, any] => {
     const knob = getKnob(mode);
     if (!knob) {
       console.log(`no map for mode=${mode}`);
@@ -243,12 +247,12 @@ export function Torso() {
       ftype = 'int';
       // lval = knob.alt_list;
     } else if (control) {
-      fmin = knob.alt_min || knob.min || 0;
-      fmax = knob.alt_max || knob.max || 0;
+      fmin = knob.alt_min || knob.min;
+      fmax = knob.alt_max || knob.max;
       ftype = knob.alt_type || knob.type;
     } else {
-      fmin = knob.min || 0;
-      fmax = knob.max || 0;
+      fmin = knob.min;
+      fmax = knob.max;
       ftype = knob.type;
     }
 
@@ -266,12 +270,12 @@ export function Torso() {
     return [propKey, value];
   };
 
-  const setValue = (value: any, interpolate: number | null = null) => {
+  const setValue = (value: any, interpolate: number = null) => {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
     const [propKey, newValue] = interpolateSetValue(value, interpolate);
     if (propKey === 'bpm') {
       sequencer.setBPM(value);
-    } else if (typeof ttrack[propKey as keyof TorsoTrack] === 'function') {
+    } else if (typeof ttrack[propKey] === 'function') {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       ttrack[propKey](newValue);
@@ -290,10 +294,10 @@ export function Torso() {
     useControl = null,
   }: {
     knob?: constants.Knob;
-    interpolate?: number | null;
+    interpolate?: number;
     asInt?: boolean;
     asIndex?: boolean;
-    useControl?: boolean | null;
+    useControl?: boolean;
   } = {}) => {
     const ttrack = sequencer.getTrack(trackKey(bank, pattern, track));
     const thisKnob = knob || getKnob(mode);
@@ -309,7 +313,7 @@ export function Torso() {
       return null;
     }
 
-    const propKey = thisKnob[thisControl ? 'alt_property' : 'property'] as keyof TorsoTrack;
+    const propKey = thisKnob[thisControl ? 'alt_property' : 'property'];
     // if (propKey === 'bpm') {
     //   return sequencer.bpm;
     // }
@@ -323,8 +327,8 @@ export function Torso() {
       value = ttrack[propKey];
     }
     const lval = thisKnob[thisControl ? 'alt_list' : 'list'];
-    let fmin = thisKnob.min ?? 0;
-    let fmax = thisKnob.max ?? 0;
+    let fmin = thisKnob.min;
+    let fmax = thisKnob.max;
 
     if (lval) {
       fmin = 0;
@@ -332,22 +336,22 @@ export function Torso() {
     }
 
     if (interpolate) {
-      value = (interpolate * ((value as number) - fmin)) / (fmax - fmin);
+      value = (interpolate * (value - fmin)) / (fmax - fmin);
     }
 
     if (asInt || lval) {
-      value = Math.round(value as number);
+      value = Math.round(value);
     }
 
     if (!asIndex && lval) {
       // console.log('!asindex', propKey, value, origValue, interpolate, thisKnob.min, thisKnob.max);
-      value = lval[value as number];
+      value = lval[value];
     }
 
     return value;
   };
 
-  const pushMode = (m: Mode, ma: Mode | null) => {
+  const pushMode = (m: Mode, ma: Mode) => {
     let thisMode = m;
     if (control && ma) {
       thisMode = ma;
@@ -480,14 +484,14 @@ export function Torso() {
   };
 
   const pressKnob = (knob: constants.Knob) => {
-    pushMode(knob.mode as Mode, knob.alt_mode as Mode);
+    pushMode(knob.mode, knob.alt_mode);
   };
 
-  const releaseKnob = (_knob: constants.Knob) => {
+  const releaseKnob = (knob: constants.Knob) => {
     popMode();
   };
 
-  const rotateKnob = (_knob: constants.Knob, percent: number) => {
+  const rotateKnob = (knob: constants.Knob, percent: number) => {
     setValue(percent, 100);
     setFoo(foo + 1);
   };
@@ -745,10 +749,10 @@ export function Torso() {
                 <td key={i}>
                   <TorsoKnob
                     k={k}
-                    pressed={Boolean(
+                    pressed={
                       (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
-                        (!control && k.mode && k.mode === modes[modes.length - 1]),
-                    )}
+                      (!control && k.mode && k.mode === modes[modes.length - 1])
+                    }
                     percent={getValue({ knob: k, interpolate: 100 })}
                     control={control}
                     pressCallback={() => pressKnob(k)}
@@ -763,10 +767,10 @@ export function Torso() {
                 <td key={i}>
                   <TorsoKnob
                     k={k}
-                    pressed={Boolean(
+                    pressed={
                       (control && k.alt_mode && k.alt_mode === modes[modes.length - 1]) ||
-                        (!control && k.mode && k.mode === modes[modes.length - 1]),
-                    )}
+                      (!control && k.mode && k.mode === modes[modes.length - 1])
+                    }
                     control={control}
                     percent={getValue({ knob: k, interpolate: 100 })}
                     pressCallback={() => pressKnob(k)}
@@ -814,7 +818,7 @@ export function Torso() {
           </tbody>
         </table>
       </div>
-      <TorsoTable bank={bank} pattern={pattern} track={track} sequencer={sequencer} _foo={foo} />
+      <TorsoTable bank={bank} pattern={pattern} track={track} sequencer={sequencer} foo={foo} />
       <div style={{ minWidth: '20em', padding: '1em' }}>
         <MidiVisualizer callbackCallback={visualizerCallbackCallback} />
       </div>
